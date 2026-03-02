@@ -1933,6 +1933,8 @@ def main():
         # Mi historial (personal)
         with tabs[1]:
             st.subheader("📜 Mi historial")
+            
+            # Filtros
             colh1, colh2, colh3, colh4 = st.columns([1,1,1,1.5])
             with colh1: f_ini_h = st.date_input("Desde", value=date.today() - timedelta(days=60), key="c_hist_ini")
             with colh2: f_fin_h = st.date_input("Hasta", value=date.today(), key="c_hist_fin")
@@ -1940,11 +1942,38 @@ def main():
             with colh4:
                 g_sel = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="c_hist_grupo")
                 a_sel = st.selectbox("Alumno", ["Todos"] + (list_alumnos_by_grupo(g_sel) if g_sel!="Todos" else []), key="c_hist_alumno")
+            
+            # Obtener historial
             df_hist = filter_teacher_incidents(teacher_id=usuario["id"], start=f_ini_h, end=f_fin_h, estado=estado_sel, grupo=g_sel, alumno=a_sel)
             if df_hist.empty: st.info("No hay partes en tu historial con esos filtros.")
             else:
                 st.metric("Número de partes", len(df_hist))
                 st.dataframe(df_hist, use_container_width=True)
+                
+                # PDF igual al profesor
+                if HAS_REPORTLAB:
+                    df_for_pdf = df_hist.copy()
+
+                    # Normalizar 'Hora' si procede (algunos listados la traen como 'Franja')
+                    if "Hora" not in df_for_pdf.columns and "Franja" in df_for_pdf.columns:
+                        df_for_pdf.rename(columns={"Franja": "Hora"}, inplace=True)
+                    elif "Hora" not in df_for_pdf.columns:
+                        df_for_pdf["Hora"] = ""
+
+                    # teacher_report_pdf necesita columna ID para ordenar correctamente
+                    df_for_pdf = df_for_pdf.assign(ID=df_for_pdf.index)
+
+                    pdf_bytes = teacher_report_pdf(df_for_pdf, usuario["name"])
+
+                    st.download_button(
+                        "📄 Exportar mi historial (PDF)",
+                        data=pdf_bytes,
+                        file_name=f"mi_historial_{usuario['name'].replace(' ', '_')}_{f_ini_h.isoformat()}_{f_fin_h.isoformat()}.pdf",
+                        mime="application/pdf",
+                        key="c_hist_pdf",
+                        use_container_width=True
+                    )
+                # Exportar EXCEL
                 xls = df_to_excel_bytes(df_hist, sheet_name="Mi_historial")
                 st.download_button("⬇️ Exportar a Excel (.xlsx)", data=xls,
                     file_name=f"mi_historial_{f_ini_h.isoformat()}_{f_fin_h.isoformat()}.xlsx",
@@ -2088,4 +2117,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
