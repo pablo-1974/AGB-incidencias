@@ -832,7 +832,7 @@ def teacher_report_pdf(dfc: pd.DataFrame, profesor: str) -> bytes:
         ])
 
     # Anchos (A4 apaisado ~794pt de ancho útil). Se prioriza "Alumno" y "Descripción".
-    fixed_cols = [40, 85, 70, 180, 90, 0, 90, 90]
+    fixed_cols = [30, 60, 30, 180, 60, 0, 90, 90]
     total_fixed = sum(c for c in fixed_cols if c > 0)
     desc_width = max(120, 794 - total_fixed)  # garantizar mínimo para descripción
     col_widths = [fixed_cols[0], fixed_cols[1], fixed_cols[2], fixed_cols[3], fixed_cols[4], desc_width, fixed_cols[6], fixed_cols[7]]
@@ -2088,3 +2088,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
