@@ -98,7 +98,6 @@ class CursorShim:
 
 class PostgresConn:
     def __init__(self, url: str):
-        # Forzar sslmode=require si no está en la URL y activar keepalives para entornos serverless
         self._conn = psycopg.connect(self._ensure_sslmode(url),
                                      keepalives=1,
                                      keepalives_idle=30,
@@ -115,7 +114,6 @@ class PostgresConn:
         return self._conn.cursor()
 
     def _prep_sql(self, sql: str) -> str:
-        # Reemplazar placeholders SQLite (?) por %s de Postgres
         return sql.replace("?", "%s")
 
     def execute(self, sql, params=()):
@@ -268,7 +266,6 @@ def init_db():
         c.execute("CREATE INDEX IF NOT EXISTS idx_incidents_grupo_alumno ON incidents(grupo, alumno)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_incidents_gravedad_final ON incidents(gravedad_final)")
         c.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_students_grupo_alumno ON students(grupo, alumno)")
-        # Índices compuestos adicionales
         c.execute("CREATE INDEX IF NOT EXISTS idx_incidents_teacher_fecha_estado ON incidents(teacher_id, fecha, estado)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_incidents_grupo_fecha ON incidents(grupo, fecha)")
         conn.commit()
@@ -371,7 +368,7 @@ def set_user_role(user_id: int, new_role: str):
     return True, "Rol actualizado correctamente."
 
 def next_role(current: str) -> str:
-    # (Se mantiene por compatibilidad, ya no se usa en la UI)
+    # Compatibilidad
     order = ["profesor", "jefe", "director", "convivencia"]
     try:
         i = order.index(current)
@@ -442,7 +439,6 @@ def import_alumnos_df_to_db(df: pd.DataFrame, mode: str = "merge"):
             conn.execute("DELETE FROM students")
             conn.executemany("INSERT INTO students(grupo, alumno) VALUES (?,?)", list(map(tuple, df2.values)))
         else:
-            # merge (UPSERT DO NOTHING)
             if DB_ENGINE == "sqlite":
                 conn.executemany("INSERT OR IGNORE INTO students(grupo, alumno) VALUES (?,?)", list(map(tuple, df2.values)))
             else:
@@ -455,7 +451,6 @@ def import_alumnos_df_to_db(df: pd.DataFrame, mode: str = "merge"):
 def load_alumnos_from_excel_if_exists():
     if ALUMNOS_XLSX.exists():
         df = pd.read_excel(ALUMNOS_XLSX, engine="openpyxl")
-        # Por defecto: merge (no borrar existentes)
         import_alumnos_df_to_db(df, mode="merge")
 
 def list_grupos():
@@ -473,12 +468,24 @@ def list_alumnos_by_grupo(grupo: str):
 # ---- INCIDENCIAS ----
 def create_incident(teacher_id: int, teacher_name: str, grupo: str, alumno: str,
                     fecha: date, franja: str, descripcion: str, gravedad_inicial: str):
+    # Validación de campos
     if not (teacher_id and teacher_name and grupo and alumno and descripcion and gravedad_inicial and fecha and franja):
         return False, "Todos los campos del parte son obligatorios."
     if gravedad_inicial not in ("leve","grave","muy grave"):
         return False, "Gravedad inicial inválida."
     if franja not in FRANJAS:
         return False, "Franja horaria inválida."
+
+    # 🚫 Bloqueo de FECHA FUTURA (servidor)
+    try:
+        if isinstance(fecha, datetime):
+            fecha_d = fecha.date()
+        else:
+            fecha_d = fecha
+        if fecha_d > date.today():
+            return False, "No se permiten partes con fecha futura."
+    except Exception:
+        return False, "Fecha inválida."
 
     with get_conn() as conn:
         conn.execute("""
@@ -487,7 +494,7 @@ def create_incident(teacher_id: int, teacher_name: str, grupo: str, alumno: str,
                               estado, created_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)
         """, (teacher_id, teacher_name, grupo, alumno,
-              fecha.isoformat(), franja,
+              fecha_d.isoformat(), franja,
               descripcion.strip(), gravedad_inicial, None,
               "pendiente", datetime.now(timezone.utc).isoformat()))
         conn.commit()
@@ -541,9 +548,8 @@ def filter_teacher_incidents(
 ) -> pd.DataFrame:
     """
     Devuelve un DataFrame con los partes emitidos por un profesor (teacher_id) en el rango de fechas.
-    Permite filtrar por estado ('Todos' | 'pendiente' | 'cerrado'), grupo y alumno.
+    Permite filtrar por estado, grupo y alumno.
     Columnas: ID, Fecha, Franja, Grupo, Alumno, Estado, Gravedad inicial, Gravedad final, Profesor, Descripción, Creado, Cerrado
-    Orden: por fecha descendente y franja (según FRANJAS) descendente.
     """
     query = """
         SELECT id, fecha, hora, grupo, alumno, estado,
@@ -576,15 +582,6 @@ def filter_teacher_incidents(
     cols = ["ID","Fecha","Franja","Grupo","Alumno","Estado",
             "Gravedad inicial","Gravedad final","Profesor","Descripción","Creado","Cerrado"]
     df = pd.DataFrame(rows, columns=cols)
-
-    if df.empty:
-        return df
-
-    # Ordenar por fecha desc y franja (FRANJAS) desc
-    df["_Fecha_dt"] = pd.to_datetime(df["Fecha"], errors="coerce")
-    franja_order = {f: i for i, f in enumerate(FRANJAS)}
-    df["_franja_idx"] = df["Franja"].map(franja_order).fillna(99).astype(int)
-    df = df.sort_values(["_Fecha_dt", "_franja_idx", "ID"], ascending=[False, False, False]).drop(columns=["_Fecha_dt","_franja_idx"])
     return df
 
 # =========================
@@ -678,7 +675,6 @@ def ranking_disruptivos(start: date, end: date, grupo_filtro: str = "Todos",
     out.insert(0, "Rank", out.index + 1)
     return out
 
-# ===== Ranking de profesores (para "Todos" en Historial de profesores) =====
 def ranking_profesores(start: date, end: date, estado: str = "Todos",
                        grupo: str = "Todos", alumno: str = "Todos") -> pd.DataFrame:
     where = ["fecha BETWEEN ? AND ?"]
@@ -745,6 +741,203 @@ def df_to_excel_bytes(df: pd.DataFrame, sheet_name: str = "Datos") -> bytes:
     buf = BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name=sheet_name)
+    return buf.getvalue()
+
+# =========================
+# NUEVOS PDFs (reemplazo total)
+# =========================
+
+def _normalize_fecha_hora_for_pdf(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza columnas 'Fecha' (a datetime) y 'Hora' (usa 'Franja' si no existe)."""
+    dfn = df.copy()
+    # Normalizar Fecha
+    dfn["_Fecha_dt"] = pd.to_datetime(dfn["Fecha"], errors="coerce")
+    # Normalizar Hora
+    if "Hora" not in dfn.columns and "Franja" in dfn.columns:
+        dfn["Hora"] = dfn["Franja"]
+    dfn["Hora"] = dfn["Hora"].astype(str)
+    # Índice de franja
+    franja_order = {f: i for i, f in enumerate(FRANJAS)}
+    dfn["_Hora_idx"] = dfn["Hora"].map(franja_order).fillna(99).astype(int)
+    return dfn
+
+def teacher_report_pdf(dfc: pd.DataFrame, profesor: str) -> bytes:
+    """
+    PDF del profesor (8 columnas):
+    1 Nº (correlativo: 1 = más antiguo), 2 Fecha, 3 Hora, 4 Alumno (ancha), 5 Grupo,
+    6 Descripción (multilínea), 7 Gravedad inicial, 8 Gravedad final.
+    Impresión: más reciente -> más antiguo (opción B).
+    """
+    if not HAS_REPORTLAB or dfc is None or dfc.empty or not profesor:
+        return b""
+
+    df = dfc.copy()
+    # Si el DF tiene datos de múltiples profesores (por seguridad), filtramos:
+    if "Profesor" in df.columns:
+        df = df[df["Profesor"].astype(str) == str(profesor)]
+
+    if df.empty:
+        return b""
+
+    df = _normalize_fecha_hora_for_pdf(df)
+
+    # Asegurar columnas de negocio
+    for col in ["Alumno","Grupo","Descripción","Gravedad inicial","Gravedad final"]:
+        if col not in df.columns:
+            df[col] = ""
+
+    # Orden cronológico ascendente para correlativo
+    df_hist = df.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[True, True, True], na_position="last").copy()
+    df_hist["#"] = range(1, len(df_hist) + 1)
+
+    # Orden de impresión: descendente (más reciente arriba)
+    df_print = df_hist.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[False, False, False]).copy()
+
+    # Formateos
+    df_print["Fecha"] = df_print["_Fecha_dt"].dt.strftime("%d/%m/%Y").fillna(df_print["Fecha"].astype(str))
+    df_print["Gravedad inicial"] = df_print["Gravedad inicial"].fillna("").astype(str)
+    df_print["Gravedad final"] = df_print["Gravedad final"].fillna("").astype(str)
+    df_print["Alumno"] = df_print["Alumno"].astype(str)
+    df_print["Grupo"] = df_print["Grupo"].astype(str)
+    df_print["Descripción"] = df_print["Descripción"].astype(str)
+
+    # Selección columnas en orden
+    out = df_print[["#", "Fecha", "Hora", "Alumno", "Grupo", "Descripción", "Gravedad inicial", "Gravedad final"]].copy()
+
+    # ---- Render PDF ----
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
+    styles = getSampleStyleSheet()
+    style_title = styles["Heading2"]
+    style_cell = styles["BodyText"]; style_cell.fontSize = 9; style_cell.leading = 11
+
+    elems = []
+    hoy = datetime.now().strftime("%d/%m/%Y")
+    titulo = f"Historial del profesor {profesor} — {hoy}"
+    elems.append(Paragraph(titulo, style_title))
+    elems.append(Spacer(1, 10))
+
+    headers = list(out.columns)
+    data = [[Paragraph(h, styles["Heading4"]) for h in headers]]
+    for _, r in out.iterrows():
+        data.append([
+            Paragraph(str(r["#"]), style_cell),
+            Paragraph(str(r["Fecha"]), style_cell),
+            Paragraph(str(r["Hora"]), style_cell),
+            Paragraph(str(r["Alumno"]), style_cell),
+            Paragraph(str(r["Grupo"]), style_cell),
+            Paragraph(str(r["Descripción"]), style_cell),
+            Paragraph(str(r["Gravedad inicial"]), style_cell),
+            Paragraph(str(r["Gravedad final"]), style_cell),
+        ])
+
+    # Anchos (A4 apaisado ~794pt de ancho útil). Se prioriza "Alumno" y "Descripción".
+    fixed_cols = [40, 85, 70, 180, 90, 0, 90, 90]
+    total_fixed = sum(c for c in fixed_cols if c > 0)
+    desc_width = max(120, 794 - total_fixed)  # garantizar mínimo para descripción
+    col_widths = [fixed_cols[0], fixed_cols[1], fixed_cols[2], fixed_cols[3], fixed_cols[4], desc_width, fixed_cols[6], fixed_cols[7]]
+
+    table = Table(data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+        ("VALIGN", (0,0), (-1,-1), "TOP"),
+        ("ALIGN", (0,0), (-1,-1), "LEFT"),
+        ("FONTSIZE", (0,0), (-1,-1), 9),
+        ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.lightcyan]),
+    ]))
+    doc.build(elems + [table])
+    return buf.getvalue()
+
+def student_report_pdf(dfc: pd.DataFrame, alumno: str | None = None, grupo: str | None = None) -> bytes:
+    """
+    PDF de historial de alumnos (9 columnas):
+    1 Nº (correlativo: 1 = más antiguo), 2 Fecha, 3 Hora, 4 Profesor, 5 Alumno, 6 Grupo,
+    7 Descripción (multilínea), 8 Gravedad inicial, 9 Gravedad final.
+    Impresión: más reciente -> más antiguo (opción B).
+    Si se pasan alumno/grupo, se filtra.
+    """
+    if not HAS_REPORTLAB or dfc is None or dfc.empty:
+        return b""
+
+    df = dfc.copy()
+    if alumno:
+        df = df[df["Alumno"].astype(str) == str(alumno)]
+    if grupo and grupo != "Todos":
+        df = df[df["Grupo"].astype(str) == str(grupo)]
+    if df.empty:
+        return b""
+
+    df = _normalize_fecha_hora_for_pdf(df)
+
+    # Asegurar columnas necesarias
+    for col in ["Profesor","Alumno","Grupo","Descripción","Gravedad inicial","Gravedad final"]:
+        if col not in df.columns:
+            df[col] = ""
+
+    # Orden cronológico ascendente para correlativo
+    df_hist = df.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[True, True, True], na_position="last").copy()
+    df_hist["#"] = range(1, len(df_hist) + 1)
+
+    # Orden de impresión descendente
+    df_print = df_hist.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[False, False, False]).copy()
+
+    # Formateos
+    df_print["Fecha"] = df_print["_Fecha_dt"].dt.strftime("%d/%m/%Y").fillna(df_print["Fecha"].astype(str))
+    for c in ["Profesor","Alumno","Grupo","Descripción","Gravedad inicial","Gravedad final"]:
+        df_print[c] = df_print[c].fillna("").astype(str)
+
+    # Selección columnas
+    out = df_print[["#", "Fecha", "Hora", "Profesor", "Alumno", "Grupo", "Descripción", "Gravedad inicial", "Gravedad final"]].copy()
+
+    # ---- Render PDF ----
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
+    styles = getSampleStyleSheet()
+    style_title = styles["Heading2"]
+    style_cell = styles["BodyText"]; style_cell.fontSize = 9; style_cell.leading = 11
+
+    elems = []
+    hoy = datetime.now().strftime("%d/%m/%Y")
+    titulo = "Historial de alumnos"
+    if alumno: titulo += f" — {alumno}"
+    if grupo and grupo != "Todos": titulo += f" ({grupo})"
+    titulo += f" — {hoy}"
+    elems.append(Paragraph(titulo, style_title))
+    elems.append(Spacer(1, 10))
+
+    headers = list(out.columns)
+    data = [[Paragraph(h, styles["Heading4"]) for h in headers]]
+    for _, r in out.iterrows():
+        data.append([
+            Paragraph(str(r["#"]), style_cell),
+            Paragraph(str(r["Fecha"]), style_cell),
+            Paragraph(str(r["Hora"]), style_cell),
+            Paragraph(str(r["Profesor"]), style_cell),
+            Paragraph(str(r["Alumno"]), style_cell),
+            Paragraph(str(r["Grupo"]), style_cell),
+            Paragraph(str(r["Descripción"]), style_cell),
+            Paragraph(str(r["Gravedad inicial"]), style_cell),
+            Paragraph(str(r["Gravedad final"]), style_cell),
+        ])
+
+    # Anchos: equilibra para dar aire a Descripción
+    fixed_cols = [40, 80, 60, 120, 140, 80, 0, 80, 80]
+    total_fixed = sum(c for c in fixed_cols if c > 0)
+    desc_width = max(114, 794 - total_fixed)
+    col_widths = [fixed_cols[0], fixed_cols[1], fixed_cols[2], fixed_cols[3], fixed_cols[4],
+                  fixed_cols[5], desc_width, fixed_cols[7], fixed_cols[8]]
+
+    table = Table(data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+        ("VALIGN", (0,0), (-1,-1), "TOP"),
+        ("ALIGN", (0,0), (-1,-1), "LEFT"),
+        ("FONTSIZE", (0,0), (-1,-1), 9),
+        ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.lightcyan]),
+    ]))
+    doc.build(elems + [table])
     return buf.getvalue()
 
 # =========================
@@ -820,130 +1013,9 @@ def go_home_after_submit(message: str | None):
     if message:
         st.session_state["last_success_message"] = message
 
-# ========== BLOQUE 4/7: PDFs Alumno y Profesor ==========
+# ========== BLOQUE 4/7: PDFs Alumno y Profesor (ya redefinidos arriba) ==========
 
-def student_report_pdf(dfc: pd.DataFrame, alumno: str, grupo: str | None = None) -> bytes:
-    if not HAS_REPORTLAB or dfc is None or dfc.empty:
-        return b""
-
-    df = dfc.copy()
-    if alumno:
-        df = df[df["Alumno"] == alumno]
-    if grupo and grupo != "Todos":
-        df = df[df["Grupo"] == grupo]
-    if df.empty:
-        return b""
-
-    df["_Fecha_dt"] = pd.to_datetime(df["Fecha"], errors="coerce")
-    order_franjas = {f: i for i, f in enumerate(FRANJAS)}
-    df["_Hora_idx"] = df["Hora"].map(order_franjas).fillna(99).astype(int)
-
-    df_hist = df.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[True, True, True], na_position="last").copy()
-    df_hist["#"] = range(1, len(df_hist) + 1)
-    df_tab = df_hist.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[False, False, False]).copy()
-
-    df_tab["Profesor"] = df_tab["Profesor"].astype(str)
-    df_tab["Alumno"] = df_tab["Alumno"].astype(str)
-    df_tab["Fecha"] = df_tab["_Fecha_dt"].dt.strftime("%d/%m/%Y").fillna(df_tab["Fecha"].astype(str))
-    df_tab["Hora"] = df_tab["Hora"].astype(str)
-    df_tab["Descripción"] = df_tab["Descripción"].astype(str)
-    df_tab["Gravedad"] = df_tab["Gravedad final"].fillna(df_tab["Gravedad inicial"]).astype(str)
-    df_tab = df_tab[["#", "Profesor", "Alumno", "Fecha", "Hora", "Descripción", "Gravedad"]]
-
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
-    styles = getSampleStyleSheet()
-    style_title = styles["Heading2"]
-    style_cell = styles["BodyText"]; style_cell.fontSize = 10; style_cell.leading = 12
-
-    elems = []
-    hoy = datetime.now().strftime("%d/%m/%Y")
-    titulo = f"Informe del alumno {alumno}" + (f" ({grupo})" if (grupo and grupo!='Todos') else "") + f" — {hoy}"
-    elems.append(Paragraph(titulo, style_title))
-    elems.append(Spacer(1, 10))
-
-    headers = ["#", "Profesor", "Alumno", "Fecha", "Hora", "Descripción", "Gravedad"]
-    data = [[Paragraph(h, styles["Heading4"]) for h in headers]]
-    for _, r in df_tab.iterrows():
-        data.append([
-            Paragraph(str(r["#"]), style_cell),
-            Paragraph(str(r["Profesor"]), style_cell),
-            Paragraph(str(r["Alumno"]), style_cell),
-            Paragraph(str(r["Fecha"]), style_cell),
-            Paragraph(str(r["Hora"]), style_cell),
-            Paragraph(str(r["Descripción"]), style_cell),
-            Paragraph(str(r["Gravedad"]), style_cell),
-        ])
-
-    col_widths = [40, 140, 140, 90, 70, 270, 44]
-    table = Table(data, colWidths=col_widths, repeatRows=1)
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
-        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
-        ("VALIGN", (0,0), (-1,-1), "TOP"),
-        ("ALIGN", (0,0), (-1,-1), "LEFT"),
-        ("FONTSIZE", (0,0), (-1,-1), 10),
-        ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.lightcyan]),
-    ]))
-    doc.build(elems + [table])
-    return buf.getvalue()
-
-def teacher_report_pdf(dfc: pd.DataFrame, profesor: str) -> bytes:
-    if not HAS_REPORTLAB or dfc is None or dfc.empty or not profesor:
-        return b""
-
-    df = dfc.copy()
-    df = df[df["Profesor"] == profesor]
-    if df.empty:
-        return b""
-
-    df["_Fecha_dt"] = pd.to_datetime(df["Fecha"], errors="coerce")
-    order_franjas = {f: i for i, f in enumerate(FRANJAS)}
-    df["_Hora_idx"] = df["Hora"].map(order_franjas).fillna(99).astype(int)
-
-    df_hist = df.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[True, True, True], na_position="last").copy()
-    df_hist["#"] = range(1, len(df_hist) + 1)
-    df_tab = df_hist.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[False, False, False]).copy()
-
-    df_tab["Fecha y franja"] = df_tab["_Fecha_dt"].dt.strftime("%d/%m/%Y").fillna(df_tab["Fecha"].astype(str)) + " — " + df_tab["Hora"].astype(str)
-    df_tab["Descripción"] = df_tab["Descripción"].astype(str)
-    df_tab = df_tab[["#", "Fecha y franja", "Grupo", "Alumno", "Descripción"]]
-
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
-    styles = getSampleStyleSheet()
-    style_title = styles["Heading2"]
-    style_cell = styles["BodyText"]; style_cell.fontSize = 10; style_cell.leading = 12
-
-    elems = []
-    hoy = datetime.now().strftime("%d/%m/%Y")
-    titulo = f"Informe del profesor {profesor} — {hoy}"
-    elems.append(Paragraph(titulo, style_title))
-    elems.append(Spacer(1, 10))
-
-    header = ["#", "Fecha y franja", "Grupo", "Alumno", "Descripción"]
-    data = [[Paragraph(h, styles["Heading4"]) for h in header]]
-    for _, r in df_tab.iterrows():
-        data.append([
-            Paragraph(str(r["#"]), style_cell),
-            Paragraph(str(r["Fecha y franja"]), style_cell),
-            Paragraph(str(r["Grupo"]), style_cell),
-            Paragraph(str(r["Alumno"]), style_cell),
-            Paragraph(str(r["Descripción"]), style_cell),
-        ])
-
-    col_widths = [40, 140, 100, 160, 794 - 40 - 140 - 100 - 160]
-    table = Table(data, colWidths=col_widths, repeatRows=1)
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
-        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
-        ("VALIGN", (0,0), (-1,-1), "TOP"),
-        ("ALIGN", (0,0), (-1,-1), "LEFT"),
-        ("FONTSIZE", (0,0), (-1,-1), 10),
-        ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.lightcyan]),
-    ]))
-    doc.build(elems + [table])
-    return buf.getvalue()
+# (Las nuevas funciones teacher_report_pdf y student_report_pdf han reemplazado a las antiguas)
 
 # ========== BLOQUE 5/7: Login, Primer Acceso ==========
 
@@ -1027,7 +1099,6 @@ def password_login_screen():
         if verify_password(p, pw_hash):
             st.session_state["user"] = {"id": uid, "name": name, "email": email, "role": role}
             st.session_state.pop("login_user", None); st.session_state.pop("ask_password", None)
-            # Pantalla inicial del menú visible por defecto
             st.session_state["show_menu"] = True
             st.rerun()
         else:
@@ -1097,7 +1168,7 @@ def main():
 
         st.markdown("---")
         if usuario["role"] == "jefe":
-            # ===== Importar alumnos (merge por defecto) =====
+            # ===== Importar alumnos =====
             st.subheader("📥 Importar alumnos (Excel)")
             st.caption("Debe tener columnas: **Grupo** y **Alumno**")
             up_alum = st.file_uploader("Selecciona Excel de alumnos", type=["xlsx"], key="side_up_alum")
@@ -1135,7 +1206,6 @@ def main():
     # ======================================
     if st.session_state.get("show_menu", True) is False:
         show_home_header()
-        # Mensaje de éxito si venimos de un envío
         last_msg = st.session_state.pop("last_success_message", None)
         if last_msg:
             st.success(last_msg)
@@ -1149,15 +1219,13 @@ def main():
     show_home_header()
     rol = usuario["role"]
 
-    # =============== JEFATURA (todas las pestañas en UNA ÚNICA LÍNEA) ===============
+    # =============== JEFATURA ===============
     if rol == "jefe":
-        # Contador de pendientes (para mostrar en la etiqueta)
         try:
             pend_count = len(list_pending_incidents())
         except Exception:
             pend_count = 0
 
-        # *** CAMBIO: una sola hilera de tabs ***
         tabs = st.tabs([
             "📝 Nuevo parte",
             "🚫 Excursiones",
@@ -1195,7 +1263,8 @@ def main():
                 with st.form("p_form_parte"):
                     col1, col2 = st.columns(2)
                     with col1:
-                        fecha_sel = st.date_input("Fecha", value=date.today(), key="p_fecha")
+                        # 🚫 Bloquear fechas futuras en UI
+                        fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="p_fecha")
                     with col2:
                         franja_sel = st.selectbox("Franja horaria", FRANJAS, key="p_franja")
                     st.markdown("**Gravedad (inicial)**")
@@ -1250,7 +1319,6 @@ def main():
                         st.download_button("📄 Exportar a PDF", data=pdf_ban,
                             file_name=f"no_aptos_{g_exc}_{fecha_actividad.isoformat()}.pdf",
                             mime="application/pdf", key="exc_pdf", use_container_width=True)
-                    # Excel
                     xls = df_to_excel_bytes(df_ban, sheet_name="No_aptos")
                     st.download_button("⬇️ Exportar a Excel (.xlsx)",
                         data=xls,
@@ -1286,7 +1354,6 @@ def main():
                     st.download_button("📄 Exportar a PDF", data=pdf_rk,
                         file_name=f"ranking_disruptivos_{g_rk}_{f_ini_rk.isoformat()}_{f_fin_rk.isoformat()}.pdf",
                         mime="application/pdf", key="rk_pdf", use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(df_rk, sheet_name="Ranking")
                 st.download_button("⬇️ Exportar a Excel (.xlsx)",
                     data=xls,
@@ -1309,7 +1376,6 @@ def main():
                 st.info("No hay partes cerrados con esos filtros.")
             else:
                 st.dataframe(df_al, use_container_width=True)
-                # PDF de la TABLA (listado filtrado)
                 if HAS_REPORTLAB:
                     titulo_tabla = "Historial de alumnos — tabla filtrada"
                     if g_al != "Todos": titulo_tabla += f" — {g_al}"
@@ -1319,13 +1385,11 @@ def main():
                     st.download_button("📄 Exportar tabla a PDF", data=pdf_tabla,
                         file_name=f"historial_alumnos_tabla_{f_ini_a.isoformat()}_{f_fin_a.isoformat()}.pdf",
                         mime="application/pdf", key="j_al_pdf_tabla", use_container_width=True)
-                # PDF de INFORME por alumno (si hay alumno concreto)
                 if HAS_REPORTLAB and g_al != "Todos" and a_sel != "Todos":
                     pdf_al = student_report_pdf(df_al, alumno=a_sel, grupo=g_al)
                     st.download_button("📄 Informe del alumno (PDF)", data=pdf_al,
                         file_name=f"informe_{a_sel.replace(' ','_')}_{date.today().isoformat()}.pdf",
                         mime="application/pdf", key="j_al_pdf", use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(df_al, sheet_name="Historial_alumnos")
                 st.download_button("⬇️ Exportar a Excel (.xlsx)",
                     data=xls,
@@ -1360,7 +1424,6 @@ def main():
                         st.download_button("📄 PDF (ranking)", data=pdf_rank,
                             file_name=f"ranking_profesores_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.pdf",
                             mime="application/pdf", key="j_pr_rank_pdf", use_container_width=True)
-                    # Excel
                     xls = df_to_excel_bytes(df_rank, sheet_name="Ranking_profes")
                     st.download_button("⬇️ Excel (.xlsx) (ranking)",
                         data=xls,
@@ -1379,18 +1442,20 @@ def main():
                         st.info("No hay partes con esos filtros.")
                     else:
                         st.dataframe(df_pr, use_container_width=True)
-                        # Excel
                         xls = df_to_excel_bytes(df_pr, sheet_name="Historial_prof")
                         st.download_button("⬇️ Excel (.xlsx) (historial)", data=xls,
                             file_name=f"historial_prof_{prof.replace(' ','_')}_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                             key="j_pr_xlsx", use_container_width=True)
-                        
-                        if "Hora" not in df_pr.columns:
+
+                        # Normalizar Hora si faltase
+                        if "Hora" not in df_pr.columns and "Franja" in df_pr.columns:
+                            df_pr = df_pr.rename(columns={"Franja":"Hora"})
+                        elif "Hora" not in df_pr.columns:
                             df_pr["Hora"] = ""
 
                         if HAS_REPORTLAB:
-                            pdf_prof = teacher_report_pdf(df_pr.assign(ID=df_pr.index), prof)
+                            pdf_prof = teacher_report_pdf(df_pr, prof)
                             if pdf_prof and len(pdf_prof) > 0:
                                 st.download_button(
                                     "📄 Exportar informe del profesor (PDF)",
@@ -1403,8 +1468,13 @@ def main():
         # ----- TAB 5: Pendientes (Jefatura) -----
         with tabs[5]:
             st.subheader("📬 Partes pendientes de revisar")
-            st.caption(f"Pendientes: **{pend_count}**")
+            # ✅ Mostrar mensaje de cierre persistido tras refresco
+            pend_msg = st.session_state.pop("pend_success_msg", None)
+            if pend_msg:
+                st.success(pend_msg)
+
             pendientes = list_pending_incidents()
+            st.caption(f"Pendientes: **{len(pendientes)}**")
             if not pendientes:
                 st.success("No hay partes pendientes. ✅")
             else:
@@ -1420,8 +1490,12 @@ def main():
                     disabled_close = grav_final not in ("leve","grave","muy grave")
                     if st.button("✅ Cerrar parte", key=f"pend_cerrar_{sel[0]}", disabled=disabled_close, use_container_width=True):
                         ok, msg = close_incident(sel[0], grav_final, usuario["id"], usuario["name"])
-                        (st.success if ok else st.error)(msg)
-                        if ok: st.rerun()
+                        if ok:
+                            # ✅ Mantenerse en la sección y mostrar mensaje tras refresco
+                            st.session_state["pend_success_msg"] = msg
+                            st.rerun()
+                        else:
+                            st.error(msg)
                     if disabled_close:
                         st.warning("Debes seleccionar exactamente una gravedad (deja solo un tick).")
 
@@ -1473,7 +1547,6 @@ def main():
                         st.info("No hay datos para el ranking de profesores.")
                     else:
                         st.dataframe(rank_prof, use_container_width=True)
-                        # Excel
                         xls = df_to_excel_bytes(rank_prof, sheet_name="Ranking_prof")
                         st.download_button("⬇️ Exportar ranking profesores (Excel)",
                             data=xls,
@@ -1493,13 +1566,11 @@ def main():
                     if df_prof.empty:
                         st.info("No hay partes del profesor con los filtros seleccionados.")
                     else:
-                        order_franjas = {f: i for i, f in enumerate(FRANJAS)}
-                        df_prof["_Fecha"] = pd.to_datetime(df_prof["Fecha"], errors="coerce")
-                        df_prof["_Hora_idx"] = df_prof["Hora"].map(order_franjas).fillna(99).astype(int)
-                        df_prof = df_prof.sort_values(["_Fecha", "_Hora_idx", "ID"], ascending=[False, False, False])
+                        # Normalización de Hora para el PDF si se descarga
+                        if "Hora" not in df_prof.columns:
+                            df_prof["Hora"] = ""
                         cols_hist = ["Fecha","Hora","Grupo","Alumno","Descripción","Gravedad final"]
                         st.dataframe(df_prof[cols_hist], use_container_width=True)
-                        # Excel
                         xls = df_to_excel_bytes(df_prof[cols_hist], sheet_name="Historial_prof")
                         st.download_button("⬇️ Exportar historial del profesor (Excel)",
                             data=xls,
@@ -1513,7 +1584,6 @@ def main():
                                 file_name=f"informe_prof_{profesor_fil.replace(' ','_')}_{date.today().isoformat()}.pdf",
                                 mime="application/pdf", key="stats_prof_hist_pdf", use_container_width=True)
 
-                # Exportaciones generales de la tabla
                 if HAS_REPORTLAB:
                     titulo = "Incidencias cerradas — tabla filtrada"
                     if grupo_fil != "Todos": titulo += f" — {grupo_fil}"
@@ -1523,7 +1593,6 @@ def main():
                     st.download_button("📄 Exportar tabla a PDF", data=pdf_stats,
                         file_name=f"incidencias_cerradas_{f_ini.isoformat()}_{f_fin.isoformat()}.pdf",
                         mime="application/pdf", key="stats_pdf", use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(dfc, sheet_name="Incidencias_cerradas")
                 st.download_button("⬇️ Exportar tabla (Excel)",
                     data=xls,
@@ -1602,7 +1671,7 @@ def main():
             if not users:
                 st.info("No hay usuarios.")
             else:
-                hdr = st.columns([3,3,2,2,6])  # Acciones más ancho para el selector de rol + botón
+                hdr = st.columns([3,3,2,2,6])
                 hdr[0].markdown("**Nombre**"); hdr[1].markdown("**Email**")
                 hdr[2].markdown("**Rol**"); hdr[3].markdown("**Estado**"); hdr[4].markdown("**Acciones**")
                 rol_map_short = {"jefe": "Jefatura", "profesor": "Profesor", "director": "Director", "convivencia": "Convivencia"}
@@ -1615,10 +1684,7 @@ def main():
                     cols[3].write("Activo ✅" if active==1 else "Suspendido ⛔")
 
                     with cols[4]:
-                        # Nuevo layout de acciones: suspender/reactivar, borrar, reset pwd, selector de rol + guardar
                         c1, c2, c3, c4, c5 = st.columns([1,1,1,3,1])
-
-                        # Suspender / Reactivar
                         if active == 1:
                             if c1.button("⏸️", key=f"users_susp_{uid}", help="Suspender usuario"):
                                 if uid == usuario["id"]:
@@ -1629,22 +1695,18 @@ def main():
                             if c1.button("▶️", key=f"users_react_{uid}", help="Reactivar usuario"):
                                 set_user_active(uid, True); st.rerun()
 
-                        # Borrar
                         if c2.button("🗑️", key=f"users_del_{uid}", help="Eliminar usuario"):
                             if uid == usuario["id"]:
                                 st.error("No puedes eliminar tu propia cuenta.")
                             else:
                                 delete_user(uid); st.rerun()
 
-                        # Resetear contraseña
                         if c3.button("🔁", key=f"users_reset_{uid}", help="Resetear contraseña (pedirá nueva al entrar)"):
                             with get_conn() as conn:
                                 conn.execute("UPDATE users SET password_hash=NULL WHERE id=?", (uid,))
                                 conn.commit()
                             st.success("Contraseña reiniciada. Pedirá nueva al próximo acceso.")
 
-                        # ==== CAMBIO: Selección explícita de rol + Confirmación ====
-                        # Selector con el rol actual como preseleccionado
                         all_roles = ["profesor","jefe","director","convivencia"]
                         try:
                             idx_role = all_roles.index(role)
@@ -1658,7 +1720,6 @@ def main():
                             label_visibility="collapsed"
                         )
 
-                        # Botón guardar para confirmar el cambio de rol
                         if c5.button("Guardar", key=f"users_role_save_{uid}", help="Guardar rol seleccionado"):
                             if uid == usuario["id"]:
                                 st.error("No puedes cambiar tu propio rol aquí.")
@@ -1692,7 +1753,8 @@ def main():
                 alumno_sel = col_a.selectbox("Alumno", options=alumnos if alumnos else [], key="d_alumno")
                 with st.form("d_form_parte"):
                     col1, col2 = st.columns(2)
-                    with col1: fecha_sel = st.date_input("Fecha", value=date.today(), key="d_fecha")
+                    with col1: 
+                        fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="d_fecha")
                     with col2: franja_sel = st.selectbox("Franja horaria", FRANJAS, key="d_franja")
                     st.markdown("**Gravedad (inicial)**"); grav_ini = gravedad_selector("d_grav_ini", default=None)
                     descripcion = st.text_area("Descripción (obligatoria)", key="d_desc")
@@ -1728,7 +1790,6 @@ def main():
                 st.info("No hay datos.")
             else:
                 st.dataframe(df_rk, use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(df_rk, sheet_name="Ranking")
                 st.download_button("⬇️ Excel (.xlsx)", data=xls,
                     file_name=f"ranking_alumnos_{g_rk}_{f_ini_rk.isoformat()}_{f_fin_rk.isoformat()}.xlsx",
@@ -1750,7 +1811,6 @@ def main():
                 st.info("No hay partes cerrados con esos filtros.")
             else:
                 st.dataframe(df_al, use_container_width=True)
-                # PDF de la TABLA (listado filtrado)
                 if HAS_REPORTLAB:
                     titulo_tabla = "Historial de alumnos — tabla filtrada"
                     if g_al != "Todos": titulo_tabla += f" — {g_al}"
@@ -1760,13 +1820,11 @@ def main():
                     st.download_button("📄 Exportar tabla a PDF", data=pdf_tabla,
                         file_name=f"historial_alumnos_tabla_{f_ini_a.isoformat()}_{f_fin_a.isoformat()}.pdf",
                         mime="application/pdf", key="d_al_pdf_tabla", use_container_width=True)
-                # PDF de INFORME por alumno
                 if HAS_REPORTLAB and g_al != "Todos" and a_sel != "Todos":
                     pdf_al = student_report_pdf(df_al, alumno=a_sel, grupo=g_al)
                     st.download_button("📄 Informe del alumno (PDF)", data=pdf_al,
                         file_name=f"informe_{a_sel.replace(' ','_')}_{date.today().isoformat()}.pdf",
                         mime="application/pdf", key="d_al_pdf", use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(df_al, sheet_name="Historial_alumnos")
                 st.download_button("⬇️ Excel (.xlsx)", data=xls,
                     file_name=f"historial_alumnos_{f_ini_a.isoformat()}_{f_fin_a.isoformat()}.xlsx",
@@ -1791,7 +1849,6 @@ def main():
                     st.info("No hay datos con esos filtros.")
                 else:
                     st.dataframe(df_rank, use_container_width=True)
-                    # Excel
                     xls = df_to_excel_bytes(df_rank, sheet_name="Ranking_profes")
                     st.download_button("⬇️ Excel (.xlsx) (ranking)",
                         data=xls,
@@ -1819,7 +1876,6 @@ def main():
                         st.info("No hay partes con esos filtros.")
                     else:
                         st.dataframe(df_pr, use_container_width=True)
-                        # Excel
                         xls = df_to_excel_bytes(df_pr, sheet_name="Historial_prof")
                         st.download_button("⬇️ Excel (.xlsx) (historial)",
                             data=xls,
@@ -1850,7 +1906,7 @@ def main():
                 alumno_sel = col_a.selectbox("Alumno", options=alumnos if alumnos else [], key="c_alumno")
                 with st.form("c_form_parte"):
                     col1, col2 = st.columns(2)
-                    with col1: fecha_sel = st.date_input("Fecha", value=date.today(), key="c_fecha")
+                    with col1: fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="c_fecha")
                     with col2: franja_sel = st.selectbox("Franja horaria", FRANJAS, key="c_franja")
                     st.markdown("**Gravedad (inicial)**"); grav_ini = gravedad_selector("c_grav_ini", default=None)
                     descripcion = st.text_area("Descripción (obligatoria)", key="c_desc")
@@ -1889,7 +1945,6 @@ def main():
             else:
                 st.metric("Número de partes", len(df_hist))
                 st.dataframe(df_hist, use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(df_hist, sheet_name="Mi_historial")
                 st.download_button("⬇️ Exportar a Excel (.xlsx)", data=xls,
                     file_name=f"mi_historial_{f_ini_h.isoformat()}_{f_fin_h.isoformat()}.xlsx",
@@ -1911,7 +1966,6 @@ def main():
                 st.info("No hay datos.")
             else:
                 st.dataframe(df_rk, use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(df_rk, sheet_name="Ranking")
                 st.download_button("⬇️ Excel (.xlsx)", data=xls,
                     file_name=f"ranking_alumnos_{g_rk}_{f_ini_rk.isoformat()}_{f_fin_rk.isoformat()}.xlsx",
@@ -1933,7 +1987,6 @@ def main():
                 st.info("No hay partes cerrados con esos filtros.")
             else:
                 st.dataframe(df_al, use_container_width=True)
-                # PDF de la TABLA (listado filtrado)
                 if HAS_REPORTLAB:
                     titulo_tabla = "Historial de alumnos — tabla filtrada"
                     if g_al != "Todos": titulo_tabla += f" — {g_al}"
@@ -1943,13 +1996,11 @@ def main():
                     st.download_button("📄 Exportar tabla a PDF", data=pdf_tabla,
                         file_name=f"historial_alumnos_tabla_{f_ini_a.isoformat()}_{f_fin_a.isoformat()}.pdf",
                         mime="application/pdf", key="c_al_pdf_tabla", use_container_width=True)
-                # PDF de INFORME por alumno
                 if HAS_REPORTLAB and g_al != "Todos" and a_sel != "Todos":
                     pdf_al = student_report_pdf(df_al, alumno=a_sel, grupo=g_al)
                     st.download_button("📄 Informe del alumno (PDF)", data=pdf_al,
                         file_name=f"informe_{a_sel.replace(' ','_')}_{date.today().isoformat()}.pdf",
                         mime="application/pdf", key="c_al_pdf", use_container_width=True)
-                # Excel
                 xls = df_to_excel_bytes(df_al, sheet_name="Historial_alumnos")
                 st.download_button("⬇️ Excel (.xlsx)", data=xls,
                     file_name=f"historial_alumnos_{f_ini_a.isoformat()}_{f_fin_a.isoformat()}.xlsx",
@@ -1974,7 +2025,7 @@ def main():
                 alumno_sel = col_a.selectbox("Alumno", options=alumnos if alumnos else [], key="p_alumno_prof")
                 with st.form("p_form_parte_prof"):
                     col1, col2 = st.columns(2)
-                    with col1: fecha_sel = st.date_input("Fecha", value=date.today(), key="p_fecha_prof")
+                    with col1: fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="p_fecha_prof")
                     with col2: franja_sel = st.selectbox("Franja horaria", FRANJAS, key="p_franja_prof")
                     st.markdown("**Gravedad (inicial)**"); grav_ini = gravedad_selector("p_grav_ini_prof", default=None)
                     descripcion = st.text_area("Descripción (obligatoria)", key="p_desc_prof")
@@ -2009,22 +2060,29 @@ def main():
                 g_sel = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="hist_grupo")
                 a_sel = st.selectbox("Alumno", ["Todos"] + (list_alumnos_by_grupo(g_sel) if g_sel!="Todos" else []), key="hist_alumno")
             df_hist = filter_teacher_incidents(teacher_id=usuario["id"], start=f_ini_h, end=f_fin_h, estado=estado_sel, grupo=g_sel, alumno=a_sel)
-            if df_hist.empty: st.info("No hay partes en tu historial con esos filtros.")
+            if df_hist.empty:
+                st.info("No hay partes en tu historial con esos filtros.")
             else:
-                st.metric("Número de partes", len(df_hist)); st.dataframe(df_hist, use_container_width=True)
-                # Excel
+                st.metric("Número de partes", len(df_hist))
+                st.dataframe(df_hist, use_container_width=True)
+                # ✅ PDF "Mi historial" (8 columnas especificadas)
+                if HAS_REPORTLAB:
+                    # Normalizar Hora si hiciera falta
+                    if "Hora" not in df_hist.columns and "Franja" in df_hist.columns:
+                        df_hist = df_hist.rename(columns={"Franja":"Hora"})
+                    elif "Hora" not in df_hist.columns:
+                        df_hist["Hora"] = ""
+                    pdf_prof = teacher_report_pdf(df_hist.assign(ID=df_hist.index), usuario["name"])
+                    st.download_button("📄 Exportar mi historial (PDF)",
+                        data=pdf_prof,
+                        file_name=f"mi_historial_{usuario['name'].replace(' ','_')}_{f_ini_h.isoformat()}_{f_fin_h.isoformat()}.pdf",
+                        mime="application/pdf", key="hist_pdf", use_container_width=True)
                 xls = df_to_excel_bytes(df_hist, sheet_name="Mi_historial")
                 st.download_button("⬇️ Exportar a Excel (.xlsx)",
                     data=xls,
                     file_name=f"mi_historial_{f_ini_h.isoformat()}_{f_fin_h.isoformat()}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="hist_xlsx", use_container_width=True)
-                if HAS_REPORTLAB:
-                    titulo = f"Historial de {usuario['name']} ({f_ini_h.strftime('%d/%m/%Y')} – {f_fin_h.strftime('%d/%m/%Y')})"
-                    pdf_hist = df_to_pdf_bytes(df_hist, title=titulo)
-                    st.download_button("📄 Exportar a PDF", data=pdf_hist,
-                        file_name=f"mi_historial_{f_ini_h.isoformat()}_{f_fin_h.isoformat()}.pdf",
-                        mime="application/pdf", key="hist_pdf", use_container_width=True)
 
 # ========== BLOQUE 7/7: Entry point ==========
 
