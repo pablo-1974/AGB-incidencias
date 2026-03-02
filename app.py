@@ -1084,7 +1084,7 @@ def show_home_header():
 # === Estilo de la pantalla de login: fondo degradado + card central ===
 def apply_login_theme(gradient: str = None):
     if gradient is None:
-        gradient = "linear-gradient(135deg, #e6f0ff 0%, #f3e8ff 50%, #fff5f7 100%)"
+        gradient = "linear-gradient(135deg, #cfe9d9 0%, #a3d9b1 50%, #7ac69a 100%)"
 
     custom_css = f"""
     <style>
@@ -2630,6 +2630,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
