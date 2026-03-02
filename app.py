@@ -1312,7 +1312,7 @@ def main():
             "👥 Usuarios"
         ])
 
-        # ----- TAB 0: Nuevo parte -----
+        # ----- TAB 0: Nuevo parte (Jefatura) -----
         with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
@@ -1478,7 +1478,6 @@ def main():
                     key="j_al_xlsx", use_container_width=True)
 
         # ----- TAB 4: Historial de profesores (Jefatura) -----
-        # ----- TAB 4: Historial de profesores (Jefatura) -----
         with tabs[4]:
             st.subheader("👨‍🏫 Historial de profesores (Jefatura)")
             c1, c2, c3 = st.columns([1,1,2])
@@ -1576,36 +1575,104 @@ def main():
         # ----- TAB 5: Pendientes (Jefatura) -----
         with tabs[5]:
             st.subheader("📬 Partes pendientes de revisar")
+        
             # ✅ Mostrar mensaje de cierre persistido tras refresco
             pend_msg = st.session_state.pop("pend_success_msg", None)
             if pend_msg:
                 st.success(pend_msg)
-
+        
             pendientes = list_pending_incidents()
             st.caption(f"Pendientes: **{len(pendientes)}**")
             if not pendientes:
                 st.success("No hay partes pendientes. ✅")
             else:
+                # Construimos opciones con todos los campos necesarios para mostrar y para cambiar gravedad_inicial si se desea
                 opciones = []
-                for (iid, prof, grupo, alumno, f, h, desc, grav, created_at) in pendientes:
-                    label = f"#{iid} · {f} {h} · {alumno} ({grupo}) · {prof} · [inicial: {grav}]"
-                    opciones.append((iid, label, desc))
-                sel = st.selectbox("Selecciona un parte", opciones, format_func=lambda x: x[1], key="pend_sel")
+                # rows: (iid, prof, grupo, alumno, f, h, desc, grav_ini, created_at)
+                for (iid, prof, grupo, alumno, f, h, desc, grav_ini, created_at) in pendientes:
+                    label = f"#{iid} · {f} {h} · {alumno} ({grupo}) · {prof} · [inicial: {grav_ini}]"
+                    # Metemos toda la tupla que necesitamos en la opción
+                    opciones.append((iid, label, desc, grav_ini, prof, grupo, alumno, f, h))
+        
+                # Nota: guardamos en session la selección previa para no perderla tras cambios
+                sel = st.selectbox(
+                    "Selecciona un parte",
+                    opciones,
+                    format_func=lambda x: x[1],
+                    key="pend_sel"
+                )
+        
                 if sel:
-                    st.markdown("**Descripción:**"); st.write(sel[2]); st.markdown("---")
-                    st.markdown("**Gravedad final (obligatoria)**")
-                    grav_final = gravedad_selector(f"pend_final_{sel[0]}", default=None)
-                    disabled_close = grav_final not in ("leve","grave","muy grave")
-                    if st.button("✅ Cerrar parte", key=f"pend_cerrar_{sel[0]}", disabled=disabled_close, use_container_width=True):
-                        ok, msg = close_incident(sel[0], grav_final, usuario["id"], usuario["name"])
+                    # Desempaquetamos la selección actual
+                    sel_id, sel_label, sel_desc, sel_grav_ini, sel_prof, sel_grupo, sel_alumno, sel_fecha, sel_hora = sel
+        
+                    # Descripción del parte
+                    st.markdown("**Descripción del parte:**")
+                    st.write(sel_desc)
+                    st.markdown("---")
+        
+                    # =========== SECCIÓN: Opcional - Cambiar gravedad INICIAL ===========
+                    st.markdown("#### ⚠️ ¿Deseas **modificar** la **gravedad inicial**?")
+                    st.caption("Por defecto, no se cambia. Marca la casilla solo si necesitas corregir el valor de la gravedad **inicial**.")
+                    c_mod_toggle = st.checkbox("Quiero cambiar la **gravedad inicial** de este parte", key=f"pend_edit_ini_toggle_{sel_id}")
+        
+                    new_grav_ini = None
+                    confirm_change_ini = False
+        
+                    if c_mod_toggle:
+                        st.info(f"Gravedad inicial actual: **{sel_grav_ini}**")
+                        st.markdown("**Selecciona la nueva gravedad inicial** (elige una):")
+                        new_grav_ini = gravedad_selector(f"pend_edit_ini_{sel_id}", default=None, show_helper_msg=False)
+        
+                        # Ayuda si no se ha elegido bien
+                        if new_grav_ini not in ("leve", "grave", "muy grave"):
+                            st.warning("Selecciona exactamente **una** gravedad inicial (deja solo un tick).")
+        
+                        # Confirmación (obligatoria si pretende guardarse el cambio)
+                        confirm_change_ini = st.checkbox(
+                            "✅ Confirmo que **QUIERO** cambiar la gravedad **inicial**",
+                            key=f"pend_edit_ini_confirm_{sel_id}"
+                        )
+                        st.caption("Esta confirmación evita cambios accidentales. Desmarca la opción si no deseas modificarla.")
+        
+                    st.markdown("---")
+        
+                    # =========== SECCIÓN: Cierre - Gravedad FINAL ===========
+                    st.markdown("**Gravedad final (obligatoria para cerrar)**")
+                    grav_final = gravedad_selector(f"pend_final_{sel_id}", default=None)
+                    disabled_close = grav_final not in ("leve", "grave", "muy grave")
+        
+                    # ÚNICO botón de acción: Cerrar parte
+                    if st.button("✅ Cerrar parte", key=f"pend_cerrar_{sel_id}", disabled=disabled_close, use_container_width=True):
+                        # Si quiere modificar la gravedad INICIAL, comprobar confirmación y validez
+                        if c_mod_toggle:
+                            if new_grav_ini not in ("leve", "grave", "muy grave"):
+                                st.error("Para cambiar la **gravedad inicial**, debes seleccionar exactamente una opción.")
+                                st.stop()
+                            if not confirm_change_ini:
+                                st.error("Debes confirmar que **quieres** cambiar la gravedad **inicial**.")
+                                st.stop()
+                            # Ejecutar el cambio de gravedad inicial
+                            try:
+                                with get_conn() as conn:
+                                    conn.execute("UPDATE incidents SET gravedad_inicial=? WHERE id=?", (new_grav_ini, sel_id))
+                                    conn.commit()
+                            except Exception as ex:
+                                st.error(f"No se pudo actualizar la gravedad inicial: {ex}")
+                                st.stop()
+        
+                        # Cerrar el parte (establece gravedad_final y marca como cerrado)
+                        ok, msg = close_incident(sel_id, grav_final, usuario["id"], usuario["name"])
                         if ok:
-                            # ✅ Mantenerse en la sección y mostrar mensaje tras refresco
+                            # ✅ Mantenerse en esta pestaña y mostrar mensaje tras refresco
                             st.session_state["pend_success_msg"] = msg
                             st.rerun()
                         else:
                             st.error(msg)
+        
+                    # Estado de ayuda si falta gravedad final
                     if disabled_close:
-                        st.warning("Debes seleccionar exactamente una gravedad (deja solo un tick).")
+                        st.warning("Debes seleccionar exactamente **una** gravedad **final** para poder cerrar el parte.")
 
         # ----- TAB 6: Estadísticas (Jefatura) -----
         with tabs[6]:
@@ -1847,7 +1914,7 @@ def main():
             "👨‍🏫 Historial de profesores",
         ])
 
-        # Nuevo parte
+        # ----- TAB 0: Nuevo parte (Director) -----
         with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
@@ -1883,7 +1950,7 @@ def main():
                         else:
                             st.error(msg)
 
-        # Ranking alumnos
+        # ----- TAB 1: Ranking alumnos (Director) -----
         with tabs[1]:
             st.subheader("🔥 Ranking alumnos")
             c1, c2, c3, c4 = st.columns([1,1,1,1.5])
@@ -1904,7 +1971,7 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="d_rk_xlsx", use_container_width=True)
 
-        # Historial de alumnos
+        # ----- TAB 2: Historial de alumnos (Director) -----
         with tabs[2]:
             st.subheader("📚 Historial de alumnos")
             c1, c2, c3 = st.columns([1,1,2])
@@ -1945,8 +2012,7 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="d_al_xlsx", use_container_width=True)
 
-        # Historial de profesores
-        # Historial de profesores (Director)
+        # ----- TAB 3: Historial de profesores (Director)
         with tabs[3]:
             st.subheader("👨‍🏫 Historial de profesores")
             c1, c2, c3 = st.columns([1,1,2])
@@ -2050,7 +2116,7 @@ def main():
             "📚 Historial de alumnos",
         ])
 
-        # Nuevo parte
+        # ----- TAB 0: Nuevo parte (Convivencia) -----
         with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
@@ -2088,7 +2154,7 @@ def main():
                         else:
                             st.error(msg)
 
-        # Mi historial (personal)
+        # ----- TAB 1: Mi historial (Convivencia) ----
         with tabs[1]:
             st.subheader("📜 Mi historial")
             
@@ -2138,7 +2204,7 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="c_hist_xlsx", use_container_width=True)
 
-        # Ranking alumnos
+        # ----- TAB 2: Ranking alumnos (Convivencia) ----
         with tabs[2]:
             st.subheader("🔥 Ranking alumnos")
             c1, c2, c3, c4 = st.columns([1,1,1,1.5])
@@ -2159,7 +2225,7 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="c_rk_xlsx", use_container_width=True)
 
-        # Historial de alumnos
+        # ----- TAB 3: Historial (Convivencia) ----
         with tabs[3]:
             st.subheader("📚 Historial de alumnos")
             c1, c2, c3 = st.columns([1,1,2])
@@ -2204,7 +2270,7 @@ def main():
     else:
         tabs = st.tabs(["📝 Nuevo parte", "📜 Mi historial"])
 
-        # Nuevo parte
+        # ----- TAB 0: Nuevo parte (Profesor) ----
         with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
@@ -2242,7 +2308,7 @@ def main():
                         else:
                             st.error(msg)
 
-        # Mi historial
+        # ----- TAB 1: Mi historial (Profesor) ----
         with tabs[1]:
             st.subheader("📜 Mi historial")
             colh1, colh2, colh3, colh4 = st.columns([1,1,1,1.5])
@@ -2281,6 +2347,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
