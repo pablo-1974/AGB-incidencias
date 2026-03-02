@@ -851,16 +851,26 @@ def teacher_report_pdf(dfc: pd.DataFrame, profesor: str) -> bytes:
 
 def student_report_pdf(dfc: pd.DataFrame, alumno: str | None = None, grupo: str | None = None) -> bytes:
     """
-    PDF de historial de alumnos (9 columnas):
-    1 Nº (correlativo: 1 = más antiguo), 2 Fecha, 3 Hora, 4 Profesor, 5 Alumno, 6 Grupo,
-    7 Descripción (multilínea), 8 Gravedad inicial, 9 Gravedad final.
-    Impresión: más reciente -> más antiguo (opción B).
-    Si se pasan alumno/grupo, se filtra.
+    PDF historial de alumnos (7 columnas):
+    1 Nº correlativo
+    2 Fecha
+    3 Hora
+    4 Profesor (ancha)
+    5 Alumno (ancha)
+    6 Grupo
+    7 Descripción (muy ancha)
+
+    SIN columnas de gravedad.
+    Orden impresión: más reciente → más antiguo.
+    Anchos fijos de columna (A4 horizontal, 794 pt útiles).
     """
+
     if not HAS_REPORTLAB or dfc is None or dfc.empty:
         return b""
 
     df = dfc.copy()
+
+    # Filtrar por alumno/grupo si se proporcionan
     if alumno:
         df = df[df["Alumno"].astype(str) == str(alumno)]
     if grupo and grupo != "Todos":
@@ -868,34 +878,56 @@ def student_report_pdf(dfc: pd.DataFrame, alumno: str | None = None, grupo: str 
     if df.empty:
         return b""
 
-    df = _normalize_fecha_hora_for_pdf(df)
+    # Normalización interna
+    df["_Fecha_dt"] = pd.to_datetime(df["Fecha"], errors="coerce")
+
+    # Normalizar hora (“Hora” o “Franja” según venga)
+    if "Hora" not in df.columns and "Franja" in df.columns:
+        df["Hora"] = df["Franja"].astype(str)
+    elif "Hora" not in df.columns:
+        df["Hora"] = ""
+
+    franja_order = {f: i for i, f in enumerate(FRANJAS)}
+    df["_Hora_idx"] = df["Hora"].map(franja_order).fillna(99).astype(int)
 
     # Asegurar columnas necesarias
-    for col in ["Profesor","Alumno","Grupo","Descripción","Gravedad inicial","Gravedad final"]:
-        if col not in df.columns:
-            df[col] = ""
+    for c in ["Profesor", "Alumno", "Grupo", "Descripción"]:
+        if c not in df.columns:
+            df[c] = ""
 
-    # Orden cronológico ascendente para correlativo
-    df_hist = df.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[True, True, True], na_position="last").copy()
+    # Correlativo ascendente (1= más antiguo)
+    df_hist = df.sort_values(
+        ["_Fecha_dt", "_Hora_idx", "ID"],
+        ascending=[True, True, True],
+        na_position="last"
+    ).copy()
     df_hist["#"] = range(1, len(df_hist) + 1)
 
-    # Orden de impresión descendente
-    df_print = df_hist.sort_values(["_Fecha_dt", "_Hora_idx", "ID"], ascending=[False, False, False]).copy()
+    # Orden de impresión: más reciente → más antiguo
+    df_print = df_hist.sort_values(
+        ["_Fecha_dt", "_Hora_idx", "ID"],
+        ascending=[False, False, False]
+    ).copy()
 
-    # Formateos
+    # Formatos finales
     df_print["Fecha"] = df_print["_Fecha_dt"].dt.strftime("%d/%m/%Y").fillna(df_print["Fecha"].astype(str))
-    for c in ["Profesor","Alumno","Grupo","Descripción","Gravedad inicial","Gravedad final"]:
-        df_print[c] = df_print[c].fillna("").astype(str)
+    for c in ["Profesor", "Alumno", "Grupo", "Descripción", "Hora"]:
+        df_print[c] = df_print[c].astype(str)
 
-    # Selección columnas
-    out = df_print[["#", "Fecha", "Hora", "Profesor", "Alumno", "Grupo", "Descripción", "Gravedad inicial", "Gravedad final"]].copy()
+    # Selección final SIN las columnas de gravedad
+    df_out = df_print[["#", "Fecha", "Hora", "Profesor", "Alumno", "Grupo", "Descripción"]]
 
-    # ---- Render PDF ----
+    # ---------------- PDF ----------------
     buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
+    doc = SimpleDocTemplate(
+        buf, pagesize=landscape(A4),
+        leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24
+    )
     styles = getSampleStyleSheet()
     style_title = styles["Heading2"]
-    style_cell = styles["BodyText"]; style_cell.fontSize = 9; style_cell.leading = 11
+    style_cell = styles["BodyText"]
+    style_cell.fontSize = 9
+    style_cell.leading = 11
 
     elems = []
     hoy = datetime.now().strftime("%d/%m/%Y")
@@ -903,12 +935,28 @@ def student_report_pdf(dfc: pd.DataFrame, alumno: str | None = None, grupo: str 
     if alumno: titulo += f" — {alumno}"
     if grupo and grupo != "Todos": titulo += f" ({grupo})"
     titulo += f" — {hoy}"
+
     elems.append(Paragraph(titulo, style_title))
     elems.append(Spacer(1, 10))
 
-    headers = list(out.columns)
+    # ---------------- ANCHOS FIJOS ----------------
+    # Total útil en A4 apaisado: 794 pt
+    col_widths = [
+        40,   # #
+        70,   # Fecha
+        60,   # Hora
+        150,  # Profesor (ancha)
+        150,  # Alumno (ancha)
+        70,   # Grupo
+        254   # Descripción (muy ancha)
+    ]
+    # Suma = 40 + 70 + 60 + 150 + 150 + 70 + 254 = 794 pt EXACTOS
+
+    # Construcción tabla
+    headers = list(df_out.columns)
     data = [[Paragraph(h, styles["Heading4"]) for h in headers]]
-    for _, r in out.iterrows():
+
+    for _, r in df_out.iterrows():
         data.append([
             Paragraph(str(r["#"]), style_cell),
             Paragraph(str(r["Fecha"]), style_cell),
@@ -917,29 +965,22 @@ def student_report_pdf(dfc: pd.DataFrame, alumno: str | None = None, grupo: str 
             Paragraph(str(r["Alumno"]), style_cell),
             Paragraph(str(r["Grupo"]), style_cell),
             Paragraph(str(r["Descripción"]), style_cell),
-            Paragraph(str(r["Gravedad inicial"]), style_cell),
-            Paragraph(str(r["Gravedad final"]), style_cell),
         ])
-
-    # Anchos: equilibra para dar aire a Descripción
-    fixed_cols = [40, 80, 60, 120, 140, 80, 0, 80, 80]
-    total_fixed = sum(c for c in fixed_cols if c > 0)
-    desc_width = max(114, 794 - total_fixed)
-    col_widths = [fixed_cols[0], fixed_cols[1], fixed_cols[2], fixed_cols[3], fixed_cols[4],
-                  fixed_cols[5], desc_width, fixed_cols[7], fixed_cols[8]]
 
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
-        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
-        ("VALIGN", (0,0), (-1,-1), "TOP"),
-        ("ALIGN", (0,0), (-1,-1), "LEFT"),
-        ("FONTSIZE", (0,0), (-1,-1), 9),
+        ("GRID",       (0,0), (-1,-1), 0.5, colors.grey),
+        ("VALIGN",     (0,0), (-1,-1), "TOP"),
+        ("ALIGN",      (0,0), (-1,-1), "LEFT"),
+        ("FONTSIZE",   (0,0), (-1,-1), 9),
         ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.whitesmoke, colors.lightcyan]),
     ]))
-    doc.build(elems + [table])
-    return buf.getvalue()
 
+    elems.append(table)
+    doc.build(elems)
+
+    return buf.getvalue()
 # =========================
 # UI helper: gravedad con 3 checkboxes exclusivos (validación en submit)
 # =========================
@@ -2117,5 +2158,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
