@@ -1450,15 +1450,21 @@ def main():
                 st.info("No hay partes cerrados con esos filtros.")
             else:
                 st.dataframe(df_al, use_container_width=True)
+
+                # PDF con nuevo formato (7 columnas) sobre la tabla filtrada
                 if HAS_REPORTLAB:
-                    titulo_tabla = "Historial de alumnos — tabla filtrada"
-                    if g_al != "Todos": titulo_tabla += f" — {g_al}"
-                    if a_sel != "Todos": titulo_tabla += f" — {a_sel}"
-                    titulo_tabla += f" ({f_ini_a.strftime('%d/%m/%Y')} – {f_fin_a.strftime('%d/%m/%Y')})"
-                    pdf_tabla = df_to_pdf_bytes(df_al, title=titulo_tabla)
-                    st.download_button("📄 Exportar tabla a PDF", data=pdf_tabla,
-                        file_name=f"historial_alumnos_tabla_{f_ini_a.isoformat()}_{f_fin_a.isoformat()}.pdf",
-                        mime="application/pdf", key="j_al_pdf_tabla", use_container_width=True)
+                    # Si quieres que respete alumno/grupo seleccionados:
+                    pdf_custom = student_report_pdf(df_al, alumno=(a_sel if a_sel and a_sel != "Todos" else None),
+                                    grupo=(g_al if g_al and g_al != "Todos" else None))
+                    st.download_button(
+                        "📄 Exportar historial (PDF, 7 columnas)",
+                        data=pdf_custom,
+                        file_name=f"historial_alumnos_custom_{f_ini_a.isoformat()}_{f_fin_a.isoformat()}.pdf",
+                        mime="application/pdf",
+                        key="hist_alumnos_pdf_custom",
+                        use_container_width=True
+                    )
+                
                 if HAS_REPORTLAB and g_al != "Todos" and a_sel != "Todos":
                     pdf_al = student_report_pdf(df_al, alumno=a_sel, grupo=g_al)
                     st.download_button("📄 Informe del alumno (PDF)", data=pdf_al,
@@ -2191,6 +2197,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
