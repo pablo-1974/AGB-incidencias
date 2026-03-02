@@ -371,6 +371,7 @@ def set_user_role(user_id: int, new_role: str):
     return True, "Rol actualizado correctamente."
 
 def next_role(current: str) -> str:
+    # (Se mantiene por compatibilidad, ya no se usa en la UI)
     order = ["profesor", "jefe", "director", "convivencia"]
     try:
         i = order.index(current)
@@ -1148,7 +1149,7 @@ def main():
     show_home_header()
     rol = usuario["role"]
 
-    # =============== JEFATURA (dos filas de pestañas arriba del todo) ===============
+    # =============== JEFATURA (todas las pestañas en UNA ÚNICA LÍNEA) ===============
     if rol == "jefe":
         # Contador de pendientes (para mostrar en la etiqueta)
         try:
@@ -1156,23 +1157,21 @@ def main():
         except Exception:
             pend_count = 0
 
-        # *** Importante ***: Declarar primero ambas filas de tabs (encabezados) ANTES de cualquier contenido.
-        tabs_row1 = st.tabs([
+        # *** CAMBIO: una sola hilera de tabs ***
+        tabs = st.tabs([
             "📝 Nuevo parte",
             "🚫 Excursiones",
             "🔥 Ranking de alumnos",
             "📚 Historial de alumnos",
             "👨‍🏫 Historial de profesores",
-        ])
-        tabs_row2 = st.tabs([
             f"📬 Pendientes · {pend_count}",
             "📊 Estadísticas",
             "📈 Gráficos",
             "👥 Usuarios"
         ])
 
-        # ----- TAB F1-1: Nuevo parte -----
-        with tabs_row1[0]:
+        # ----- TAB 0: Nuevo parte -----
+        with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
             if not grupos:
@@ -1225,8 +1224,8 @@ def main():
                         else:
                             st.error(msg)
 
-        # ----- TAB F1-2: No aptos (Jefatura) -----
-        with tabs_row1[1]:
+        # ----- TAB 1: No aptos (Jefatura) -----
+        with tabs[1]:
             st.subheader("🚫 Alumnos no aptos para excursión")
             st.caption("NO aptos: partes **cerrados** con gravedad **grave o muy grave** en los **30 días previos**.")
             grupos_all = ["Todos"] + list_grupos()
@@ -1259,8 +1258,8 @@ def main():
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         key="exc_xlsx", use_container_width=True)
 
-        # ----- TAB F1-3: Disruptivos (Jefatura) -----
-        with tabs_row1[2]:
+        # ----- TAB 2: Disruptivos (Jefatura) -----
+        with tabs[2]:
             st.subheader("🔥 Alumnos más disruptivos")
             col_a, col_b, col_c, col_d = st.columns([1,1,1,1.5])
             with col_a:
@@ -1295,8 +1294,8 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="rk_xlsx", use_container_width=True)
 
-        # ----- TAB F1-4: Historial de alumnos (Jefatura) -----
-        with tabs_row1[3]:
+        # ----- TAB 3: Historial de alumnos (Jefatura) -----
+        with tabs[3]:
             st.subheader("📚 Historial de alumnos (Jefatura)")
             c1, c2, c3 = st.columns([1,1,2])
             with c1: f_ini_a = st.date_input("Desde", value=date.today() - timedelta(days=60), key="j_al_ini")
@@ -1334,8 +1333,8 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="j_al_xlsx", use_container_width=True)
 
-        # ----- TAB F1-5: Historial de profesores (Jefatura) -----
-        with tabs_row1[4]:
+        # ----- TAB 4: Historial de profesores (Jefatura) -----
+        with tabs[4]:
             st.subheader("👨‍🏫 Historial de profesores (Jefatura)")
             c1, c2, c3 = st.columns([1,1,2])
             with c1: f_ini_p = st.date_input("Desde", value=date.today() - timedelta(days=60), key="j_pr_ini")
@@ -1400,8 +1399,9 @@ def main():
                                     mime="application/pdf",
                                     use_container_width=True
                                 )
-        # ----- TAB F2-1: Pendientes (Jefatura) -----
-        with tabs_row2[0]:
+
+        # ----- TAB 5: Pendientes (Jefatura) -----
+        with tabs[5]:
             st.subheader("📬 Partes pendientes de revisar")
             st.caption(f"Pendientes: **{pend_count}**")
             pendientes = list_pending_incidents()
@@ -1425,8 +1425,8 @@ def main():
                     if disabled_close:
                         st.warning("Debes seleccionar exactamente una gravedad (deja solo un tick).")
 
-        # ----- TAB F2-2: Estadísticas (Jefatura) -----
-        with tabs_row2[1]:
+        # ----- TAB 6: Estadísticas (Jefatura) -----
+        with tabs[6]:
             st.subheader("📊 Estadísticas (Jefatura)")
             colf1, colf2, colf3 = st.columns([1,1,2])
             with colf1:
@@ -1531,8 +1531,8 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="stats_xlsx", use_container_width=True)
 
-        # ----- TAB F2-3: Gráficos (Jefatura) -----
-        with tabs_row2[2]:
+        # ----- TAB 7: Gráficos (Jefatura) -----
+        with tabs[7]:
             st.subheader("📈 Gráficos (Jefatura)")
             colf1, colf2, colf3 = st.columns([1,1,2])
             with colf1:
@@ -1567,8 +1567,8 @@ def main():
                     mcount = dfc_g["_Mes"].value_counts().sort_index()
                     st.bar_chart(mcount, use_container_width=True)
 
-        # ----- TAB F2-4: Usuarios (Jefatura) -----
-        with tabs_row2[3]:
+        # ----- TAB 8: Usuarios (Jefatura) -----
+        with tabs[8]:
             st.subheader("👥 Gestión de usuarios")
 
             st.markdown("### ➕ Crear usuario")
@@ -1602,20 +1602,22 @@ def main():
             if not users:
                 st.info("No hay usuarios.")
             else:
-                hdr = st.columns([3,3,2,2,4])
+                hdr = st.columns([3,3,2,2,6])  # Acciones más ancho para el selector de rol + botón
                 hdr[0].markdown("**Nombre**"); hdr[1].markdown("**Email**")
                 hdr[2].markdown("**Rol**"); hdr[3].markdown("**Estado**"); hdr[4].markdown("**Acciones**")
                 rol_map_short = {"jefe": "Jefatura", "profesor": "Profesor", "director": "Director", "convivencia": "Convivencia"}
 
                 for (uid, name, email, role, active, pw_hash) in users:
-                    cols = st.columns([3,3,2,2,4])
+                    cols = st.columns([3,3,2,2,6])
                     cols[0].write(name)
                     cols[1].write(email)
                     cols[2].write(rol_map_short.get(role, role))
                     cols[3].write("Activo ✅" if active==1 else "Suspendido ⛔")
 
                     with cols[4]:
-                        c1, c2, c3, c4 = st.columns(4)
+                        # Nuevo layout de acciones: suspender/reactivar, borrar, reset pwd, selector de rol + guardar
+                        c1, c2, c3, c4, c5 = st.columns([1,1,1,3,1])
+
                         # Suspender / Reactivar
                         if active == 1:
                             if c1.button("⏸️", key=f"users_susp_{uid}", help="Suspender usuario"):
@@ -1641,13 +1643,29 @@ def main():
                                 conn.commit()
                             st.success("Contraseña reiniciada. Pedirá nueva al próximo acceso.")
 
-                        # Cambiar rol (rotar)
-                        if c4.button("🎚️", key=f"users_role_cycle_{uid}", help="Cambiar rol (rotar)"):
+                        # ==== CAMBIO: Selección explícita de rol + Confirmación ====
+                        # Selector con el rol actual como preseleccionado
+                        all_roles = ["profesor","jefe","director","convivencia"]
+                        try:
+                            idx_role = all_roles.index(role)
+                        except ValueError:
+                            idx_role = 0
+                        new_role_sel = c4.selectbox(
+                            "Rol",
+                            all_roles,
+                            index=idx_role,
+                            key=f"users_role_select_{uid}",
+                            label_visibility="collapsed"
+                        )
+
+                        # Botón guardar para confirmar el cambio de rol
+                        if c5.button("Guardar", key=f"users_role_save_{uid}", help="Guardar rol seleccionado"):
                             if uid == usuario["id"]:
                                 st.error("No puedes cambiar tu propio rol aquí.")
+                            elif new_role_sel == role:
+                                st.info("El usuario ya tiene ese rol.")
                             else:
-                                new_role = next_role(role)
-                                ok, msg = set_user_role(uid, new_role)
+                                ok, msg = set_user_role(uid, new_role_sel)
                                 (st.success if ok else st.error)(msg)
                                 if ok: st.rerun()
 
