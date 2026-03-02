@@ -1478,6 +1478,7 @@ def main():
                     key="j_al_xlsx", use_container_width=True)
 
         # ----- TAB 4: Historial de profesores (Jefatura) -----
+        # ----- TAB 4: Historial de profesores (Jefatura) -----
         with tabs[4]:
             st.subheader("👨‍🏫 Historial de profesores (Jefatura)")
             c1, c2, c3 = st.columns([1,1,2])
@@ -1488,60 +1489,87 @@ def main():
             prof = st.selectbox("Profesor", prof_opts, index=0, key="j_pr_prof")
             g_pr = st.selectbox("Grupo (opcional)", ["Todos"] + list_grupos(), key="j_pr_grupo")
             a_pr = st.selectbox("Alumno (opcional)", ["Todos"] + (list_alumnos_by_grupo(g_pr) if g_pr!="Todos" else []), key="j_pr_alumno")
-
+        
             if prof == "Todos":
+                # ======= RANKING DE PROFESORES =======
                 df_rank = ranking_profesores(f_ini_p, f_fin_p, estado=estado_p, grupo=g_pr, alumno=a_pr)
                 if df_rank.empty:
                     st.info("No hay datos con esos filtros.")
                 else:
                     st.dataframe(df_rank, use_container_width=True)
+        
+                    # PDF (ranking)
                     if HAS_REPORTLAB:
                         titulo = f"Ranking de profesores ({f_ini_p.strftime('%d/%m/%Y')} – {f_fin_p.strftime('%d/%m/%Y')})"
                         if estado_p in ("pendiente","cerrado"): titulo += f" · estado={estado_p}"
                         if g_pr != "Todos": titulo += f" · grupo={g_pr}"
                         if a_pr != "Todos": titulo += f" · alumno={a_pr}"
                         pdf_rank = df_to_pdf_bytes(df_rank, title=titulo)
-                        st.download_button("📄 PDF (ranking)", data=pdf_rank,
+                        st.download_button(
+                            "📄 PDF (ranking)",
+                            data=pdf_rank,
                             file_name=f"ranking_profesores_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.pdf",
-                            mime="application/pdf", key="j_pr_rank_pdf", use_container_width=True)
+                            mime="application/pdf",
+                            key="j_pr_rank_pdf",
+                            use_container_width=True
+                        )
+        
+                    # Excel (ranking)
                     xls = df_to_excel_bytes(df_rank, sheet_name="Ranking_profes")
-                    st.download_button("⬇️ Excel (.xlsx) (ranking)",
+                    st.download_button(
+                        "⬇️ Excel (.xlsx) (ranking)",
                         data=xls,
                         file_name=f"ranking_profesores_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        key="j_pr_rank_xlsx", use_container_width=True)
+                        key="j_pr_rank_xlsx",
+                        use_container_width=True
+                    )
             else:
+                # ======= HISTORIAL DE UN PROFESOR =======
                 row_prof = get_user_by_name(prof)
                 if not row_prof:
                     st.error("No se encontró el usuario seleccionado.")
                 else:
                     teacher_id = row_prof[0]
-                    df_pr = filter_teacher_incidents(teacher_id=teacher_id, start=f_ini_p, end=f_fin_p,
-                                                     estado=estado_p, grupo=g_pr, alumno=a_pr)
+                    df_pr = filter_teacher_incidents(
+                        teacher_id=teacher_id,
+                        start=f_ini_p, end=f_fin_p,
+                        estado=estado_p, grupo=g_pr, alumno=a_pr
+                    )
+        
                     if df_pr.empty:
                         st.info("No hay partes con esos filtros.")
                     else:
                         st.dataframe(df_pr, use_container_width=True)
+        
+                        # Excel (historial)
                         xls = df_to_excel_bytes(df_pr, sheet_name="Historial_prof")
-                        st.download_button("⬇️ Excel (.xlsx) (historial)", data=xls,
+                        st.download_button(
+                            "⬇️ Excel (.xlsx) (historial)",
+                            data=xls,
                             file_name=f"historial_prof_{prof.replace(' ','_')}_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            key="j_pr_xlsx", use_container_width=True)
-
-                        # Normalizar Hora si faltase
-                        if "Hora" not in df_pr.columns and "Franja" in df_pr.columns:
-                            df_pr = df_pr.rename(columns={"Franja":"Hora"})
-                        elif "Hora" not in df_pr.columns:
-                            df_pr["Hora"] = ""
-
+                            key="j_pr_xlsx",
+                            use_container_width=True
+                        )
+        
+                        # Normalizar 'Hora' si faltase o viene como 'Franja'
+                        df_pr_pdf = df_pr.copy()
+                        if "Hora" not in df_pr_pdf.columns and "Franja" in df_pr_pdf.columns:
+                            df_pr_pdf.rename(columns={"Franja": "Hora"}, inplace=True)
+                        elif "Hora" not in df_pr_pdf.columns:
+                            df_pr_pdf["Hora"] = ""
+        
+                        # PDF (historial del profesor)
                         if HAS_REPORTLAB:
-                            pdf_prof = teacher_report_pdf(df_pr, prof)
+                            pdf_prof = teacher_report_pdf(df_pr_pdf.assign(ID=df_pr_pdf.index), prof)
                             if pdf_prof and len(pdf_prof) > 0:
                                 st.download_button(
-                                    "📄 Exportar informe del profesor (PDF)",
+                                    "📄 PDF (historial del profesor)",
                                     data=pdf_prof,
-                                    file_name=f"informe_prof_{prof.replace(' ','_')}.pdf",
+                                    file_name=f"historial_prof_{prof.replace(' ','_')}_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.pdf",
                                     mime="application/pdf",
+                                    key="j_pr_hist_pdf",
                                     use_container_width=True
                                 )
 
@@ -1918,6 +1946,7 @@ def main():
                     key="d_al_xlsx", use_container_width=True)
 
         # Historial de profesores
+        # Historial de profesores (Director)
         with tabs[3]:
             st.subheader("👨‍🏫 Historial de profesores")
             c1, c2, c3 = st.columns([1,1,2])
@@ -1928,46 +1957,89 @@ def main():
             prof = st.selectbox("Profesor", prof_opts, index=0, key="d_pr_prof")
             g_pr = st.selectbox("Grupo (opcional)", ["Todos"] + list_grupos(), key="d_pr_grupo")
             a_pr = st.selectbox("Alumno (opcional)", ["Todos"] + (list_alumnos_by_grupo(g_pr) if g_pr!="Todos" else []), key="d_pr_alumno")
-
+        
             if prof == "Todos":
+                # ======= RANKING DE PROFESORES =======
                 df_rank = ranking_profesores(f_ini_p, f_fin_p, estado=estado_p, grupo=g_pr, alumno=a_pr)
                 if df_rank.empty:
                     st.info("No hay datos con esos filtros.")
                 else:
                     st.dataframe(df_rank, use_container_width=True)
+        
+                    # Excel (ranking)
                     xls = df_to_excel_bytes(df_rank, sheet_name="Ranking_profes")
-                    st.download_button("⬇️ Excel (.xlsx) (ranking)",
+                    st.download_button(
+                        "⬇️ Excel (.xlsx) (ranking)",
                         data=xls,
                         file_name=f"ranking_profesores_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        key="d_pr_rank_xlsx", use_container_width=True)
+                        key="d_pr_rank_xlsx",
+                        use_container_width=True
+                    )
+        
+                    # PDF (ranking)
                     if HAS_REPORTLAB:
                         titulo = f"Ranking de profesores ({f_ini_p.strftime('%d/%m/%Y')} – {f_fin_p.strftime('%d/%m/%Y')})"
                         if estado_p in ("pendiente","cerrado"): titulo += f" · estado={estado_p}"
                         if g_pr != "Todos": titulo += f" · grupo={g_pr}"
                         if a_pr != "Todos": titulo += f" · alumno={a_pr}"
                         pdf_rank = df_to_pdf_bytes(df_rank, title=titulo)
-                        st.download_button("📄 PDF (ranking)", data=pdf_rank,
+                        st.download_button(
+                            "📄 PDF (ranking)",
+                            data=pdf_rank,
                             file_name=f"ranking_profesores_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.pdf",
-                            mime="application/pdf", key="d_pr_rank_pdf", use_container_width=True)
+                            mime="application/pdf",
+                            key="d_pr_rank_pdf",
+                            use_container_width=True
+                        )
             else:
+                # ======= HISTORIAL DE UN PROFESOR =======
                 row_prof = get_user_by_name(prof)
                 if not row_prof:
                     st.error("No se encontró el usuario seleccionado.")
                 else:
                     teacher_id = row_prof[0]
-                    df_pr = filter_teacher_incidents(teacher_id=teacher_id, start=f_ini_p, end=f_fin_p,
-                                                     estado=estado_p, grupo=g_pr, alumno=a_pr)
+                    df_pr = filter_teacher_incidents(
+                        teacher_id=teacher_id,
+                        start=f_ini_p, end=f_fin_p,
+                        estado=estado_p, grupo=g_pr, alumno=a_pr
+                    )
+        
                     if df_pr.empty:
                         st.info("No hay partes con esos filtros.")
                     else:
                         st.dataframe(df_pr, use_container_width=True)
+        
+                        # Excel (historial)
                         xls = df_to_excel_bytes(df_pr, sheet_name="Historial_prof")
-                        st.download_button("⬇️ Excel (.xlsx) (historial)",
+                        st.download_button(
+                            "⬇️ Excel (.xlsx) (historial)",
                             data=xls,
                             file_name=f"historial_prof_{prof.replace(' ','_')}_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            key="d_pr_xlsx", use_container_width=True)
+                            key="d_pr_xlsx",
+                            use_container_width=True
+                        )
+        
+                        # Normalizar 'Hora' si faltase o viene como 'Franja'
+                        df_pr_pdf = df_pr.copy()
+                        if "Hora" not in df_pr_pdf.columns and "Franja" in df_pr_pdf.columns:
+                            df_pr_pdf.rename(columns={"Franja": "Hora"}, inplace=True)
+                        elif "Hora" not in df_pr_pdf.columns:
+                            df_pr_pdf["Hora"] = ""
+        
+                        # PDF (historial del profesor)
+                        if HAS_REPORTLAB:
+                            pdf_prof = teacher_report_pdf(df_pr_pdf.assign(ID=df_pr_pdf.index), prof)
+                            if pdf_prof and len(pdf_prof) > 0:
+                                st.download_button(
+                                    "📄 PDF (historial del profesor)",
+                                    data=pdf_prof,
+                                    file_name=f"historial_prof_{prof.replace(' ','_')}_{f_ini_p.isoformat()}_{f_fin_p.isoformat()}.pdf",
+                                    mime="application/pdf",
+                                    key="d_pr_hist_pdf",
+                                    use_container_width=True
+                                )
 
     # =============== CONVIVENCIA ===============
     elif rol == "convivencia":
@@ -2209,6 +2281,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
