@@ -1083,56 +1083,90 @@ def show_home_header():
 
 # === Estilo de la pantalla de login: fondo degradado + card central ===
 def apply_login_theme(gradient: str = None):
-    """
-    Aplica un tema visual para pantallas de login/primer acceso con fondo degradado y 'card' centrada.
-    Usa 'gradient' si se proporciona; si no, aplica uno por defecto.
-    """
     if gradient is None:
-        # Degradado suave por defecto (azules y lilas)
         gradient = "linear-gradient(135deg, #e6f0ff 0%, #f3e8ff 50%, #fff5f7 100%)"
 
     custom_css = f"""
     <style>
-    /* Fondo con degradado a toda la app */
     .stApp {{
         background: {gradient};
         background-attachment: fixed;
     }}
-    /* Sidebar translúcida (opcional) */
+
     section[data-testid="stSidebar"] {{
         background: rgba(255,255,255,0.7);
         backdrop-filter: blur(3px);
     }}
-    /* Contenedor central tipo 'card' para formularios de login */
+
     .login-card {{
         max-width: 540px;
         margin: 4rem auto 2rem auto;
         padding: 2rem 1.5rem;
-        background: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.92);
         border-radius: 16px;
         box-shadow: 0 12px 28px rgba(30, 41, 59, 0.18), 0 8px 10px rgba(30, 41, 59, 0.10);
         border: 1px solid rgba(148,163,184,0.25);
     }}
-    /* Ajustes de títulos y espaciados */
+
     .login-card h1, .login-card h2, .login-card h3 {{
         text-align: center;
         margin-top: 0.4rem;
         margin-bottom: 0.8rem;
     }}
-    /* Botones más vistosos */
+
     .stButton > button {{
         border-radius: 12px !important;
         padding: 0.6rem 0.9rem !important;
         font-weight: 600 !important;
         box-shadow: 0 6px 16px rgba(30, 41, 59, 0.12);
     }}
-    /* Inputs más redondeados */
-    .stTextInput > div > div > input,
-    .stPassword > div > div > input,
-    .stSelectbox > div > div > select {{
-        border-radius: 10px !important;
+
+    /* ==== INPUTS DESTACADOS EN LOGIN ==== */
+    /* Contenedores de Email/Password dentro de la card */
+    .login-card .stTextInput, .login-card .stPassword {{
+        margin-bottom: 0.8rem;
     }}
-    /* Imagen del logo centrada */
+
+    /* Caja del input (envoltorio) */
+    .login-card .stTextInput > div > div,
+    .login-card .stPassword   > div > div {{
+        background: #ffffff;                     /* Fondo blanco nítido */
+        border: 1px solid rgba(148,163,184,0.45);/* Gris suave */
+        border-radius: 12px;                     /* Bordes redondeados */
+        box-shadow: 0 3px 10px rgba(30,41,59,0.06);
+        transition: box-shadow .2s ease, border-color .2s ease;
+    }}
+
+    /* El propio input */
+    .login-card .stTextInput input,
+    .login-card .stPassword   input {{
+        background: transparent;                 /* Fondo ya lo pone el wrapper */
+        border: none;
+        outline: none;
+        border-radius: 12px;                     /* Redondeo coherente */
+        padding: 0.55rem 0.75rem;                /* Respiración */
+        font-size: 0.98rem;
+        color: #111827;                          /* Texto oscuro */
+    }}
+
+    /* Placeholder más visible sobre el degradado */
+    .login-card input::placeholder {{
+        color: #6b7280;                          /* Gris medio */
+        opacity: 1;
+    }}
+
+    /* Estado foco/hover: resaltado visible y accesible */
+    .login-card .stTextInput > div > div:focus-within,
+    .login-card .stPassword   > div > div:focus-within {{
+        border-color: #5B6CFF;                   /* Primario */
+        box-shadow: 0 0 0 3px rgba(91,108,255,0.20);
+    }}
+    .login-card .stTextInput > div > div:hover,
+    .login-card .stPassword   > div > div:hover {{
+        border-color: #64748b;                   /* Gris un pelín más intenso */
+    }}
+
+    /* Centrado del logo (si decides ponerlo dentro del card) */
     .login-logo {{
         display: block;
         margin: 0 auto 0.5rem auto;
@@ -1207,7 +1241,7 @@ def login_screen():
 
     # Logo centrado (si existe)
     if Path(HERE/"logo.png").exists():
-        st.image(str(HERE/"logo.png"), width=160, caption=None, use_column_width=False, output_format="auto", clamp=False)
+        st.image(str(HERE/"logo.png"), width=160)
 
     # 🃏 card centrado
     with login_card():
@@ -2596,6 +2630,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
