@@ -1081,6 +1081,85 @@ def show_home_header():
         st.image(str(HERE/"logo.png"), width=180)
     st.title("📋 Partes de Incidencias de Alumnado")
 
+# === Estilo de la pantalla de login: fondo degradado + card central ===
+def apply_login_theme(gradient: str = None):
+    """
+    Aplica un tema visual para pantallas de login/primer acceso con fondo degradado y 'card' centrada.
+    Usa 'gradient' si se proporciona; si no, aplica uno por defecto.
+    """
+    if gradient is None:
+        # Degradado suave por defecto (azules y lilas)
+        gradient = "linear-gradient(135deg, #e6f0ff 0%, #f3e8ff 50%, #fff5f7 100%)"
+
+    custom_css = f"""
+    <style>
+    /* Fondo con degradado a toda la app */
+    .stApp {{
+        background: {gradient};
+        background-attachment: fixed;
+    }}
+    /* Sidebar translúcida (opcional) */
+    section[data-testid="stSidebar"] {{
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(3px);
+    }}
+    /* Contenedor central tipo 'card' para formularios de login */
+    .login-card {{
+        max-width: 540px;
+        margin: 4rem auto 2rem auto;
+        padding: 2rem 1.5rem;
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        box-shadow: 0 12px 28px rgba(30, 41, 59, 0.18), 0 8px 10px rgba(30, 41, 59, 0.10);
+        border: 1px solid rgba(148,163,184,0.25);
+    }}
+    /* Ajustes de títulos y espaciados */
+    .login-card h1, .login-card h2, .login-card h3 {{
+        text-align: center;
+        margin-top: 0.4rem;
+        margin-bottom: 0.8rem;
+    }}
+    /* Botones más vistosos */
+    .stButton > button {{
+        border-radius: 12px !important;
+        padding: 0.6rem 0.9rem !important;
+        font-weight: 600 !important;
+        box-shadow: 0 6px 16px rgba(30, 41, 59, 0.12);
+    }}
+    /* Inputs más redondeados */
+    .stTextInput > div > div > input,
+    .stPassword > div > div > input,
+    .stSelectbox > div > div > select {{
+        border-radius: 10px !important;
+    }}
+    /* Imagen del logo centrada */
+    .login-logo {{
+        display: block;
+        margin: 0 auto 0.5rem auto;
+    }}
+    </style>
+    """
+    import streamlit as st
+    st.markdown(custom_css, unsafe_allow_html=True)
+
+
+# Context manager para crear la "card" del login
+from contextlib import contextmanager
+
+@contextmanager
+def login_card():
+    """
+    Abre un contenedor con clase 'login-card' para centrar y estilizar el área de login.
+    Uso:  with login_card(): ...
+    """
+    import streamlit as st
+    _container = st.container()
+    with _container:
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        try:
+            yield
+        finally:
+            st.markdown('</div>', unsafe_allow_html=True)
 def go_home_after_submit(message: str | None):
     """Envía al usuario a la pantalla general tras enviar un parte."""
     st.session_state["show_menu"] = False
@@ -1120,15 +1199,18 @@ def bootstrap_admin_screen():
             st.error(msg)
 
 def login_screen():
-    apply_login_theme()  # 🎨 fondo degradado
+    import streamlit as st
+    from pathlib import Path
+
+    # 🎨 fondo degradado
+    apply_login_theme()
 
     # Logo centrado (si existe)
-    import streamlit as st, os
-    from pathlib import Path
     if Path(HERE/"logo.png").exists():
-        st.markdown('<img src="logo.png" width="180" class="login-logo">', unsafe_allow_html=True)
+        st.image(str(HERE/"logo.png"), width=160, caption=None, use_column_width=False, output_format="auto", clamp=False)
 
-    with login_card():  # 🃏 card centrado
+    # 🃏 card centrado
+    with login_card():
         st.title(APP_TITLE)
         st.subheader("🔐 Acceso")
 
@@ -1148,42 +1230,57 @@ def login_screen():
                 st.session_state["ask_password"] = True; st.rerun()
 
 def first_password_screen():
+    import streamlit as st
+    from pathlib import Path
+
+    apply_login_theme()
+
     if Path(HERE/"logo.png").exists():
-        st.image(str(HERE/"logo.png"), width=180)
-    st.title(APP_TITLE)
-    st.subheader("🔑 Crear contraseña (primer acceso)")
-    p1 = st.text_input("Nueva contraseña", type="password", key="first_p1")
-    p2 = st.text_input("Repetir contraseña", type="password", key="first_p2")
-    if st.button("Guardar", key="first_save", use_container_width=True):
-        if p1 != p2:
-            st.error("Las contraseñas no coinciden."); return
-        if len(p1) < 4:
-            st.error("Debe tener al menos 4 caracteres."); return
-        u = st.session_state.get("pending_user")
-        if not u:
-            st.error("Sesión expirada. Vuelve a iniciar sesión."); return
-        set_user_password(u["id"], p1)
-        st.success("Contraseña creada. Inicia sesión.")
-        st.session_state.clear(); st.rerun()
+        st.image(str(HERE/"logo.png"), width=160)
+
+    with login_card():
+        st.title(APP_TITLE)
+        st.subheader("🔑 Crear contraseña (primer acceso)")
+
+        p1 = st.text_input("Nueva contraseña", type="password", key="first_p1")
+        p2 = st.text_input("Repetir contraseña", type="password", key="first_p2")
+        if st.button("Guardar", key="first_save", use_container_width=True):
+            if p1 != p2:
+                st.error("Las contraseñas no coinciden."); return
+            if len(p1) < 4:
+                st.error("Debe tener al menos 4 caracteres."); return
+            u = st.session_state.get("pending_user")
+            if not u:
+                st.error("Sesión expirada. Vuelve a iniciar sesión."); return
+            set_user_password(u["id"], p1)
+            st.success("Contraseña creada. Inicia sesión.")
+            st.session_state.clear(); st.rerun()
 
 def password_login_screen():
+    import streamlit as st
+    from pathlib import Path
+
+    apply_login_theme()
+
     if Path(HERE/"logo.png").exists():
-        st.image(str(HERE/"logo.png"), width=180)
-    st.title(APP_TITLE)
-    st.subheader("🔒 Contraseña")
-    u = st.session_state["login_user"]
-    uid, name, email, role, pw_hash, active = u
-    p = st.text_input("Contraseña", type="password", key="pass_login")
-    if st.button("Entrar", key="pass_enter", use_container_width=True):
-        if active == 0:
-            st.error("Cuenta suspendida. Contacta con Jefatura."); return
-        if verify_password(p, pw_hash):
-            st.session_state["user"] = {"id": uid, "name": name, "email": email, "role": role}
-            st.session_state.pop("login_user", None); st.session_state.pop("ask_password", None)
-            st.session_state["show_menu"] = True
-            st.rerun()
-        else:
-            st.error("Contraseña incorrecta.")
+        st.image(str(HERE/"logo.png"), width=160)
+
+    with login_card():
+        st.title(APP_TITLE)
+        st.subheader("🔒 Contraseña")
+        u = st.session_state["login_user"]
+        uid, name, email, role, pw_hash, active = u
+        p = st.text_input("Contraseña", type="password", key="pass_login")
+        if st.button("Entrar", key="pass_enter", use_container_width=True):
+            if active == 0:
+                st.error("Cuenta suspendida. Contacta con Jefatura."); return
+            if verify_password(p, pw_hash):
+                st.session_state["user"] = {"id": uid, "name": name, "email": email, "role": role}
+                st.session_state.pop("login_user", None); st.session_state.pop("ask_password", None)
+                st.session_state["show_menu"] = True
+                st.rerun()
+            else:
+                st.error("Contraseña incorrecta.")
 
 # ========== BLOQUE 6/7: App principal (Tabs por rol) ==========
 
@@ -2499,6 +2596,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
