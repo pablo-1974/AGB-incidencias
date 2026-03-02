@@ -1120,25 +1120,32 @@ def bootstrap_admin_screen():
             st.error(msg)
 
 def login_screen():
-    if Path(HERE/"logo.png").exists():
-        st.image(str(HERE/"logo.png"), width=180)
-    st.title(APP_TITLE)
-    st.subheader("🔐 Acceso")
+    apply_login_theme()  # 🎨 fondo degradado
 
-    email = st.text_input("Email", key="login_email")
-    if st.button("Continuar", key="login_continue", use_container_width=True):
-        u = get_user_by_email(email)
-        if not u:
-            st.error("Email no registrado."); return
-        uid, name, email, role, pw_hash, active = u
-        if active == 0:
-            st.error("Tu cuenta está suspendida. Contacta con Jefatura."); return
-        if pw_hash is None:
-            st.session_state["pending_user"] = {"id": uid, "name": name, "email": email, "role": role}
-            st.session_state["needs_password_setup"] = True; st.rerun()
-        else:
-            st.session_state["login_user"] = u
-            st.session_state["ask_password"] = True; st.rerun()
+    # Logo centrado (si existe)
+    import streamlit as st, os
+    from pathlib import Path
+    if Path(HERE/"logo.png").exists():
+        st.markdown('<img src="logo.png" width="180" class="login-logo">', unsafe_allow_html=True)
+
+    with login_card():  # 🃏 card centrado
+        st.title(APP_TITLE)
+        st.subheader("🔐 Acceso")
+
+        email = st.text_input("Email", key="login_email")
+        if st.button("Continuar", key="login_continue", use_container_width=True):
+            u = get_user_by_email(email)
+            if not u:
+                st.error("Email no registrado."); return
+            uid, name, email, role, pw_hash, active = u
+            if active == 0:
+                st.error("Tu cuenta está suspendida. Contacta con Jefatura."); return
+            if pw_hash is None:
+                st.session_state["pending_user"] = {"id": uid, "name": name, "email": email, "role": role}
+                st.session_state["needs_password_setup"] = True; st.rerun()
+            else:
+                st.session_state["login_user"] = u
+                st.session_state["ask_password"] = True; st.rerun()
 
 def first_password_screen():
     if Path(HERE/"logo.png").exists():
@@ -1370,35 +1377,106 @@ def main():
         # ----- TAB 1: No aptos (Jefatura) -----
         with tabs[1]:
             st.subheader("🚫 Alumnos no aptos para excursión")
-            st.caption("NO aptos: partes **cerrados** con gravedad **grave o muy grave** en los **30 días previos**.")
-            grupos_all = ["Todos"] + list_grupos()
-            colx, coly, colz = st.columns([1,2,1])
+            st.caption("NO aptos: partes **cerrados** con gravedad **grave o muy grave** en los **X días previos** a la fecha elegida.")
+        
+            # === Controles ===
+            colx, coly, colz = st.columns([1.2, 2.2, 1.0])
             with colx:
                 fecha_actividad = st.date_input("Fecha de la actividad", value=date.today(), key="exc_fecha")
+        
             with coly:
-                g_exc = st.selectbox("Grupo", grupos_all, index=0, key="exc_grupo")
+                # 🔁 MULTISELECT de grupos (además de opción Todos simulada)
+                grupos_all = list_grupos()
+                grupos_sel = st.multiselect(
+                    "Grupos (puedes elegir varios o dejar vacío para 'Todos')",
+                    options=grupos_all,
+                    default=[],
+                    help="Si lo dejas vacío, se considerarán TODOS los grupos."
+                )
+        
+                # Nombre de la actividad (para el título del PDF)
+                actividad = st.text_input(
+                    "Nombre de la actividad (para el PDF)",
+                    placeholder="Ej.: Visita al Museo de Ciencias",
+                    key="exc_actividad"
+                )
+        
             with colz:
-                ventana = st.number_input("Ventana (días)", min_value=7, max_value=90, value=30, step=1, key="exc_dias")
+                ventana = st.number_input(
+                    "Ventana (días)",
+                    min_value=7, max_value=90,
+                    value=30, step=1, key="exc_dias"
+                )
+        
+            # === Acción ===
             if st.button("Consultar", key="exc_consultar", use_container_width=True):
-                df_ban = excursion_banlist(fecha_actividad, grupo_filtro=g_exc, lookback_days=int(ventana))
+                # Llamamos a la versión multi-grupo (si lista vacía -> todos)
+                df_ban = excursion_banlist_multi(
+                    activity_date=fecha_actividad,
+                    grupos_filtro=grupos_sel if len(grupos_sel) > 0 else None,
+                    lookback_days=int(ventana)
+                )
+        
                 if df_ban.empty:
                     st.success("No hay alumnos restringidos. ✅")
                 else:
+                    # Título informativo en la página
                     titulo = f"No aptos excursión — {fecha_actividad.strftime('%d/%m/%Y')}"
-                    if g_exc != "Todos": titulo += f" — Grupo {g_exc}"
+                    if grupos_sel and len(grupos_sel) > 0:
+                        if len(grupos_sel) <= 3:
+                            titulo += " — " + ", ".join(grupos_sel)
+                        else:
+                            titulo += f" — Varios grupos ({len(grupos_sel)})"
+        
                     st.markdown(f"**{titulo}**")
                     st.dataframe(df_ban, use_container_width=True)
+        
+                    # === Exportación a PDF (con NOMBRE ACTIVIDAD EN TÍTULO) ===
                     if HAS_REPORTLAB:
-                        pdf_ban = df_to_pdf_bytes(df_ban, title=titulo)
-                        st.download_button("📄 Exportar a PDF", data=pdf_ban,
-                            file_name=f"no_aptos_{g_exc}_{fecha_actividad.isoformat()}.pdf",
-                            mime="application/pdf", key="exc_pdf", use_container_width=True)
+                        # Armamos el título del PDF incluyendo el nombre de la actividad si se ha indicado
+                        titulo_pdf = "No aptos excursión"
+                        if actividad.strip():
+                            titulo_pdf += f" — {actividad.strip()}"
+                        titulo_pdf += f" — {fecha_actividad.strftime('%d/%m/%Y')}"
+                        if grupos_sel and len(grupos_sel) > 0:
+                            if len(grupos_sel) <= 3:
+                                titulo_pdf += " — " + ", ".join(grupos_sel)
+                            else:
+                                titulo_pdf += f" — Varios grupos ({len(grupos_sel)})"
+        
+                        pdf_ban = df_to_pdf_bytes(df_ban, title=titulo_pdf)
+        
+                        # Nombre de archivo amigable
+                        def _slug(s: str) -> str:
+                            return "".join(ch for ch in s.replace(" ", "_") if ch.isalnum() or ch in ("_", "-")).strip("_")
+        
+                        nombre_act_slug = _slug(actividad) if actividad.strip() else "actividad"
+                        grupos_slug = (
+                            _slug("_".join(grupos_sel)) if (grupos_sel and len(grupos_sel) > 0)
+                            else "todos"
+                        )
+                        fname_pdf = f"no_aptos_{nombre_act_slug}_{grupos_slug}_{fecha_actividad.isoformat()}.pdf"
+        
+                        st.download_button(
+                            "📄 Exportar a PDF",
+                            data=pdf_ban,
+                            file_name=fname_pdf,
+                            mime="application/pdf",
+                            key="exc_pdf",
+                            use_container_width=True
+                        )
+        
+                    # === Exportación a Excel (sin necesidad del nombre de actividad) ===
                     xls = df_to_excel_bytes(df_ban, sheet_name="No_aptos")
-                    st.download_button("⬇️ Exportar a Excel (.xlsx)",
+                    fname_xlsx = f"no_aptos_{fecha_actividad.isoformat()}.xlsx"  # puedes incluir actividad si lo deseas
+                    st.download_button(
+                        "⬇️ Exportar a Excel (.xlsx)",
                         data=xls,
-                        file_name=f"no_aptos_{g_exc}_{fecha_actividad.isoformat()}.xlsx",
+                        file_name=fname_xlsx,
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        key="exc_xlsx", use_container_width=True)
+                        key="exc_xlsx",
+                        use_container_width=True
+                    )
 
         # ----- TAB 2: Disruptivos (Jefatura) -----
         with tabs[2]:
@@ -1954,22 +2032,59 @@ def main():
         with tabs[1]:
             st.subheader("🔥 Ranking alumnos")
             c1, c2, c3, c4 = st.columns([1,1,1,1.5])
-            with c1: f_ini_rk = st.date_input("Desde", value=date.today() - timedelta(days=90), key="d_rk_ini")
-            with c2: f_fin_rk = st.date_input("Hasta", value=date.today(), key="d_rk_fin")
-            with c3: g_rk = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="d_rk_grupo")
+            with c1:
+                f_ini_rk = st.date_input("Desde", value=date.today() - timedelta(days=90), key="d_rk_ini")
+            with c2:
+                f_fin_rk = st.date_input("Hasta", value=date.today(), key="d_rk_fin")
+            with c3:
+                g_rk = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="d_rk_grupo")
             with c4:
                 solo_cerr = st.checkbox("Solo cerrados", value=True, key="d_rk_cerr")
                 pond_grav = st.checkbox("Ponderar gravedad (L=1, G=2, MG=3)", value=True, key="d_rk_pond")
-            df_rk = ranking_disruptivos(f_ini_rk, f_fin_rk, grupo_filtro=g_rk, solo_cerrados=solo_cerr, ponderar_gravedad=pond_grav)
+        
+            df_rk = ranking_disruptivos(
+                f_ini_rk, f_fin_rk,
+                grupo_filtro=g_rk,
+                solo_cerrados=solo_cerr,
+                ponderar_gravedad=pond_grav
+            )
+        
             if df_rk.empty:
                 st.info("No hay datos.")
             else:
                 st.dataframe(df_rk, use_container_width=True)
+        
+                # === PDF (igual que en Jefatura) ===
+                if HAS_REPORTLAB:
+                    titulo = "Ranking alumnos más disruptivos"
+                    if g_rk != "Todos":
+                        titulo += f" — {g_rk}"
+                    titulo += f" ({f_ini_rk.strftime('%d/%m/%Y')} – {f_fin_rk.strftime('%d/%m/%Y')})"
+                    if solo_cerr:
+                        titulo += " · solo cerrados"
+                    if pond_grav:
+                        titulo += " · ponderado por gravedad"
+        
+                    pdf_rk = df_to_pdf_bytes(df_rk, title=titulo)
+                    st.download_button(
+                        "📄 Exportar a PDF",
+                        data=pdf_rk,
+                        file_name=f"ranking_disruptivos_{g_rk}_{f_ini_rk.isoformat()}_{f_fin_rk.isoformat()}.pdf",
+                        mime="application/pdf",
+                        key="d_rk_pdf",
+                        use_container_width=True
+                    )
+        
+                # === Excel ===
                 xls = df_to_excel_bytes(df_rk, sheet_name="Ranking")
-                st.download_button("⬇️ Excel (.xlsx)", data=xls,
+                st.download_button(
+                    "⬇️ Excel (.xlsx)",
+                    data=xls,
                     file_name=f"ranking_alumnos_{g_rk}_{f_ini_rk.isoformat()}_{f_fin_rk.isoformat()}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="d_rk_xlsx", use_container_width=True)
+                    key="d_rk_xlsx",
+                    use_container_width=True
+                )
 
         # ----- TAB 2: Historial de alumnos (Director) -----
         with tabs[2]:
@@ -2208,22 +2323,59 @@ def main():
         with tabs[2]:
             st.subheader("🔥 Ranking alumnos")
             c1, c2, c3, c4 = st.columns([1,1,1,1.5])
-            with c1: f_ini_rk = st.date_input("Desde", value=date.today() - timedelta(days=90), key="c_rk_ini")
-            with c2: f_fin_rk = st.date_input("Hasta", value=date.today(), key="c_rk_fin")
-            with c3: g_rk = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="c_rk_grupo")
+            with c1:
+                f_ini_rk = st.date_input("Desde", value=date.today() - timedelta(days=90), key="c_rk_ini")
+            with c2:
+                f_fin_rk = st.date_input("Hasta", value=date.today(), key="c_rk_fin")
+            with c3:
+                g_rk = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="c_rk_grupo")
             with c4:
                 solo_cerr = st.checkbox("Solo cerrados", value=True, key="c_rk_cerr")
                 pond_grav = st.checkbox("Ponderar gravedad (L=1, G=2, MG=3)", value=True, key="c_rk_pond")
-            df_rk = ranking_disruptivos(f_ini_rk, f_fin_rk, grupo_filtro=g_rk, solo_cerrados=solo_cerr, ponderar_gravedad=pond_grav)
+        
+            df_rk = ranking_disruptivos(
+                f_ini_rk, f_fin_rk,
+                grupo_filtro=g_rk,
+                solo_cerrados=solo_cerr,
+                ponderar_gravedad=pond_grav
+            )
+        
             if df_rk.empty:
                 st.info("No hay datos.")
             else:
                 st.dataframe(df_rk, use_container_width=True)
+        
+                # === PDF (igual que Jefatura/Director) ===
+                if HAS_REPORTLAB:
+                    titulo = "Ranking alumnos más disruptivos"
+                    if g_rk != "Todos":
+                        titulo += f" — {g_rk}"
+                    titulo += f" ({f_ini_rk.strftime('%d/%m/%Y')} – {f_fin_rk.strftime('%d/%m/%Y')})"
+                    if solo_cerr:
+                        titulo += " · solo cerrados"
+                    if pond_grav:
+                        titulo += " · ponderado por gravedad"
+        
+                    pdf_rk = df_to_pdf_bytes(df_rk, title=titulo)
+                    st.download_button(
+                        "📄 Exportar a PDF",
+                        data=pdf_rk,
+                        file_name=f"ranking_disruptivos_{g_rk}_{f_ini_rk.isoformat()}_{f_fin_rk.isoformat()}.pdf",
+                        mime="application/pdf",
+                        key="c_rk_pdf",
+                        use_container_width=True
+                    )
+        
+                # === Excel (igual que Jefatura/Director) ===
                 xls = df_to_excel_bytes(df_rk, sheet_name="Ranking")
-                st.download_button("⬇️ Excel (.xlsx)", data=xls,
+                st.download_button(
+                    "⬇️ Excel (.xlsx)",
+                    data=xls,
                     file_name=f"ranking_alumnos_{g_rk}_{f_ini_rk.isoformat()}_{f_fin_rk.isoformat()}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="c_rk_xlsx", use_container_width=True)
+                    key="c_rk_xlsx",
+                    use_container_width=True
+                )
 
         # ----- TAB 3: Historial (Convivencia) ----
         with tabs[3]:
@@ -2347,6 +2499,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
