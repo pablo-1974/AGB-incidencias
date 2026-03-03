@@ -2072,25 +2072,23 @@ def main():
         with tabs[5]:
             st.subheader("📬 Partes pendientes de revisar")
         
-            # ✅ Mostrar mensaje de cierre persistido tras refresco
+            # Mostrar mensaje tras cierre
             pend_msg = st.session_state.pop("pend_success_msg", None)
             if pend_msg:
                 st.success(pend_msg)
         
             pendientes = list_pending_incidents()
             st.caption(f"Pendientes: **{len(pendientes)}**")
+        
             if not pendientes:
                 st.success("No hay partes pendientes. ✅")
+        
             else:
-                # Construimos opciones con todos los campos necesarios para mostrar y para cambiar gravedad_inicial si se desea
                 opciones = []
-                # rows: (iid, prof, grupo, alumno, f, h, desc, grav_ini, created_at)
                 for (iid, prof, grupo, alumno, f, h, desc, grav_ini, created_at) in pendientes:
                     label = f"#{iid} · {f} {h} · {alumno} ({grupo}) · {prof} · [inicial: {grav_ini}]"
-                    # Metemos toda la tupla que necesitamos en la opción
                     opciones.append((iid, label, desc, grav_ini, prof, grupo, alumno, f, h))
         
-                # Nota: guardamos en session la selección previa para no perderla tras cambios
                 sel = st.selectbox(
                     "Selecciona un parte",
                     opciones,
@@ -2099,76 +2097,46 @@ def main():
                 )
         
                 if sel:
-                    # Desempaquetamos la selección actual
                     sel_id, sel_label, sel_desc, sel_grav_ini, sel_prof, sel_grupo, sel_alumno, sel_fecha, sel_hora = sel
         
-                    # Descripción del parte
-                    st.markdown("**Descripción del parte:**")
+                    st.markdown("### 📝 Descripción del parte")
                     st.write(sel_desc)
                     st.markdown("---")
         
-                    # =========== SECCIÓN: Opcional - Cambiar gravedad INICIAL ===========
-                    st.markdown("#### ⚠️ ¿Deseas **modificar** la **gravedad inicial**?")
-                    st.caption("Por defecto, no se cambia. Marca la casilla solo si necesitas corregir el valor de la gravedad **inicial**.")
-                    c_mod_toggle = st.checkbox("Quiero cambiar la **gravedad inicial** de este parte", key=f"pend_edit_ini_toggle_{sel_id}")
-        
-                    new_grav_ini = None
-                    confirm_change_ini = False
-        
-                    if c_mod_toggle:
-                        st.info(f"Gravedad inicial actual: **{sel_grav_ini}**")
-                        st.markdown("**Selecciona la nueva gravedad inicial** (elige una):")
-                        new_grav_ini = gravedad_selector(f"pend_edit_ini_{sel_id}", default=None, show_helper_msg=False)
-        
-                        # Ayuda si no se ha elegido bien
-                        if new_grav_ini not in ("leve", "grave", "muy grave"):
-                            st.warning("Selecciona exactamente **una** gravedad inicial (deja solo un tick).")
-        
-                        # Confirmación (obligatoria si pretende guardarse el cambio)
-                        confirm_change_ini = st.checkbox(
-                            "✅ Confirmo que **QUIERO** cambiar la gravedad **inicial**",
-                            key=f"pend_edit_ini_confirm_{sel_id}"
-                        )
-                        st.caption("Esta confirmación evita cambios accidentales. Desmarca la opción si no deseas modificarla.")
+                    # ===== GRAVEDAD FINAL: selector simple =====
+                    st.markdown("### ⚖️ Gravedad final")
+                    grav_final = st.selectbox(
+                        "Selecciona gravedad final",
+                        ["leve", "grave", "muy grave"],
+                        key=f"pend_grav_final_{sel_id}"
+                    )
         
                     st.markdown("---")
         
-                    # =========== SECCIÓN: Cierre - Gravedad FINAL ===========
-                    st.markdown("**Gravedad final (obligatoria para cerrar)**")
-                    grav_final = gravedad_selector(f"pend_final_{sel_id}", default=None)
-                    disabled_close = grav_final not in ("leve", "grave", "muy grave")
+                    # ===== BOTÓN CERRAR PARTE (con confirmación Sí/No) =====
+                    if st.button("✅ Cerrar parte", key=f"pend_close_btn_{sel_id}", use_container_width=True):
+                        st.session_state["confirm_close"] = sel_id
         
-                    # ÚNICO botón de acción: Cerrar parte
-                    if st.button("✅ Cerrar parte", key=f"pend_cerrar_{sel_id}", disabled=disabled_close, use_container_width=True):
-                        # Si quiere modificar la gravedad INICIAL, comprobar confirmación y validez
-                        if c_mod_toggle:
-                            if new_grav_ini not in ("leve", "grave", "muy grave"):
-                                st.error("Para cambiar la **gravedad inicial**, debes seleccionar exactamente una opción.")
-                                st.stop()
-                            if not confirm_change_ini:
-                                st.error("Debes confirmar que **quieres** cambiar la gravedad **inicial**.")
-                                st.stop()
-                            # Ejecutar el cambio de gravedad inicial
-                            try:
-                                with get_conn() as conn:
-                                    conn.execute("UPDATE incidents SET gravedad_inicial=? WHERE id=?", (new_grav_ini, sel_id))
-                                    conn.commit()
-                            except Exception as ex:
-                                st.error(f"No se pudo actualizar la gravedad inicial: {ex}")
-                                st.stop()
+                    # Si está en proceso de confirmación
+                    if st.session_state.get("confirm_close") == sel_id:
         
-                        # Cerrar el parte (establece gravedad_final y marca como cerrado)
-                        ok, msg = close_incident(sel_id, grav_final, usuario["id"], usuario["name"])
-                        if ok:
-                            # ✅ Mantenerse en esta pestaña y mostrar mensaje tras refresco
-                            st.session_state["pend_success_msg"] = msg
-                            st.rerun()
-                        else:
-                            st.error(msg)
+                        st.warning(f"¿Está seguro de cerrar el parte #{sel_id} con gravedad final **{grav_final}**?")
         
-                    # Estado de ayuda si falta gravedad final
-                    if disabled_close:
-                        st.warning("Debes seleccionar exactamente **una** gravedad **final** para poder cerrar el parte.")
+                        col_yes, col_no = st.columns(2)
+        
+                        with col_yes:
+                            if st.button("Sí, cerrar", key=f"pend_yes_{sel_id}", use_container_width=True):
+                                ok, msg = close_incident(sel_id, grav_final, usuario["id"], usuario["name"])
+                                if ok:
+                                    st.session_state.pop("confirm_close", None)
+                                    st.session_state["pend_success_msg"] = msg
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
+        
+                        with col_no:
+                            if st.button("No", key=f"pend_no_{sel_id}", use_container_width=True):
+                                st.session_state.pop("confirm_close", None)
 
         # ----- TAB 6: Estadísticas (Jefatura) -----
         with tabs[6]:
@@ -3073,6 +3041,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
