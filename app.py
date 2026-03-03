@@ -1715,7 +1715,11 @@ def main():
                 st.warning("No hay grupos cargados. La Jefatura debe importar 'alumnos.xlsx'.")
             else:
                 col_g, col_a = st.columns([1, 2])
-                grupo_sel = col_g.selectbox("Grupo", options=grupos, key="p_grupo")
+                grupo_sel = col_g.selectbox("Grupo", options=[""] + grupos,   # ← primera opción en blanco
+                    format_func=lambda x: "— Selecciona —" if x == "" else x,
+                    key="p_grupo"
+                )
+
         
                 # Reset alumno al cambiar grupo
                 if "p_grupo_prev" not in st.session_state or st.session_state["p_grupo_prev"] != grupo_sel:
@@ -3048,6 +3052,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
