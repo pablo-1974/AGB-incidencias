@@ -1688,25 +1688,24 @@ def main():
             pend_count = len(list_pending_incidents())
         except Exception:
             pend_count = 0
-
-        # Control persistente de la pestaña seleccionada
-        if "selected_tab" not in st.session_state:
-            st.session_state["selected_tab"] = 0  # normalmente se abre en Nuevo parte
+    
+        # 🚫 IMPORTANTE:
+        # Las etiquetas de los tabs DEBEN ser estáticas.
+        # Si cambian (por ejemplo al incluir el número de pendientes)
+        # Streamlit reconstruye los tabs y vuelve al TAB 0 siempre.
+        # Por eso eliminamos el contador de la etiqueta.
         
-        tabs = st.tabs(
-            [
-                "📝 Nuevo parte",
-                "🚫 Excursiones",
-                "🔥 Ranking de alumnos",
-                "📚 Historial de alumnos",
-                "👨‍🏫 Historial de profesores",
-                f"📬 Pendientes · {pend_count}",
-                "📊 Estadísticas",
-                "📈 Gráficos",
-                "👥 Usuarios"
-            ],
-            tab_id="jefatura_tabs",                 # ← clave del grupo de tabs
-        )
+        tabs = st.tabs([
+            "📝 Nuevo parte",
+            "🚫 Excursiones",
+            "🔥 Ranking de alumnos",
+            "📚 Historial de alumnos",
+            "👨‍🏫 Historial de profesores",
+            "📬 Pendientes",        # ← etiqueta fija
+            "📊 Estadísticas",
+            "📈 Gráficos",
+            "👥 Usuarios"
+        ])
 
         # ----- TAB 0: Nuevo parte (Jefatura) -----
         with tabs[0]:
@@ -3049,6 +3048,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
