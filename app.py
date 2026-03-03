@@ -2399,8 +2399,12 @@ def main():
             else:
                 # Selección de grupo y alumno
                 col_g, col_a = st.columns([1, 2])
-                grupo_sel = col_g.selectbox("Grupo", options=grupos, key="d_grupo")
-        
+                    grupo_sel = col_g.selectbox("Grupo",
+                        options=[""] + grupos,
+                        format_func=lambda x: "— Selecciona —" if x == "" else x,
+                        key="d_grupo"
+                    )
+
                 # Reset alumno al cambiar grupo
                 if "d_grupo_prev" not in st.session_state or st.session_state["d_grupo_prev"] != grupo_sel:
                     st.session_state["d_alumno"] = None
@@ -2693,8 +2697,13 @@ def main():
             else:
                 # Selección de grupo y alumno
                 col_g, col_a = st.columns([1,2])
-                grupo_sel = col_g.selectbox("Grupo", options=grupos, key="c_grupo")
-        
+                grupo_sel = col_g.selectbox(
+                    "Grupo",
+                    options=[""] + grupos,
+                    format_func=lambda x: "— Selecciona —" if x == "" else x,
+                    key="c_grupo"
+                )
+       
                 # Reset del alumno si cambia el grupo
                 if "c_grupo_prev" not in st.session_state or st.session_state["c_grupo_prev"] != grupo_sel:
                     st.session_state["c_alumno"] = None
@@ -2931,7 +2940,12 @@ def main():
             else:
                 # Selección de grupo y alumno
                 col_g, col_a = st.columns([1,2])
-                grupo_sel = col_g.selectbox("Grupo", options=grupos, key="p_grupo_prof")
+                grupo_sel = col_g.selectbox(
+                    "Grupo",
+                    options=[""] + grupos,
+                    format_func=lambda x: "— Selecciona —" if x == "" else x,
+                    key="p_grupo_prof"
+                )
         
                 # Reset alumno si el grupo cambia
                 if "p_grupo_prev_prof" not in st.session_state or st.session_state["p_grupo_prev_prof"] != grupo_sel:
@@ -3052,6 +3066,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
