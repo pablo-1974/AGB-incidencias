@@ -779,6 +779,73 @@ def df_to_excel_bytes(df: pd.DataFrame, sheet_name: str = "Datos") -> bytes:
         df.to_excel(writer, index=False, sheet_name=sheet_name)
     return buf.getvalue()
 
+# ===== PDF: ticket del parte (impresión inmediata tras enviar) =====
+def incident_ticket_pdf(
+    alumno: str,
+    fecha: date,
+    hora: str,
+    profesor: str,
+    descripcion: str,
+    gravedad_inicial: str,
+    enviado_por: str,
+    enviado_dt: datetime | None = None,
+) -> bytes:
+    """
+    Genera un PDF de 'ticket' con:
+      - Título: "Parte de Incidencias. IES Antonio García Bellido."
+      - 1ª línea: Alumno, Fecha, Hora
+      - 2ª línea: Profesor
+      - 3ª línea y siguientes: Descripción (multilínea)
+      - Debajo: Catalogación de gravedad inicial
+      - Pie: *** Enviado a Jefatura el (Fecha) a las (Hora) por (Usuario) ***
+    """
+    if not HAS_REPORTLAB:
+        return b""
+
+    if enviado_dt is None:
+        enviado_dt = datetime.now()
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=A4,  # vertical
+        leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36
+    )
+    styles = getSampleStyleSheet()
+    st_title = styles["Title"]
+    st_body = styles["BodyText"]; st_body.fontSize = 11; st_body.leading = 14
+
+    elems = []
+    # Título
+    elems.append(Paragraph("Parte de Incidencias. IES Antonio García Bellido.", st_title))
+    elems.append(Spacer(1, 12))
+
+    # Líneas superiores
+    f_str = fecha.strftime("%d/%m/%Y") if isinstance(fecha, (date, datetime)) else str(fecha)
+    elems.append(Paragraph(f"<b>Alumno:</b> {alumno} &nbsp;&nbsp; <b>Fecha:</b> {f_str} &nbsp;&nbsp; <b>Hora:</b> {hora}", st_body))
+    elems.append(Spacer(1, 6))
+    elems.append(Paragraph(f"<b>Profesor:</b> {profesor}", st_body))
+    elems.append(Spacer(1, 10))
+
+    # Descripción multilínea
+    desc_html = (descripcion or "").replace("\n", "<br/>")
+    elems.append(Paragraph(f"<b>Descripción:</b><br/>{desc_html}", st_body))
+    elems.append(Spacer(1, 10))
+
+    # Gravedad
+    elems.append(Paragraph(f"<b>Gravedad (inicial):</b> {gravedad_inicial}", st_body))
+    elems.append(Spacer(1, 18))
+
+    # Pie
+    elems.append(Paragraph(
+        f"<i>*** Enviado a Jefatura el {enviado_dt.strftime('%d/%m/%Y')} "
+        f"a las {enviado_dt.strftime('%H:%M')} por {enviado_por} ***</i>",
+        st_body
+    ))
+
+    doc.build(elems)
+    return buf.getvalue()
+
 # =========================
 # NUEVOS PDFs (reemplazo total)
 # =========================
@@ -2763,6 +2830,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
