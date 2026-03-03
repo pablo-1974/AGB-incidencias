@@ -2397,22 +2397,36 @@ def main():
             if not grupos:
                 st.warning("No hay grupos cargados.")
             else:
-                # Selección de grupo y alumno
                 col_g, col_a = st.columns([1, 2])
-                    grupo_sel = col_g.selectbox(
-                        "Grupo",
-                        options=[""] + grupos,
-                        format_func=lambda x: "— Selecciona —" if x == "" else x,
-                        key="d_grupo"
-                    )
-
-                # Reset alumno al cambiar grupo
-                if "d_grupo_prev" not in st.session_state or st.session_state["d_grupo_prev"] != grupo_sel:
-                    st.session_state["d_alumno"] = None
+        
+                # Grupo con opción en blanco
+                grupo_sel = col_g.selectbox(
+                    "Grupo",
+                    options=[""] + grupos,
+                    format_func=lambda x: "— Selecciona —" if x == "" else x,
+                    key="d_grupo"
+                )
+        
+                # Reset del alumno al cambiar grupo
+                if (
+                    "d_grupo_prev" not in st.session_state
+                    or st.session_state["d_grupo_prev"] != grupo_sel
+                ):
+                    st.session_state["d_alumno"] = ""
                     st.session_state["d_grupo_prev"] = grupo_sel
         
-                alumnos = list_alumnos_by_grupo(grupo_sel)
-                alumno_sel = col_a.selectbox("Alumno", options=alumnos if alumnos else [], key="d_alumno")
+                # Alumno dependiente del grupo
+                if grupo_sel == "":
+                    alumno_sel = None
+                    col_a.info("Selecciona primero un grupo.")
+                else:
+                    alumnos = list_alumnos_by_grupo(grupo_sel)
+                    alumno_sel = col_a.selectbox(
+                        "Alumno",
+                        options=[""] + alumnos,
+                        format_func=lambda x: "— Selecciona —" if x == "" else x,
+                        key="d_alumno"
+                    )
         
                 # ===== FORMULARIO =====
                 with st.form("d_form_parte"):
@@ -2441,9 +2455,9 @@ def main():
         
                 # ===== PROCESAR ENVÍO =====
                 if enviar:
-                    if not alumnos or not alumno_sel or not grupo_sel:
+                    if grupo_sel == "" or alumno_sel in (None, ""):
                         st.error("Grupo y alumno son obligatorios.")
-                    elif not descripcion or not descripcion.strip():
+                    elif not descripcion.strip():
                         st.error("La descripción es obligatoria.")
                     elif grav_ini not in ("leve", "grave", "muy grave"):
                         st.error("Selecciona exactamente una gravedad.")
@@ -2460,7 +2474,6 @@ def main():
                         )
         
                         if ok:
-                            # === Guardar datos para el prompt de impresión ===
                             st.session_state["d_last_created_incident"] = {
                                 "alumno": alumno_sel,
                                 "fecha": fecha_sel,
@@ -2472,17 +2485,11 @@ def main():
                                 "enviado_dt": datetime.now(),
                             }
         
-                            # Limpiamos el formulario
                             reset_nuevo_parte_form("d_")
-        
-                            # IMPORTANTE:
-                            # NO llamamos a go_home_after_submit()
-                            # NO hacemos st.rerun()
-                            # Dejar que actúe show_print_prompt()
                         else:
                             st.error(msg)
         
-                # ===== Mostrar prompt para imprimir PDF =====
+                # Pregunta de impresión del parte
                 show_print_prompt("d_")
 
         # ----- TAB 1: Ranking alumnos (Director) -----
@@ -3067,6 +3074,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
