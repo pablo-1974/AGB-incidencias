@@ -545,7 +545,9 @@ def list_pending_incidents():
         ORDER BY created_at DESC
         """).fetchall()
 
-def close_incident(incident_id: int, gravedad_final: str, reviewer_id: int, reviewer_name: str):
+def close_incident(incident_id: int, gravedad_final: str, reviewer_id: int, reviewer_name: str, reviewer_role: str):
+    if reviewer_role not in ("jefe",):
+        return False, "No tienes permisos para cerrar partes."
     if gravedad_final not in ("leve","grave","muy grave"):
         return False, "Debes valorar la gravedad antes de cerrar el parte."
     with get_conn() as conn:
@@ -2152,7 +2154,10 @@ def main():
         
                     # ===== BOTÓN CERRAR PARTE (con confirmación Sí/No) =====
                     if st.button("✅ Cerrar parte", key=f"pend_close_btn_{sel_id}", use_container_width=True):
-                        st.session_state["confirm_close"] = sel_id
+                        if grav_final not in ("leve","grave","muy grave"):
+                            st.error("Selecciona una gravedad final antes de cerrar.")
+                        else:
+                            st.session_state["confirm_close"] = sel_id
         
                     # Si está en proceso de confirmación
                     if st.session_state.get("confirm_close") == sel_id:
@@ -2163,7 +2168,7 @@ def main():
         
                         with col_yes:
                             if st.button("Sí, cerrar", key=f"pend_yes_{sel_id}", use_container_width=True):
-                                ok, msg = close_incident(sel_id, grav_final, usuario["id"], usuario["name"])
+                                ok, msg = close_incident(sel_id, grav_final, usuario["id"], usuario["name"], usuario["role"])
                                 if ok:
                                     st.session_state.pop("confirm_close", None)
                                     st.session_state["pend_success_msg"] = msg
@@ -3100,6 +3105,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
