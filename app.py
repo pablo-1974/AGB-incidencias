@@ -2107,7 +2107,8 @@ def main():
                     st.markdown("### ⚖️ Gravedad final")
                     grav_final = st.selectbox(
                         "Selecciona gravedad final",
-                        ["leve", "grave", "muy grave"],
+                        ["", "leve", "grave", "muy grave"],   # 👈 opción vacía como primera
+                        format_func=lambda x: "— Selecciona —" if x == "" else x,
                         key=f"pend_grav_final_{sel_id}"
                     )
         
@@ -3041,6 +3042,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
