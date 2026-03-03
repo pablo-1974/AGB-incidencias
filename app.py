@@ -1236,6 +1236,19 @@ def go_home_after_submit(message: str | None):
     if message:
         st.session_state["last_success_message"] = message
 
+# ===== Helper: inicio del curso escolar =====
+def school_year_start(today: date | None = None) -> date:
+    """
+    Devuelve el 1 de septiembre del curso vigente:
+      - Si hoy es septiembre (mes >= 9) o posterior: 1/9 del año actual.
+      - Si hoy es antes de septiembre: 1/9 del año anterior.
+    Esto permite que la fecha por defecto de filtros sea coherente con el curso escolar.
+    """
+    if today is None:
+        today = date.today()
+    year = today.year if today.month >= 9 else today.year - 1
+    return date(year, 9, 1)
+
 # ========== BLOQUE 4/7: PDFs Alumno y Profesor (ya redefinidos arriba) ==========
 
 # (Las nuevas funciones teacher_report_pdf y student_report_pdf han reemplazado a las antiguas)
@@ -1734,7 +1747,7 @@ def main():
             st.subheader("🔥 Alumnos más disruptivos")
             col_a, col_b, col_c, col_d = st.columns([1,1,1,1.5])
             with col_a:
-                f_ini_rk = st.date_input("Desde", value=date.today() - timedelta(days=90), key="rk_ini")
+                f_ini_rk = st.date_input("Desde", value=school_year_start(), key="rk_ini")
             with col_b:
                 f_fin_rk = st.date_input("Hasta", value=date.today(), key="rk_fin")
             with col_c:
@@ -2750,6 +2763,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
