@@ -1781,7 +1781,7 @@ def main():
         with tabs[3]:
             st.subheader("📚 Historial de alumnos (Jefatura)")
             c1, c2, c3 = st.columns([1,1,2])
-            with c1: f_ini_a = st.date_input("Desde", value=date.today() - timedelta(days=60), key="j_al_ini")
+            with c1: f_ini_a = st.date_input("Desde", value=school_year_start(), key="j_al_ini")
             with c2: f_fin_a = st.date_input("Hasta", value=date.today(), key="j_al_fin")
             with c3:
                 g_al = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="j_al_grupo")
@@ -1823,7 +1823,7 @@ def main():
         with tabs[4]:
             st.subheader("👨‍🏫 Historial de profesores (Jefatura)")
             c1, c2, c3 = st.columns([1,1,2])
-            with c1: f_ini_p = st.date_input("Desde", value=date.today() - timedelta(days=60), key="j_pr_ini")
+            with c1: f_ini_p = st.date_input("Desde", value=school_year_start(), key="j_pr_ini")
             with c2: f_fin_p = st.date_input("Hasta", value=date.today(), key="j_pr_fin")
             with c3: estado_p = st.selectbox("Estado", ["Todos","pendiente","cerrado"], key="j_pr_estado")
             prof_opts = ["Todos"] + list_profesor_names()
@@ -2021,7 +2021,7 @@ def main():
             st.subheader("📊 Estadísticas (Jefatura)")
             colf1, colf2, colf3 = st.columns([1,1,2])
             with colf1:
-                f_ini = st.date_input("Desde", value=date.today() - timedelta(days=30), key="stats_ini")
+                f_ini = st.date_input("Desde", value=school_year_start(), key="stats_ini")
             with colf2:
                 f_fin = st.date_input("Hasta", value=date.today(), key="stats_fin")
             with colf3:
@@ -2122,7 +2122,7 @@ def main():
             st.subheader("📈 Gráficos (Jefatura)")
             colf1, colf2, colf3 = st.columns([1,1,2])
             with colf1:
-                f_ini_g = st.date_input("Desde", value=date.today() - timedelta(days=30), key="charts_ini")
+                f_ini_g = st.date_input("Desde", value=school_year_start(), key="charts_ini")
             with colf2:
                 f_fin_g = st.date_input("Hasta", value=date.today(), key="charts_fin")
             with colf3:
@@ -2297,7 +2297,7 @@ def main():
             st.subheader("🔥 Ranking alumnos")
             c1, c2, c3, c4 = st.columns([1,1,1,1.5])
             with c1:
-                f_ini_rk = st.date_input("Desde", value=date.today() - timedelta(days=90), key="d_rk_ini")
+                f_ini_rk = st.date_input("Desde", value=school_year_start(), key="d_rk_ini")
             with c2:
                 f_fin_rk = st.date_input("Hasta", value=date.today(), key="d_rk_fin")
             with c3:
@@ -2354,7 +2354,7 @@ def main():
         with tabs[2]:
             st.subheader("📚 Historial de alumnos")
             c1, c2, c3 = st.columns([1,1,2])
-            with c1: f_ini_a = st.date_input("Desde", value=date.today() - timedelta(days=60), key="d_al_ini")
+            with c1: f_ini_a = st.date_input("Desde", value=school_year_start(), key="d_al_ini")
             with c2: f_fin_a = st.date_input("Hasta", value=date.today(), key="d_al_fin")
             with c3:
                 g_al = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="d_al_grupo")
@@ -2395,7 +2395,7 @@ def main():
         with tabs[3]:
             st.subheader("👨‍🏫 Historial de profesores")
             c1, c2, c3 = st.columns([1,1,2])
-            with c1: f_ini_p = st.date_input("Desde", value=date.today() - timedelta(days=60), key="d_pr_ini")
+            with c1: f_ini_p = st.date_input("Desde", value=school_year_start(), key="d_pr_ini")
             with c2: f_fin_p = st.date_input("Hasta", value=date.today(), key="d_pr_fin")
             with c3: estado_p = st.selectbox("Estado", ["Todos","pendiente","cerrado"], key="d_pr_estado")
             prof_opts = ["Todos"] + list_profesor_names()
@@ -2539,7 +2539,7 @@ def main():
             
             # Filtros
             colh1, colh2, colh3, colh4 = st.columns([1,1,1,1.5])
-            with colh1: f_ini_h = st.date_input("Desde", value=date.today() - timedelta(days=60), key="c_hist_ini")
+            with colh1: f_ini_h = st.date_input("Desde", value=school_year_start(), key="c_hist_ini")
             with colh2: f_fin_h = st.date_input("Hasta", value=date.today(), key="c_hist_fin")
             with colh3: estado_sel = st.selectbox("Estado", ["Todos","pendiente","cerrado"], index=0, key="c_hist_estado")
             with colh4:
@@ -2588,7 +2588,7 @@ def main():
             st.subheader("🔥 Ranking alumnos")
             c1, c2, c3, c4 = st.columns([1,1,1,1.5])
             with c1:
-                f_ini_rk = st.date_input("Desde", value=date.today() - timedelta(days=90), key="c_rk_ini")
+                f_ini_rk = st.date_input("Desde", value=school_year_start(), key="c_rk_ini")
             with c2:
                 f_fin_rk = st.date_input("Hasta", value=date.today(), key="c_rk_fin")
             with c3:
@@ -2645,7 +2645,7 @@ def main():
         with tabs[3]:
             st.subheader("📚 Historial de alumnos")
             c1, c2, c3 = st.columns([1,1,2])
-            with c1: f_ini_a = st.date_input("Desde", value=date.today() - timedelta(days=60), key="c_al_ini")
+            with c1: f_ini_a = st.date_input("Desde", value=school_year_start(), key="c_al_ini")
             with c2: f_fin_a = st.date_input("Hasta", value=date.today(), key="c_al_fin")
             with c3:
                 g_al = st.selectbox("Grupo", ["Todos"] + list_grupos(), key="c_al_grupo")
@@ -2728,7 +2728,7 @@ def main():
         with tabs[1]:
             st.subheader("📜 Mi historial")
             colh1, colh2, colh3, colh4 = st.columns([1,1,1,1.5])
-            with colh1: f_ini_h = st.date_input("Desde", value=date.today() - timedelta(days=60), key="hist_ini")
+            with colh1: f_ini_h = st.date_input("Desde", value=school_year_start(), key="hist_ini")
             with colh2: f_fin_h = st.date_input("Hasta", value=date.today(), key="hist_fin")
             with colh3: estado_sel = st.selectbox("Estado", ["Todos","pendiente","cerrado"], index=0, key="hist_estado")
             with colh4:
@@ -2763,6 +2763,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
