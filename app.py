@@ -2399,7 +2399,8 @@ def main():
             else:
                 # Selección de grupo y alumno
                 col_g, col_a = st.columns([1, 2])
-                    grupo_sel = col_g.selectbox("Grupo",
+                    grupo_sel = col_g.selectbox(
+                        "Grupo",
                         options=[""] + grupos,
                         format_func=lambda x: "— Selecciona —" if x == "" else x,
                         key="d_grupo"
@@ -3066,6 +3067,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
