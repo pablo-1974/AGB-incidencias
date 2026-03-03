@@ -1303,6 +1303,57 @@ def go_home_after_submit(message: str | None):
     if message:
         st.session_state["last_success_message"] = message
 
+# ===== UI: pregunta de impresión inmediata del parte =====
+def show_print_prompt(prefix: str):
+    """
+    Muestra (si existe en session_state) el prompt de imprimir el último parte creado.
+    Usa la clave f"{prefix}last_created_incident" para recuperar los datos del parte.
+    """
+    info = st.session_state.get(f"{prefix}last_created_incident")
+    if not info:
+        return
+
+    st.success("Parte creado y enviado a Jefatura.")
+    st.info("¿Deseas imprimir el parte ahora?")
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("🖨️ Imprimir PDF", key=f"{prefix}print_yes", use_container_width=True):
+            if HAS_REPORTLAB:
+                pdf = incident_ticket_pdf(
+                    alumno=info["alumno"],
+                    fecha=info["fecha"],
+                    hora=info["hora"],
+                    profesor=info["profesor"],
+                    descripcion=info["descripcion"],
+                    gravedad_inicial=info["gravedad_inicial"],
+                    enviado_por=info["enviado_por"],
+                    enviado_dt=info["enviado_dt"],
+                )
+                st.download_button(
+                    "📄 Descargar PDF del parte",
+                    data=pdf,
+                    file_name=f"parte_{info['alumno'].replace(' ','_')}_{info['fecha'].strftime('%Y%m%d')}_{info['hora']}.pdf",
+                    mime="application/pdf",
+                    key=f"{prefix}print_dl",
+                    use_container_width=True,
+                )
+            else:
+                st.warning("ReportLab no está disponible en este entorno; no se puede generar el PDF.")
+    with col2:
+        if st.button("No, gracias", key=f"{prefix}print_no", use_container_width=True):
+            # Limpia y regresa al flujo normal
+            st.session_state.pop(f"{prefix}last_created_incident", None)
+            go_home_after_submit("Parte creado y enviado a Jefatura.")
+            st.rerun()
+
+    # Botón opcional para continuar si ya descargó
+    st.divider()
+    if st.button("Volver al menú", key=f"{prefix}print_back", use_container_width=True):
+        st.session_state.pop(f"{prefix}last_created_incident", None)
+        go_home_after_submit("Parte creado y enviado a Jefatura.")
+        st.rerun()
+
 # ===== Helper: inicio del curso escolar =====
 def school_year_start(today: date | None = None) -> date:
     """
@@ -1659,10 +1710,12 @@ def main():
             else:
                 col_g, col_a = st.columns([1, 2])
                 grupo_sel = col_g.selectbox("Grupo", options=grupos, key="p_grupo")
+        
+                # Reset alumno al cambiar grupo
                 if "p_grupo_prev" not in st.session_state or st.session_state["p_grupo_prev"] != grupo_sel:
                     st.session_state["p_alumno"] = None
                     st.session_state["p_grupo_prev"] = grupo_sel
-
+        
                 alumnos = list_alumnos_by_grupo(grupo_sel)
                 if not alumnos:
                     col_a.error("Este grupo no tiene alumnos cargados.")
@@ -1671,39 +1724,73 @@ def main():
                     prev_al = st.session_state.get("p_alumno")
                     idx = alumnos.index(prev_al) if prev_al in alumnos else 0
                     alumno_sel = col_a.selectbox("Alumno", options=alumnos, key="p_alumno", index=idx)
-
+        
+                # ===== FORMULARIO =====
                 with st.form("p_form_parte"):
                     col1, col2 = st.columns(2)
+        
                     with col1:
-                        # 🚫 Bloquear fechas futuras en UI
-                        fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="p_fecha")
+                        fecha_sel = st.date_input(
+                            "Fecha",
+                            value=date.today(),
+                            max_value=date.today(),
+                            key="p_fecha"
+                        )
+        
                     with col2:
                         franja_sel = st.selectbox("Franja horaria", FRANJAS, key="p_franja")
+        
                     st.markdown("**Gravedad (inicial)**")
                     grav_ini = gravedad_selector("p_grav_ini", default=None)
+        
                     descripcion = st.text_area("Descripción (obligatoria)", key="p_desc")
-                    enviar = st.form_submit_button("Enviar parte a Jefatura", use_container_width=True)
-
+        
+                    enviar = st.form_submit_button(
+                        "Enviar parte a Jefatura",
+                        use_container_width=True
+                    )
+        
+                # ===== PROCESAR ENVÍO =====
                 if enviar:
                     if not alumnos or not alumno_sel or not grupo_sel:
                         st.error("Grupo y alumno son obligatorios.")
                     elif not descripcion or not descripcion.strip():
                         st.error("La descripción es obligatoria.")
                     elif grav_ini not in ("leve","grave","muy grave"):
-                        st.error("Debes seleccionar exactamente una gravedad (marca un único tick).")
+                        st.error("Debes seleccionar exactamente una gravedad (deja solo un tick).")
                     else:
                         ok, msg = create_incident(
-                            teacher_id=usuario["id"], teacher_name=usuario["name"],
-                            grupo=grupo_sel, alumno=alumno_sel,
-                            fecha=fecha_sel, franja=franja_sel,
-                            descripcion=descripcion.strip(), gravedad_inicial=grav_ini
+                            teacher_id=usuario["id"],
+                            teacher_name=usuario["name"],
+                            grupo=grupo_sel,
+                            alumno=alumno_sel,
+                            fecha=fecha_sel,
+                            franja=franja_sel,
+                            descripcion=descripcion.strip(),
+                            gravedad_inicial=grav_ini
                         )
+        
                         if ok:
+                            # === Guardar datos para posible impresión ===
+                            st.session_state["p_last_created_incident"] = {
+                                "alumno": alumno_sel,
+                                "fecha": fecha_sel,
+                                "hora": franja_sel,
+                                "profesor": usuario["name"],
+                                "descripcion": descripcion.strip(),
+                                "gravedad_inicial": grav_ini,
+                                "enviado_por": usuario["name"],
+                                "enviado_dt": datetime.now(),
+                            }
+        
                             reset_nuevo_parte_form("p_")
-                            go_home_after_submit(msg)
-                            st.rerun()
+        
+                            # Muy importante: NO hacer go_home_after_submit ni rerun aquí
                         else:
                             st.error(msg)
+        
+                # ===== Mostrar prompt de impresión si existe =====
+                show_print_prompt("p_")
 
         # ----- TAB 1: No aptos (Jefatura) -----
         with tabs[1]:
@@ -2327,37 +2414,92 @@ def main():
         with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
-            if not grupos: st.warning("No hay grupos cargados.")
+        
+            if not grupos:
+                st.warning("No hay grupos cargados.")
             else:
-                col_g, col_a = st.columns([1,2])
+                # Selección de grupo y alumno
+                col_g, col_a = st.columns([1, 2])
                 grupo_sel = col_g.selectbox("Grupo", options=grupos, key="d_grupo")
+        
+                # Reset alumno al cambiar grupo
                 if "d_grupo_prev" not in st.session_state or st.session_state["d_grupo_prev"] != grupo_sel:
-                    st.session_state["d_alumno"] = None; st.session_state["d_grupo_prev"] = grupo_sel
+                    st.session_state["d_alumno"] = None
+                    st.session_state["d_grupo_prev"] = grupo_sel
+        
                 alumnos = list_alumnos_by_grupo(grupo_sel)
                 alumno_sel = col_a.selectbox("Alumno", options=alumnos if alumnos else [], key="d_alumno")
+        
+                # ===== FORMULARIO =====
                 with st.form("d_form_parte"):
                     col1, col2 = st.columns(2)
-                    with col1: 
-                        fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="d_fecha")
-                    with col2: franja_sel = st.selectbox("Franja horaria", FRANJAS, key="d_franja")
-                    st.markdown("**Gravedad (inicial)**"); grav_ini = gravedad_selector("d_grav_ini", default=None)
+        
+                    with col1:
+                        fecha_sel = st.date_input(
+                            "Fecha",
+                            value=date.today(),
+                            max_value=date.today(),
+                            key="d_fecha"
+                        )
+        
+                    with col2:
+                        franja_sel = st.selectbox("Franja horaria", FRANJAS, key="d_franja")
+        
+                    st.markdown("**Gravedad (inicial)**")
+                    grav_ini = gravedad_selector("d_grav_ini", default=None)
+        
                     descripcion = st.text_area("Descripción (obligatoria)", key="d_desc")
-                    enviar = st.form_submit_button("Enviar parte a Jefatura", use_container_width=True)
+        
+                    enviar = st.form_submit_button(
+                        "Enviar parte a Jefatura",
+                        use_container_width=True
+                    )
+        
+                # ===== PROCESAR ENVÍO =====
                 if enviar:
-                    if not alumnos or not alumno_sel or not grupo_sel: st.error("Grupo y alumno son obligatorios.")
-                    elif not descripcion or not descripcion.strip(): st.error("La descripción es obligatoria.")
-                    elif grav_ini not in ("leve","grave","muy grave"): st.error("Selecciona exactamente una gravedad.")
+                    if not alumnos or not alumno_sel or not grupo_sel:
+                        st.error("Grupo y alumno son obligatorios.")
+                    elif not descripcion or not descripcion.strip():
+                        st.error("La descripción es obligatoria.")
+                    elif grav_ini not in ("leve", "grave", "muy grave"):
+                        st.error("Selecciona exactamente una gravedad.")
                     else:
                         ok, msg = create_incident(
-                            teacher_id=usuario["id"], teacher_name=usuario["name"],
-                            grupo=grupo_sel, alumno=alumno_sel, fecha=fecha_sel, franja=franja_sel,
-                            descripcion=descripcion.strip(), gravedad_inicial=grav_ini
+                            teacher_id=usuario["id"],
+                            teacher_name=usuario["name"],
+                            grupo=grupo_sel,
+                            alumno=alumno_sel,
+                            fecha=fecha_sel,
+                            franja=franja_sel,
+                            descripcion=descripcion.strip(),
+                            gravedad_inicial=grav_ini
                         )
+        
                         if ok:
+                            # === Guardar datos para el prompt de impresión ===
+                            st.session_state["d_last_created_incident"] = {
+                                "alumno": alumno_sel,
+                                "fecha": fecha_sel,
+                                "hora": franja_sel,
+                                "profesor": usuario["name"],
+                                "descripcion": descripcion.strip(),
+                                "gravedad_inicial": grav_ini,
+                                "enviado_por": usuario["name"],
+                                "enviado_dt": datetime.now(),
+                            }
+        
+                            # Limpiamos el formulario
                             reset_nuevo_parte_form("d_")
-                            go_home_after_submit(msg); st.rerun()
+        
+                            # IMPORTANTE:
+                            # NO llamamos a go_home_after_submit()
+                            # NO hacemos st.rerun()
+                            # Dejar que actúe show_print_prompt()
                         else:
                             st.error(msg)
+        
+                # ===== Mostrar prompt para imprimir PDF =====
+                show_print_prompt("d_")
 
         # ----- TAB 1: Ranking alumnos (Director) -----
         with tabs[1]:
@@ -2566,21 +2708,45 @@ def main():
         with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
-            if not grupos: st.warning("No hay grupos cargados.")
+        
+            if not grupos:
+                st.warning("No hay grupos cargados.")
             else:
+                # Selección de grupo y alumno
                 col_g, col_a = st.columns([1,2])
                 grupo_sel = col_g.selectbox("Grupo", options=grupos, key="c_grupo")
+        
+                # Reset del alumno si cambia el grupo
                 if "c_grupo_prev" not in st.session_state or st.session_state["c_grupo_prev"] != grupo_sel:
-                    st.session_state["c_alumno"] = None; st.session_state["c_grupo_prev"] = grupo_sel
+                    st.session_state["c_alumno"] = None
+                    st.session_state["c_grupo_prev"] = grupo_sel
+        
                 alumnos = list_alumnos_by_grupo(grupo_sel)
                 alumno_sel = col_a.selectbox("Alumno", options=alumnos if alumnos else [], key="c_alumno")
+        
+                # ===== FORMULARIO =====
                 with st.form("c_form_parte"):
                     col1, col2 = st.columns(2)
-                    with col1: fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="c_fecha")
-                    with col2: franja_sel = st.selectbox("Franja horaria", FRANJAS, key="c_franja")
-                    st.markdown("**Gravedad (inicial)**"); grav_ini = gravedad_selector("c_grav_ini", default=None)
+        
+                    with col1:
+                        fecha_sel = st.date_input(
+                            "Fecha",
+                            value=date.today(),
+                            max_value=date.today(),
+                            key="c_fecha"
+                        )
+        
+                    with col2:
+                        franja_sel = st.selectbox("Franja horaria", FRANJAS, key="c_franja")
+        
+                    st.markdown("**Gravedad (inicial)**")
+                    grav_ini = gravedad_selector("c_grav_ini", default=None)
+        
                     descripcion = st.text_area("Descripción (obligatoria)", key="c_desc")
+        
                     enviar = st.form_submit_button("Enviar parte a Jefatura", use_container_width=True)
+        
+                # ===== PROCESAR ENVÍO =====
                 if enviar:
                     if not alumnos or not alumno_sel or not grupo_sel:
                         st.error("Grupo y alumno son obligatorios.")
@@ -2590,15 +2756,38 @@ def main():
                         st.error("Selecciona exactamente una gravedad.")
                     else:
                         ok, msg = create_incident(
-                            teacher_id=usuario["id"], teacher_name=usuario["name"],
-                            grupo=grupo_sel, alumno=alumno_sel, fecha=fecha_sel, franja=franja_sel,
-                            descripcion=descripcion.strip(), gravedad_inicial=grav_ini
+                            teacher_id=usuario["id"],
+                            teacher_name=usuario["name"],
+                            grupo=grupo_sel,
+                            alumno=alumno_sel,
+                            fecha=fecha_sel,
+                            franja=franja_sel,
+                            descripcion=descripcion.strip(),
+                            gravedad_inicial=grav_ini
                         )
+        
                         if ok:
+                            # === Guardamos la info del parte para imprimir ===
+                            st.session_state["c_last_created_incident"] = {
+                                "alumno": alumno_sel,
+                                "fecha": fecha_sel,
+                                "hora": franja_sel,
+                                "profesor": usuario["name"],
+                                "descripcion": descripcion.strip(),
+                                "gravedad_inicial": grav_ini,
+                                "enviado_por": usuario["name"],
+                                "enviado_dt": datetime.now(),
+                            }
+        
+                            # Limpiar formulario
                             reset_nuevo_parte_form("c_")
-                            go_home_after_submit(msg); st.rerun()
+        
+                            # No se usa go_home_after_submit ni rerun aquí
                         else:
                             st.error(msg)
+        
+                # ===== PREGUNTA DE IMPRESIÓN / DESCARGA PDF =====
+                show_print_prompt("c_")
 
         # ----- TAB 1: Mi historial (Convivencia) ----
         with tabs[1]:
@@ -2753,25 +2942,56 @@ def main():
     else:
         tabs = st.tabs(["📝 Nuevo parte", "📜 Mi historial"])
 
-        # ----- TAB 0: Nuevo parte (Profesor) ----
+        # ----- TAB 0: Nuevo parte (Profesor) -----
         with tabs[0]:
             st.subheader("📝 Nuevo parte")
             grupos = list_grupos()
-            if not grupos: st.warning("No hay grupos cargados.")
+        
+            if not grupos:
+                st.warning("No hay grupos cargados.")
             else:
+                # Selección de grupo y alumno
                 col_g, col_a = st.columns([1,2])
                 grupo_sel = col_g.selectbox("Grupo", options=grupos, key="p_grupo_prof")
+        
+                # Reset alumno si el grupo cambia
                 if "p_grupo_prev_prof" not in st.session_state or st.session_state["p_grupo_prev_prof"] != grupo_sel:
-                    st.session_state["p_alumno_prof"] = None; st.session_state["p_grupo_prev_prof"] = grupo_sel
+                    st.session_state["p_alumno_prof"] = None
+                    st.session_state["p_grupo_prev_prof"] = grupo_sel
+        
                 alumnos = list_alumnos_by_grupo(grupo_sel)
-                alumno_sel = col_a.selectbox("Alumno", options=alumnos if alumnos else [], key="p_alumno_prof")
+                alumno_sel = col_a.selectbox(
+                    "Alumno",
+                    options=alumnos if alumnos else [],
+                    key="p_alumno_prof"
+                )
+        
+                # ===== FORMULARIO =====
                 with st.form("p_form_parte_prof"):
                     col1, col2 = st.columns(2)
-                    with col1: fecha_sel = st.date_input("Fecha", value=date.today(), max_value=date.today(), key="p_fecha_prof")
-                    with col2: franja_sel = st.selectbox("Franja horaria", FRANJAS, key="p_franja_prof")
-                    st.markdown("**Gravedad (inicial)**"); grav_ini = gravedad_selector("p_grav_ini_prof", default=None)
+        
+                    with col1:
+                        fecha_sel = st.date_input(
+                            "Fecha",
+                            value=date.today(),
+                            max_value=date.today(),
+                            key="p_fecha_prof"
+                        )
+        
+                    with col2:
+                        franja_sel = st.selectbox("Franja horaria", FRANJAS, key="p_franja_prof")
+        
+                    st.markdown("**Gravedad (inicial)**")
+                    grav_ini = gravedad_selector("p_grav_ini_prof", default=None)
+        
                     descripcion = st.text_area("Descripción (obligatoria)", key="p_desc_prof")
-                    enviar = st.form_submit_button("Enviar parte a Jefatura", use_container_width=True)
+        
+                    enviar = st.form_submit_button(
+                        "Enviar parte a Jefatura",
+                        use_container_width=True
+                    )
+        
+                # ===== PROCESAR ENVÍO =====
                 if enviar:
                     if not alumnos or not alumno_sel or not grupo_sel:
                         st.error("Grupo y alumno son obligatorios.")
@@ -2781,15 +3001,38 @@ def main():
                         st.error("Selecciona exactamente una gravedad.")
                     else:
                         ok, msg = create_incident(
-                            teacher_id=usuario["id"], teacher_name=usuario["name"],
-                            grupo=grupo_sel, alumno=alumno_sel, fecha=fecha_sel, franja=franja_sel,
-                            descripcion=descripcion.strip(), gravedad_inicial=grav_ini
+                            teacher_id=usuario["id"],
+                            teacher_name=usuario["name"],
+                            grupo=grupo_sel,
+                            alumno=alumno_sel,
+                            fecha=fecha_sel,
+                            franja=franja_sel,
+                            descripcion=descripcion.strip(),
+                            gravedad_inicial=grav_ini
                         )
+        
                         if ok:
+                            # Guardar los datos del parte para impresión
+                            st.session_state["p_prof_last_created_incident"] = {
+                                "alumno": alumno_sel,
+                                "fecha": fecha_sel,
+                                "hora": franja_sel,
+                                "profesor": usuario["name"],
+                                "descripcion": descripcion.strip(),
+                                "gravedad_inicial": grav_ini,
+                                "enviado_por": usuario["name"],
+                                "enviado_dt": datetime.now(),
+                            }
+        
+                            # Limpiar el formulario
                             reset_nuevo_parte_form("p_")
-                            go_home_after_submit(msg); st.rerun()
+        
+                            # NO hacer go_home_after_submit ni st.rerun()
                         else:
                             st.error(msg)
+        
+                # ===== MOSTRAR PROMPT DE IMPRESIÓN =====
+                show_print_prompt("p_prof_")
 
         # ----- TAB 1: Mi historial (Profesor) ----
         with tabs[1]:
@@ -2830,6 +3073,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
