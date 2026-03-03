@@ -1689,17 +1689,24 @@ def main():
         except Exception:
             pend_count = 0
 
-        tabs = st.tabs([
-            "📝 Nuevo parte",
-            "🚫 Excursiones",
-            "🔥 Ranking de alumnos",
-            "📚 Historial de alumnos",
-            "👨‍🏫 Historial de profesores",
-            f"📬 Pendientes · {pend_count}",
-            "📊 Estadísticas",
-            "📈 Gráficos",
-            "👥 Usuarios"
-        ])
+        # Control persistente de la pestaña seleccionada
+        if "selected_tab" not in st.session_state:
+            st.session_state["selected_tab"] = 0  # normalmente se abre en Nuevo parte
+        
+        tabs = st.tabs(
+            [
+                "📝 Nuevo parte",
+                "🚫 Excursiones",
+                "🔥 Ranking de alumnos",
+                "📚 Historial de alumnos",
+                "👨‍🏫 Historial de profesores",
+                f"📬 Pendientes · {pend_count}",
+                "📊 Estadísticas",
+                "📈 Gráficos",
+                "👥 Usuarios"
+            ],
+            tab_id="jefatura_tabs",                 # ← clave del grupo de tabs
+        )
 
         # ----- TAB 0: Nuevo parte (Jefatura) -----
         with tabs[0]:
@@ -3042,6 +3049,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
