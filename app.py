@@ -420,6 +420,42 @@ def insert_student(grupo: str, alumno: str) -> tuple[bool, str]:
         except Exception as ex:
             return False, f"No se pudo insertar: {ex}"
 
+def delete_student(grupo: str, alumno: str) -> tuple[bool, str]:
+    """
+    Elimina un alumno del maestro 'students'. No borra partes de 'incidents'.
+    Devuelve (ok, mensaje). Si no existe, no falla y lo indica.
+    """
+    grupo = (grupo or "").strip()
+    alumno = (alumno or "").strip()
+    if not grupo or not alumno:
+        return False, "Debes indicar Grupo y Alumno."
+
+    # Comprobación opcional: partes asociados (solo para informar)
+    with get_conn() as conn:
+        try:
+            cnt_parts = conn.execute(
+                "SELECT COUNT(*) FROM incidents WHERE grupo=? AND alumno=?",
+                (grupo, alumno)
+            ).fetchone()[0]
+
+            # Intentar borrar del maestro
+            cur = conn.execute(
+                "DELETE FROM students WHERE grupo=? AND alumno=?",
+                (grupo, alumno)
+            )
+            conn.commit()
+
+            if cur.rowcount == 0:
+                return False, "No se encontró ese alumno en el maestro."
+
+            if cnt_parts > 0:
+                return True, f"Alumno eliminado del maestro. Nota: existen {cnt_parts} parte(s) asociados que NO se han borrado."
+            else:
+                return True, "Alumno eliminado del maestro."
+
+        except Exception as ex:
+            return False, f"No se pudo eliminar: {ex}"
+
 def import_alumnos_df_to_db(df: pd.DataFrame, mode: str = "merge"):
     """
     Importa alumnos desde un DataFrame.
@@ -1467,6 +1503,36 @@ def main():
                 ok, msg = insert_student(g_manual, a_manual)
                 (st.success if ok else st.error)(msg)
 
+            st.markdown("---")
+            # ===== Eliminar alumno a mano =====
+            st.subheader("🗑️ Eliminar alumno a mano")
+
+            # Selección de grupo y alumno (dependiente)
+            grupos_existentes_del = list_grupos()
+            colg_del, cola_del = st.columns([1, 2])
+
+            with colg_del:
+                g_del = st.selectbox("Grupo", options=grupos_existentes_del if grupos_existentes_del else ["(sin grupos)"], key="side_del_group")
+            with cola_del:
+                alumnos_del = list_alumnos_by_grupo(g_del) if grupos_existentes_del else []
+                a_del = st.selectbox("Alumno", options=alumnos_del if alumnos_del else ["(sin alumnos)"], key="side_del_student")
+
+            # Confirmación obligatoria
+            confirm_del = st.checkbox("✅ ¿Estás seguro de que desea borrar este alumno?", key="side_del_confirm")
+
+            # Acción: eliminar
+            if st.button("Eliminar alumno", key="side_btn_del_student", use_container_width=True, disabled=not confirm_del):
+                if not grupos_existentes_del or not alumnos_del or g_del in (None, "", "(sin grupos)") or a_del in (None, "", "(sin alumnos)"):
+                    st.error("Selecciona un grupo y un alumno válidos.")
+                elif not confirm_del:
+                    st.warning("Debes confirmar el borrado marcando la casilla.")
+                else:
+                    ok, msg = delete_student(g_del, a_del)
+                    (st.success if ok else st.error)(msg)
+                    # Si se eliminó correctamente, refrescamos la lista para que desaparezca del selector
+                    if ok:
+                        st.rerun()
+    
     # ======================================
     # Pantalla general tras crear un parte
     # ======================================
@@ -2684,6 +2750,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
