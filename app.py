@@ -1635,32 +1635,58 @@ def main():
                 (st.success if ok else st.error)(msg)
 
             st.markdown("---")
+
             # ===== Eliminar alumno a mano =====
             st.subheader("🗑️ Eliminar alumno a mano")
-
-            # Selección de grupo y alumno (dependiente)
+            
+            # Obtener lista de grupos existentes
             grupos_existentes_del = list_grupos()
-            colg_del, cola_del = st.columns([1, 2])
-
-            with colg_del:
-                g_del = st.selectbox("Grupo", options=grupos_existentes_del if grupos_existentes_del else ["(sin grupos)"], key="side_del_group")
-            with cola_del:
-                alumnos_del = list_alumnos_by_grupo(g_del) if grupos_existentes_del else []
-                a_del = st.selectbox("Alumno", options=alumnos_del if alumnos_del else ["(sin alumnos)"], key="side_del_student")
-
-            # Confirmación obligatoria
-            confirm_del = st.checkbox("✅ ¿Estás seguro de que desea borrar este alumno?", key="side_del_confirm")
-
-            # Acción: eliminar
-            if st.button("Eliminar alumno", key="side_btn_del_student", use_container_width=True, disabled=not confirm_del):
-                if not grupos_existentes_del or not alumnos_del or g_del in (None, "", "(sin grupos)") or a_del in (None, "", "(sin alumnos)"):
+            
+            # ----- SELECTOR DE GRUPO (con opción en blanco) -----
+            g_del = st.selectbox(
+                "Grupo",
+                options=[""] + grupos_existentes_del,                # ← primera opción vacía
+                format_func=lambda x: "— Selecciona —" if x == "" else x,
+                key="side_del_group"
+            )
+            
+            # ----- Resetear alumno cuando cambia el grupo -----
+            if (
+                "side_del_group_prev" not in st.session_state
+                or st.session_state["side_del_group_prev"] != g_del
+            ):
+                st.session_state["side_del_student"] = ""            # ← alumno vuelve a vacío
+                st.session_state["side_del_group_prev"] = g_del
+            
+            # ----- SELECTOR DE ALUMNO -----
+            if g_del == "":
+                # Si no se ha elegido grupo
+                a_del = None
+                st.info("Selecciona primero un grupo.")
+            else:
+                alumnos_del = list_alumnos_by_grupo(g_del)
+                a_del = st.selectbox(
+                    "Alumno",
+                    options=[""] + alumnos_del,                      # ← primera opción vacía
+                    format_func=lambda x: "— Selecciona —" if x == "" else x,
+                    key="side_del_student"
+                )
+            
+            # ----- CONFIRMACIÓN -----
+            confirm_del = st.checkbox(
+                "¿Estás seguro de que desea borrar este alumno?",
+                key="side_del_confirm"
+            )
+            
+            # ----- BOTÓN ELIMINAR -----
+            if st.button("Eliminar alumno", use_container_width=True, disabled=not confirm_del):
+                if g_del == "" or not a_del:
                     st.error("Selecciona un grupo y un alumno válidos.")
-                elif not confirm_del:
-                    st.warning("Debes confirmar el borrado marcando la casilla.")
                 else:
                     ok, msg = delete_student(g_del, a_del)
                     (st.success if ok else st.error)(msg)
-                    # Si se eliminó correctamente, refrescamos la lista para que desaparezca del selector
+            
+                    # Si se eliminó correctamente, refrescar la página
                     if ok:
                         st.rerun()
     
@@ -3074,6 +3100,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
