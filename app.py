@@ -1316,6 +1316,60 @@ def password_login_screen():
             else:
                 st.error("Contraseña incorrecta.")
 
+def excursion_banlist_multi(activity_date: date, grupos_filtro: list[str] | None = None, lookback_days: int = 30) -> pd.DataFrame:
+    """
+    Versión multi-grupo: devuelve alumnos NO aptos (partes CERRADOS con gravedad GRAVE o MUY GRAVE
+    en los últimos lookback_days días hasta activity_date), filtrando por una lista de grupos.
+    Si grupos_filtro es None o [], se consideran TODOS los grupos.
+    """
+    start = activity_date - timedelta(days=lookback_days)
+    graves = ("grave","muy grave")
+
+    # Filtro de 30 días (cerrados + gravedad final grave/muy grave + fecha en ventana)
+    where_30 = ["estado='cerrado'", "fecha BETWEEN ? AND ?", f"gravedad_final IN ({','.join('?'*len(graves))})"]
+    params_30 = [start.isoformat(), activity_date.isoformat(), *graves]
+
+    # Filtro por varios grupos (IN) si procede
+    if grupos_filtro and len(grupos_filtro) > 0:
+        placeholders = ",".join("?" for _ in grupos_filtro)
+        where_30.append(f"grupo IN ({placeholders})")
+        params_30.extend(grupos_filtro)
+
+    sql_30 = f"""
+        SELECT grupo, alumno, COUNT(*) as cnt
+        FROM incidents
+        WHERE {' AND '.join(where_30)}
+        GROUP BY grupo, alumno
+    """
+
+    # Totales por alumno (para columna Partes_totales)
+    where_tot = []
+    params_tot = []
+    if grupos_filtro and len(grupos_filtro) > 0:
+        placeholders = ",".join("?" for _ in grupos_filtro)
+        where_tot.append(f"grupo IN ({placeholders})")
+        params_tot.extend(grupos_filtro)
+
+    sql_tot = "SELECT grupo, alumno, COUNT(*) as cnt FROM incidents"
+    if where_tot:
+        sql_tot += " WHERE " + " AND ".join(where_tot)
+    sql_tot += " GROUP BY grupo, alumno"
+
+    with get_conn() as conn:
+        rows_30d = conn.execute(sql_30, tuple(params_30)).fetchall()
+        rows_tot = conn.execute(sql_tot, tuple(params_tot)).fetchall()
+
+    df_30 = pd.DataFrame(rows_30d, columns=["Grupo","Alumno","Partes_30d"])
+    df_tot = pd.DataFrame(rows_tot, columns=["Grupo","Alumno","Partes_totales"])
+
+    if df_30.empty:
+        return pd.DataFrame(columns=["Grupo","Alumno","Partes_30d","Partes_totales"])
+
+    df = df_30.merge(df_tot, on=["Grupo","Alumno"], how="left").fillna({"Partes_totales": 0})
+    df["Partes_30d"] = df["Partes_30d"].astype(int)
+    df["Partes_totales"] = df["Partes_totales"].astype(int)
+    return df.sort_values(["Grupo","Alumno"]).reset_index(drop=True)
+
 # ========== BLOQUE 6/7: App principal (Tabs por rol) ==========
 
 def main():
@@ -2630,6 +2684,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
