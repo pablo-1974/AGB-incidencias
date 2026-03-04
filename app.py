@@ -19,6 +19,19 @@ from io import BytesIO
 import streamlit as st
 import pandas as pd
 
+# Fondo azul para todas las páginas
+def apply_global_background():
+    css = """
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        background-attachment: fixed;
+    }
+    </style>
+    """
+    import streamlit as st
+    st.markdown(css, unsafe_allow_html=True)
+
 # ===== Soporte PDF =====
 try:
     from reportlab.lib.pagesizes import A4, landscape
@@ -1547,6 +1560,9 @@ def main():
         layout="wide",
         initial_sidebar_state="collapsed"
     )
+
+    apply_global_background()
+    
     init_db()
 
     # Cargar alumnos.xlsx si existe (una vez por sesión)
@@ -3105,31 +3121,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
