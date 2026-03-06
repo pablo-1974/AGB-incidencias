@@ -24,7 +24,7 @@ def apply_global_background():
     css = """
     <style>
     .stApp {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%) !important;
         background-attachment: fixed;
     }
     </style>
@@ -3121,3 +3121,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
