@@ -1200,43 +1200,41 @@ def show_home_header():
     st.title("📋 Partes de Incidencias de Alumnado")
 
 # === Estilo de la pantalla de login: fondo degradado + card central ===
-def apply_login_theme(gradient: str = None):
-    """
-    Aplica el tema del login. Si no se pasa 'gradient', usa paleta naranja corporativa.
-    Todo el CSS está acotado a la pantalla de login (stApp + .login-card),
-    por lo que no afecta a otras pantallas.
-    """
+import streamlit as st
+
+def apply_login_theme(gradient: str | None = None):
+    """Inyecta CSS del login. Usa tema naranja corporativo si no se pasa 'gradient'."""
     if gradient is None:
-        # Degradado naranja (izq->der) suave y limpio
         gradient = "linear-gradient(135deg, #FFE8D9 0%, #FFD1B3 40%, #FFB37A 100%)"
 
     custom_css = f"""
     <style>
     :root {{
-        /* Paleta naranja profesional */
         --brand-50:  #FFF4E9;
         --brand-100: #FFE8D9;
         --brand-200: #FFDCC7;
         --brand-300: #FFC9A6;
-        --brand-400: #FFB37A;   /* Base clara */
-        --brand-500: #FF8F3F;   /* Principal (botón) */
-        --brand-600: #F5762B;   /* Hover botón */
-        --brand-700: #D8651F;   /* Activo */
-        --ink-900:   #0F172A;   /* Texto oscuro */
-        --ink-700:   #334155;   /* Texto secundario */
+        --brand-400: #FFB37A;
+        --brand-500: #FF8F3F;
+        --brand-600: #F5762B;
+        --brand-700: #D8651F;
+        --ink-900:   #0F172A;
+        --ink-700:   #334155;
         --border:    rgba(148,163,184,0.35);
         --card:      rgba(255, 255, 255, 0.96);
         --shadow-1:  0 12px 28px rgba(30,41,59,0.16), 0 8px 10px rgba(30,41,59,0.10);
         --shadow-2:  0 6px 16px rgba(30, 41, 59, 0.12);
-        --focus:     0 0 0 3px rgba(245, 118, 43, 0.20); /* naranja suave accesible */
+        --focus:     0 0 0 3px rgba(245, 118, 43, 0.20);
     }}
 
-    .stApp {{
+    /* Fondo app */
+    [data-testid="stAppViewContainer"] {{
         background: {gradient};
         background-attachment: fixed;
     }}
 
-    section[data-testid="stSidebar"] {{
+    /* Sidebar */
+    [data-testid="stSidebar"] {{
         background: rgba(255,255,255,0.75);
         backdrop-filter: blur(3px);
         border-left: 1px solid var(--border);
@@ -1265,13 +1263,9 @@ def apply_login_theme(gradient: str = None):
     }}
 
     /* ===== Inputs ===== */
-    .login-card .stTextInput, .login-card .stPassword {{
-        margin-bottom: 0.9rem;
-    }}
-
-    /* Wrapper del input */
+    /* Envase del input (la caja blanca) */
     .login-card .stTextInput > div > div,
-    .login-card .stPassword   > div > div {{
+    .login-card [data-testid="stPasswordInput"] > div > div {{
         background: #ffffff;
         border: 1px solid var(--border);
         border-radius: 12px;
@@ -1280,31 +1274,32 @@ def apply_login_theme(gradient: str = None):
     }}
 
     /* Input real */
-    .login-card .stTextInput input,
-    .login-card .stPassword   input {{
-        background: transparent;
-        border: none;
-        outline: none;
-        border-radius: 12px;
-        padding: 0.55rem 0.75rem;
-        font-size: 0.98rem;
-        color: var(--ink-900);
+    .login-card input[type="text"],
+    .login-card input[type="password"],
+    .login-card input[type="email"] {{
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        border-radius: 12px !important;
+        padding: 0.55rem 0.75rem !important;
+        font-size: 0.98rem !important;
+        color: var(--ink-900) !important;
     }}
 
-    /* Placeholder visible */
+    /* Placeholder */
     .login-card input::placeholder {{
         color: #6b7280;
         opacity: 1;
     }}
 
-    /* Focus/Hover */
+    /* Focus/Hover sobre el wrapper */
     .login-card .stTextInput > div > div:focus-within,
-    .login-card .stPassword   > div > div:focus-within {{
+    .login-card [data-testid="stPasswordInput"] > div > div:focus-within {{
         border-color: var(--brand-500);
         box-shadow: var(--focus);
     }}
     .login-card .stTextInput > div > div:hover,
-    .login-card .stPassword   > div > div:hover {{
+    .login-card [data-testid="stPasswordInput"] > div > div:hover {{
         border-color: var(--brand-400);
     }}
 
@@ -1318,7 +1313,6 @@ def apply_login_theme(gradient: str = None):
         transition: transform .06s ease;
     }}
 
-    /* Botones dentro del login -> naranja corporativo */
     .login-card .stButton > button {{
         background: var(--brand-500) !important;
         color: white !important;
@@ -1332,7 +1326,7 @@ def apply_login_theme(gradient: str = None):
         transform: translateY(0);
     }}
 
-    /* Enlaces secundarios (texto de ayuda) */
+    /* Enlaces */
     .login-card a {{
         color: var(--brand-600) !important;
         text-decoration: none;
@@ -1343,11 +1337,11 @@ def apply_login_theme(gradient: str = None):
         border-bottom-color: rgba(216,101,31,0.55);
     }}
 
-    /* Logo centrado si lo usas dentro de la card */
+    /* Logo centrado (opcional) */
     .login-logo {{
         display: block;
         margin: 0 auto 0.4rem auto;
-        width: 72px;   /* Ajusta a tu logo */
+        width: 72px;
         height: auto;
     }}
 
@@ -1360,8 +1354,42 @@ def apply_login_theme(gradient: str = None):
     }}
     </style>
     """
-    import streamlit as st
     st.markdown(custom_css, unsafe_allow_html=True)
+
+
+# ==== Página de login (ejemplo) ====
+def login_page():
+    apply_login_theme()
+
+    # Abre la tarjeta .login-card
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+
+    st.image("tu_logo.png", caption=None, use_container_width=False)  # o usa la clase login-logo con HTML si prefieres
+    st.markdown("### Acceso")
+
+    # Campos
+    user = st.text_input("Usuario")
+    pwd = st.text_input("Contraseña", type="password")
+
+    col1, col2 = st.columns([1,1])
+    with col1:
+        login_ok = st.button("Entrar")
+    with col2:
+        st.link_button("¿Olvidaste tu contraseña?", "https://tusitio/recuperar")  # o st.markdown con <a>
+
+    st.markdown('<div class="login-footer">Soporte: soporte@tucolegio.es</div>', unsafe_allow_html=True)
+
+    # Cierra la tarjeta
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Lógica de login
+    if login_ok:
+        # valida credenciales...
+        pass
+
+if __name__ == "__main__":
+    st.set_page_config(page_title="Login", page_icon="🔐", layout="centered")
+    login_page()
 
 # Context manager para crear la "card" del login
 from contextlib import contextmanager
@@ -3189,5 +3217,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
