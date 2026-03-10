@@ -1201,99 +1201,167 @@ def show_home_header():
 
 # === Estilo de la pantalla de login: fondo degradado + card central ===
 def apply_login_theme(gradient: str = None):
+    """
+    Aplica el tema del login. Si no se pasa 'gradient', usa paleta naranja corporativa.
+    Todo el CSS está acotado a la pantalla de login (stApp + .login-card),
+    por lo que no afecta a otras pantallas.
+    """
     if gradient is None:
-        gradient = "linear-gradient(135deg, #cfe9d9 0%, #a3d9b1 50%, #7ac69a 100%)"
+        # Degradado naranja (izq->der) suave y limpio
+        gradient = "linear-gradient(135deg, #FFE8D9 0%, #FFD1B3 40%, #FFB37A 100%)"
 
     custom_css = f"""
     <style>
+    :root {{
+        /* Paleta naranja profesional */
+        --brand-50:  #FFF4E9;
+        --brand-100: #FFE8D9;
+        --brand-200: #FFDCC7;
+        --brand-300: #FFC9A6;
+        --brand-400: #FFB37A;   /* Base clara */
+        --brand-500: #FF8F3F;   /* Principal (botón) */
+        --brand-600: #F5762B;   /* Hover botón */
+        --brand-700: #D8651F;   /* Activo */
+        --ink-900:   #0F172A;   /* Texto oscuro */
+        --ink-700:   #334155;   /* Texto secundario */
+        --border:    rgba(148,163,184,0.35);
+        --card:      rgba(255, 255, 255, 0.96);
+        --shadow-1:  0 12px 28px rgba(30,41,59,0.16), 0 8px 10px rgba(30,41,59,0.10);
+        --shadow-2:  0 6px 16px rgba(30, 41, 59, 0.12);
+        --focus:     0 0 0 3px rgba(245, 118, 43, 0.20); /* naranja suave accesible */
+    }}
+
     .stApp {{
         background: {gradient};
         background-attachment: fixed;
     }}
 
     section[data-testid="stSidebar"] {{
-        background: rgba(255,255,255,0.7);
+        background: rgba(255,255,255,0.75);
         backdrop-filter: blur(3px);
+        border-left: 1px solid var(--border);
     }}
 
+    /* ===== Tarjeta de login ===== */
     .login-card {{
-        max-width: 540px;
+        max-width: 560px;
         margin: 4rem auto 2rem auto;
         padding: 2rem 1.5rem;
-        background: rgba(255, 255, 255, 0.92);
-        border-radius: 16px;
-        box-shadow: 0 12px 28px rgba(30, 41, 59, 0.18), 0 8px 10px rgba(30, 41, 59, 0.10);
-        border: 1px solid rgba(148,163,184,0.25);
+        background: var(--card);
+        border-radius: 18px;
+        box-shadow: var(--shadow-1);
+        border: 1px solid var(--border);
     }}
 
     .login-card h1, .login-card h2, .login-card h3 {{
         text-align: center;
         margin-top: 0.4rem;
         margin-bottom: 0.8rem;
+        color: var(--ink-900);
     }}
 
-    .stButton > button {{
-        border-radius: 12px !important;
-        padding: 0.6rem 0.9rem !important;
-        font-weight: 600 !important;
-        box-shadow: 0 6px 16px rgba(30, 41, 59, 0.12);
+    .login-card p, .login-card small, .login-card label {{
+        color: var(--ink-700);
     }}
 
-    /* ==== INPUTS DESTACADOS EN LOGIN ==== */
-    /* Contenedores de Email/Password dentro de la card */
+    /* ===== Inputs ===== */
     .login-card .stTextInput, .login-card .stPassword {{
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.9rem;
     }}
 
-    /* Caja del input (envoltorio) */
+    /* Wrapper del input */
     .login-card .stTextInput > div > div,
     .login-card .stPassword   > div > div {{
-        background: #ffffff;                     /* Fondo blanco nítido */
-        border: 1px solid rgba(148,163,184,0.45);/* Gris suave */
-        border-radius: 12px;                     /* Bordes redondeados */
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
         box-shadow: 0 3px 10px rgba(30,41,59,0.06);
-        transition: box-shadow .2s ease, border-color .2s ease;
+        transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease;
     }}
 
-    /* El propio input */
+    /* Input real */
     .login-card .stTextInput input,
     .login-card .stPassword   input {{
-        background: transparent;                 /* Fondo ya lo pone el wrapper */
+        background: transparent;
         border: none;
         outline: none;
-        border-radius: 12px;                     /* Redondeo coherente */
-        padding: 0.55rem 0.75rem;                /* Respiración */
+        border-radius: 12px;
+        padding: 0.55rem 0.75rem;
         font-size: 0.98rem;
-        color: #111827;                          /* Texto oscuro */
+        color: var(--ink-900);
     }}
 
-    /* Placeholder más visible sobre el degradado */
+    /* Placeholder visible */
     .login-card input::placeholder {{
-        color: #6b7280;                          /* Gris medio */
+        color: #6b7280;
         opacity: 1;
     }}
 
-    /* Estado foco/hover: resaltado visible y accesible */
+    /* Focus/Hover */
     .login-card .stTextInput > div > div:focus-within,
     .login-card .stPassword   > div > div:focus-within {{
-        border-color: #5B6CFF;                   /* Primario */
-        box-shadow: 0 0 0 3px rgba(91,108,255,0.20);
+        border-color: var(--brand-500);
+        box-shadow: var(--focus);
     }}
     .login-card .stTextInput > div > div:hover,
     .login-card .stPassword   > div > div:hover {{
-        border-color: #64748b;                   /* Gris un pelín más intenso */
+        border-color: var(--brand-400);
     }}
 
-    /* Centrado del logo (si decides ponerlo dentro del card) */
+    /* ===== Botones ===== */
+    .stButton > button {{
+        border-radius: 12px !important;
+        padding: 0.6rem 0.9rem !important;
+        font-weight: 700 !important;
+        box-shadow: var(--shadow-2);
+        border: 1px solid transparent;
+        transition: transform .06s ease;
+    }}
+
+    /* Botones dentro del login -> naranja corporativo */
+    .login-card .stButton > button {{
+        background: var(--brand-500) !important;
+        color: white !important;
+    }}
+    .login-card .stButton > button:hover {{
+        background: var(--brand-600) !important;
+        transform: translateY(-1px);
+    }}
+    .login-card .stButton > button:active {{
+        background: var(--brand-700) !important;
+        transform: translateY(0);
+    }}
+
+    /* Enlaces secundarios (texto de ayuda) */
+    .login-card a {{
+        color: var(--brand-600) !important;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(245,118,43,0.35);
+    }}
+    .login-card a:hover {{
+        color: var(--brand-700) !important;
+        border-bottom-color: rgba(216,101,31,0.55);
+    }}
+
+    /* Logo centrado si lo usas dentro de la card */
     .login-logo {{
         display: block;
-        margin: 0 auto 0.5rem auto;
+        margin: 0 auto 0.4rem auto;
+        width: 72px;   /* Ajusta a tu logo */
+        height: auto;
+    }}
+
+    /* Pie (opcional) */
+    .login-footer {{
+        text-align: center;
+        color: var(--ink-700);
+        font-size: 0.85rem;
+        margin-top: 0.75rem;
     }}
     </style>
     """
     import streamlit as st
     st.markdown(custom_css, unsafe_allow_html=True)
-
 
 # Context manager para crear la "card" del login
 from contextlib import contextmanager
@@ -3121,4 +3189,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
