@@ -1364,7 +1364,7 @@ def login_page():
     # Abre la tarjeta .login-card
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-    st.image("tu_logo.png", caption=None, use_container_width=False)  # o usa la clase login-logo con HTML si prefieres
+    st.image("logo.png", caption=None, use_container_width=False)  # o usa la clase login-logo con HTML si prefieres
     st.markdown("### Acceso")
 
     # Campos
@@ -3217,6 +3217,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
