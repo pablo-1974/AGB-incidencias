@@ -1357,40 +1357,6 @@ def apply_login_theme(gradient: str | None = None):
     st.markdown(custom_css, unsafe_allow_html=True)
 
 
-# ==== Página de login (ejemplo) ====
-def login_page():
-    apply_login_theme()
-
-    # Abre la tarjeta .login-card
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
-
-    st.image("logo.png", caption=None, use_container_width=False)  # o usa la clase login-logo con HTML si prefieres
-    st.markdown("### Acceso")
-
-    # Campos
-    user = st.text_input("Usuario")
-    pwd = st.text_input("Contraseña", type="password")
-
-    col1, col2 = st.columns([1,1])
-    with col1:
-        login_ok = st.button("Entrar")
-    with col2:
-        st.link_button("¿Olvidaste tu contraseña?", "https://tusitio/recuperar")  # o st.markdown con <a>
-
-    st.markdown('<div class="login-footer">Soporte: soporte@tucolegio.es</div>', unsafe_allow_html=True)
-
-    # Cierra la tarjeta
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Lógica de login
-    if login_ok:
-        # valida credenciales...
-        pass
-
-if __name__ == "__main__":
-    st.set_page_config(page_title="Login", page_icon="🔐", layout="centered")
-    login_page()
-
 # Context manager para crear la "card" del login
 from contextlib import contextmanager
 
