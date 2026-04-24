@@ -1,6 +1,7 @@
 # db/students.py
 from db.connection import get_db
 
+from utils.text import normalize_for_sort
 
 def get_all_groups():
     """
