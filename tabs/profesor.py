@@ -11,11 +11,13 @@ def render_profesor(user: dict):
     st.subheader("✏️ Área del profesorado")
 
     st.write(
-        "Desde aquí podrás gestionar tus incidencias como docente.\n\n"
-        "Opciones disponibles:\n"
-        "- Mis incidencias"
+        "Desde aquí podrás gestionar tus incidencias como docente."
     )
 
-    # Más adelante:
-    # from tabs.incidents_profesor import render_incidents_profesor
-    # render_incidents_profesor(user)
+    st.markdown("---")
+
+   
+    # ✅ Funcionalidad real: ver mis incidencias
+    from tabs.incidents_profesor import render_incidents_profesor
+    render_incidents_profesor(user)
+
