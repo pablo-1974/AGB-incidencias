@@ -5,6 +5,7 @@ from tabs.incidents_list import render_incidents_list
 from tabs.incidents_create import render_incident_create
 from tabs.incidents_close import render_incidents_close
 from tabs.rankings import render_rankings
+from tabs.student_analysis import render_student_analysis
 
 from db.incidents import (
     count_open_incidents,
@@ -79,8 +80,13 @@ def render_jefatura(user: dict):
     # ==========================
     st.subheader("📊 Rankings")
     render_rankings(user["role"])
-
+    
+    
+    # ==========================
+    # ANÁLISIS ALUMNO
+    # ==========================
     st.divider()
+    render_student_analysis(user)
 
     
     # ==========================
