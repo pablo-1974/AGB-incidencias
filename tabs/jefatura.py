@@ -82,13 +82,22 @@ def render_jefatura(user: dict):
     st.subheader("📊 Rankings")
     render_rankings(user["role"])
     
+    st.divider()
     
     # ==========================
     # ANÁLISIS ALUMNO
     # ==========================
-    st.divider()
+    
     render_student_analysis(user)
+    st.divider()
+    
+    # ==========================
+    # APTOS EXCURSIÓN
+    # ==========================
+    st.subheader("🎒 No aptos para excursiones")
+    render_excursion_eligibility()
 
+    st.divider()
     
     # ==========================
     # NAVEGACIÓN DIRECTA (BOTÓN)
