@@ -3,7 +3,7 @@ import streamlit as st
 
 from tabs.incidents_list import render_incidents_list
 from tabs.incidents_create import render_incident_create
-
+from tabs.rankings import render_rankings
 
 def render_director(user: dict):
     """
@@ -22,3 +22,10 @@ def render_director(user: dict):
 
     with tabs[1]:
         render_incident_create(user)
+
+
+    # ==========================
+    # RANKINGS
+    # ==========================
+    st.subheader("📊 Rankings")
+    render_rankings(user["role"])
