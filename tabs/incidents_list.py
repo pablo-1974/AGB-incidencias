@@ -6,6 +6,7 @@ from db.connection import get_db
 from db.incidents import get_incidents
 
 from utils.text import normalize_for_sort
+from utils.enums import GRAVEDADES
 
 def render_incidents_list(user: dict, mode: str = "own"):
     """
