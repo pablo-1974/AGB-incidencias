@@ -84,19 +84,22 @@ def render_jefatura(user: dict):
     
     st.divider()
     
+    
     # ==========================
     # ANÁLISIS ALUMNO
     # ==========================
-    
+    st.subheader("🧒 Análisis por alumno")
     render_student_analysis(user)
+    
     st.divider()
+
     
     # ==========================
     # APTOS EXCURSIÓN
     # ==========================
     st.subheader("🎒 No aptos para excursiones")
     render_excursion_eligibility()
-
+    
     st.divider()
     
     # ==========================
