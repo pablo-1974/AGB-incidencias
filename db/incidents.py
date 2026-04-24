@@ -290,3 +290,102 @@ def count_incidents_closed_this_week() -> int:
                 (ESTADO_CERRADO, since),
             )
             return cur.fetchone()[0]
+
+# ======================================================
+# RANKINGS
+# ======================================================
+
+def get_students_ranking():
+    """
+    Ranking de alumnos.
+    Devuelve:
+      - posicion
+      - alumno
+      - grupo
+      - num_incidencias
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                WITH alumno_grupo_counts AS (
+                    SELECT
+                        alumno,
+                        grupo,
+                        COUNT(*) AS cnt
+                    FROM incidents
+                    GROUP BY alumno, grupo
+                ),
+                alumno_totals AS (
+                    SELECT
+                        alumno,
+                        SUM(cnt) AS total_cnt
+                    FROM alumno_grupo_counts
+                    GROUP BY alumno
+                ),
+                alumno_main_group AS (
+                    SELECT DISTINCT ON (alumno)
+                        alumno,
+                        grupo
+                    FROM alumno_grupo_counts
+                    ORDER BY alumno, cnt DESC, grupo
+                )
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY at.total_cnt DESC, at.alumno) AS posicion,
+                    at.alumno,
+                    amg.grupo,
+                    at.total_cnt AS num_incidencias
+                FROM alumno_totals at
+                JOIN alumno_main_group amg
+                  ON amg.alumno = at.alumno
+                ORDER BY at.total_cnt DESC, at.alumno
+                """
+            )
+            return cur.fetchall()
+
+def get_groups_ranking():
+    """
+    Ranking de grupos.
+    Devuelve:
+      - posicion
+      - grupo
+      - num_incidencias
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, grupo) AS posicion,
+                    grupo,
+                    COUNT(*) AS num_incidencias
+                FROM incidents
+                GROUP BY grupo
+                ORDER BY num_incidencias DESC, grupo
+                """
+            )
+            return cur.fetchall()
+
+def get_teachers_ranking():
+    """
+    Ranking de profesores.
+    Devuelve:
+      - posicion
+      - profesor
+      - num_incidencias
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, teacher_name) AS posicion,
+                    teacher_name AS profesor,
+                    COUNT(*) AS num_incidencias
+                FROM incidents
+                GROUP BY teacher_name
+                ORDER BY num_incidencias DESC, profesor
+                """
+            )
+            return cur.fetchall()
+
