@@ -3,6 +3,7 @@ import streamlit as st
 from datetime import date
 
 from db.connection import get_db
+from db.incidents import create_incident
 
 
 def render_incident_create(user: dict):
@@ -15,7 +16,7 @@ def render_incident_create(user: dict):
     st.write("Completa el formulario para enviar la incidencia a Jefatura.")
 
     # =========================
-    # CARGA DE OPCIONES
+    # CARGA DE OPCIONES (UI)
     # =========================
     try:
         with get_db() as conn:
@@ -91,39 +92,18 @@ def render_incident_create(user: dict):
         return
 
     # =========================
-    # INSERT EN BD
+    # CREACIÓN (DB)
     # =========================
     try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO incidents (
-                        teacher_id,
-                        teacher_name,
-                        grupo,
-                        alumno,
-                        fecha,
-                        hora,
-                        descripcion,
-                        gravedad_inicial,
-                        estado,
-                        created_at
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                    """,
-                    (
-                        user["id"],
-                        user["name"],
-                        grupo,
-                        alumno,
-                        fecha.isoformat(),
-                        "",  # hora vacía (no obligatoria ahora)
-                        descripcion.strip(),
-                        gravedad,
-                        "abierto",
-                    ),
-                )
+        create_incident(
+            user_id=user["id"],
+            user_name=user["name"],
+            grupo=grupo,
+            alumno=alumno,
+            fecha=fecha.isoformat(),
+            descripcion=descripcion.strip(),
+            gravedad=gravedad,
+        )
 
         st.success("✅ Incidencia enviada correctamente a Jefatura.")
 
