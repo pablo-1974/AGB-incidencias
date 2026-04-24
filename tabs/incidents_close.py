@@ -1,8 +1,7 @@
 # tabs/incidents_close.py
 import streamlit as st
-from datetime import datetime
 
-from db.connection import get_db
+from db.incidents import get_open_incidents, close_incident
 
 
 def render_incidents_close(user: dict):
@@ -14,26 +13,10 @@ def render_incidents_close(user: dict):
     st.subheader("✅ Cerrar incidencias")
 
     # --------------------------
-    # Cargar incidencias abiertas
+    # Cargar incidencias abiertas (DB)
     # --------------------------
     try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT
-                        id,
-                        fecha,
-                        grupo,
-                        alumno,
-                        descripcion,
-                        gravedad_inicial
-                    FROM incidents
-                    WHERE estado != 'cerrado'
-                    ORDER BY id DESC
-                    """
-                )
-                rows = cur.fetchall()
+        rows = get_open_incidents()
     except Exception as e:
         st.error("❌ Error al cargar incidencias abiertas.")
         st.exception(e)
@@ -91,30 +74,15 @@ def render_incidents_close(user: dict):
         return
 
     # --------------------------
-    # UPDATE EN BD
+    # CIERRE (DB)
     # --------------------------
     try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE incidents
-                    SET
-                        gravedad_final = %s,
-                        estado = 'cerrado',
-                        reviewed_by = %s,
-                        reviewed_by_name = %s,
-                        closed_at = %s
-                    WHERE id = %s
-                    """,
-                    (
-                        gravedad_final,
-                        user["id"],
-                        user["name"],
-                        datetime.now().isoformat(),
-                        incident_id,
-                    ),
-                )
+        close_incident(
+            incident_id=incident_id,
+            gravedad_final=gravedad_final,
+            reviewer_id=user["id"],
+            reviewer_name=user["name"],
+        )
 
         st.success("✅ Incidencia cerrada correctamente.")
         st.rerun()
