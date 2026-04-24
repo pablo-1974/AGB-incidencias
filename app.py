@@ -46,35 +46,12 @@ def main():
     # LOGIN
     # ==============================
     if st.session_state["user"] is None:
-        ok, email, password = render_login(
+        render_login(
             app_name=APP_NAME,
             institution_name=INSTITUTION_NAME,
             logo_path=LOGO_PATH,
         )
-
-        if ok:
-            result = authenticate_user(email, password)
-
-            if result is None:
-                st.error("Credenciales incorrectas.")
-                return
-
-            status, user = result
-
-            # ✅ PRIMER ACCESO: sin contraseña todavía
-            if status == "first_login":
-                st.session_state["user"] = user
-                st.session_state["view"] = "change_password"
-                st.rerun()
-
-            # ✅ LOGIN NORMAL
-            if status == "ok":
-                st.session_state["user"] = user
-                st.session_state["view"] = "home"
-                st.rerun()
-
-        # ⚠️ MUY IMPORTANTE:
-        # cortar aquí para no renderizar nada más
+        # MUY IMPORTANTE: no seguir renderizando la app
         return
 
     # ==============================
