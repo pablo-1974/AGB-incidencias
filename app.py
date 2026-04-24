@@ -8,20 +8,7 @@ from ui.home import render_header, render_footer
 from ui.sidebar import render_sidebar
 
 from db.init import check_db
-
-# ==============================
-# AUTENTICACIÓN (PLACEHOLDER)
-# ==============================
-def authenticate(email: str, password: str):
-    """
-    Autenticación REAL se implementará con:
-      - db.users
-      - security.passwords
-
-    De momento:
-      - devuelve None (login aún no operativo contra BD)
-    """
-    return None
+from db.users import authenticate_user
 
 
 # ==============================
@@ -64,16 +51,28 @@ def main():
         )
 
         if ok:
-            user = authenticate(email, password)
+            result = authenticate_user(email, password)
 
-            if user:
+            if result is None:
+                st.error("Credenciales incorrectas.")
+                return
+
+            status, user = result
+
+            # ✅ PRIMER ACCESO: sin contraseña todavía
+            if status == "first_login":
+                st.session_state["user"] = user
+                st.session_state["view"] = "change_password"
+                st.rerun()
+
+            # ✅ LOGIN NORMAL
+            if status == "ok":
                 st.session_state["user"] = user
                 st.session_state["view"] = "home"
                 st.rerun()
-            else:
-                st.error("Credenciales incorrectas.")
 
-        # MUY IMPORTANTE: cortar aquí
+        # ⚠️ MUY IMPORTANTE:
+        # cortar aquí para no renderizar nada más
         return
 
     # ==============================
@@ -104,7 +103,11 @@ def main():
 
     elif view == "change_password":
         st.title("🔐 Cambiar contraseña")
-        st.info("Funcionalidad pendiente de implementar.")
+        st.info(
+            "Es tu primer acceso o no tienes contraseña definida. "
+            "Debes establecer una contraseña antes de continuar."
+        )
+        # 👉 aquí conectaremos la vista real de cambio de contraseña
 
     else:
         st.warning("Vista no reconocida.")
