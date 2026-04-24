@@ -71,10 +71,10 @@ def render_change_password():
                 )
 
         st.success("✅ Contraseña actualizada correctamente.")
-        st.info("Ya puedes usar la aplicación con normalidad.")
-
-        # Redirigir a home
-        st.session_state["view"] = "home"
+        st.info("La sesión se cerrará para que accedas con tu nueva contraseña.")
+        
+        # Forzar logout completo
+        st.session_state.clear()
         st.rerun()
 
     except Exception as e:
