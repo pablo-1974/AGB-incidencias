@@ -5,46 +5,50 @@ import pandas as pd
 from db.connection import get_db
 
 
-def render_incidents_list(user: dict):
+def render_incidents_list(user: dict, mode: str = "own"):
     """
-    Lista incidencias asociadas al usuario.
-    El filtro exacto puede variar según rol.
+    Lista incidencias con distintos alcances según modo.
+
+    mode:
+      - "own"    -> solo incidencias del usuario (profesor)
+      - "all"    -> todas las incidencias (jefatura, admin, convivencia)
     """
 
+    st.subheader("📄 Incidencias")
 
-    st.markdown("### 📄 Mis incidencias")
+    params = []
+    where_clause = ""
 
-    teacher_id = user.get("id")
-    if not teacher_id:
-        st.error("Usuario no válido.")
-        return
+    if mode == "own":
+        where_clause = "WHERE teacher_id = %s"
+        params.append(user["id"])
 
-    # --------------------------
-    # CONSULTA A BD (Neon)
-    # --------------------------
+    # mode == "all"  -> sin WHERE
+
+    query = f"""
+        SELECT
+            fecha,
+            hora,
+            grupo,
+            alumno,
+            descripcion,
+            gravedad_inicial,
+            gravedad_final,
+            estado,
+            teacher_name
+        FROM incidents
+        {where_clause}
+        ORDER BY id DESC
+    """
+
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT
-                        fecha,
-                        hora,
-                        grupo,
-                        alumno,
-                        descripcion,
-                        gravedad_inicial,
-                        estado
-                    FROM incidents
-                    WHERE teacher_id = %s
-                    ORDER BY id DESC
-                    """,
-                    (teacher_id,),
-                )
+                cur.execute(query, params)
                 rows = cur.fetchall()
 
     except Exception as e:
-        st.error("❌ Error al cargar las incidencias.")
+        st.error("❌ Error al cargar incidencias.")
         st.exception(e)
         return
 
@@ -52,9 +56,6 @@ def render_incidents_list(user: dict):
         st.info("No hay incidencias para mostrar.")
         return
 
-    # --------------------------
-    # DATAFRAME
-    # --------------------------
     df = pd.DataFrame(
         rows,
         columns=[
@@ -63,8 +64,10 @@ def render_incidents_list(user: dict):
             "Grupo",
             "Alumno",
             "Descripción",
-            "Gravedad",
+            "Gravedad inicial",
+            "Gravedad final",
             "Estado",
+            "Profesor",
         ],
     )
 
