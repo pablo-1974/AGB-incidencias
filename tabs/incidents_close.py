@@ -1,6 +1,8 @@
 # tabs/incidents_close.py
 import streamlit as st
 
+from utils.enums import GRAVEDADES
+
 from db.incidents import get_open_incidents, close_incident
 
 
