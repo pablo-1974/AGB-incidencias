@@ -1,6 +1,5 @@
 # tabs/profesor.py
 import streamlit as st
-
 from tabs.incidents_list import render_incidents_list
 from tabs.incidents_create import render_incident_create
 
@@ -8,12 +7,10 @@ from tabs.incidents_create import render_incident_create
 def render_profesor(user: dict):
     st.subheader("✏️ Área del profesorado")
 
-    tab_list, tab_create = st.tabs(
-        ["📄 Mis incidencias", "➕ Nueva incidencia"]
-    )
+    tabs = st.tabs(["📄 Mis incidencias", "➕ Nueva incidencia"])
 
-    with tab_list:
-        render_incidents_list(user)
+    with tabs[0]:
+        render_incidents_list(user, mode="own")
 
-    with tab_create:
+    with tabs[1]:
         render_incident_create(user)
