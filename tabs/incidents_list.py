@@ -1,15 +1,16 @@
-# tabs/incidents_profesor.py
+# tabs/incidents_list.py
 import streamlit as st
 import pandas as pd
 
 from db.connection import get_db
 
 
-def render_incidents_profesor(user: dict):
+def render_incidents_list(user: dict):
     """
-    Muestra las incidencias creadas por el profesor autenticado.
-    Solo lectura (por ahora).
+    Lista incidencias asociadas al usuario.
+    El filtro exacto puede variar según rol.
     """
+
 
     st.markdown("### 📄 Mis incidencias")
 
@@ -48,7 +49,7 @@ def render_incidents_profesor(user: dict):
         return
 
     if not rows:
-        st.info("No has registrado ninguna incidencia todavía.")
+        st.info("No hay incidencias para mostrar.")
         return
 
     # --------------------------
