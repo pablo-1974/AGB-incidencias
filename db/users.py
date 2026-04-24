@@ -109,6 +109,7 @@ def create_user(
         raise ValueError("Rol no válido")
 
     password_hash = hash_password(password)
+    active_int = 1 if active else 0   # ✅ conversión correct
 
     with get_db() as conn:
         with conn.cursor() as cur:
