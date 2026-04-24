@@ -6,6 +6,7 @@ from tabs.incidents_create import render_incident_create
 from tabs.incidents_close import render_incidents_close
 from tabs.rankings import render_rankings
 from tabs.student_analysis import render_student_analysis
+from tabs.excursion_eligibility import render_excursion_eligibility
 
 from db.incidents import (
     count_open_incidents,
