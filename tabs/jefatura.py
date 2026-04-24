@@ -1,19 +1,10 @@
 # tabs/jefatura.py
 import streamlit as st
+from tabs.incidents_list import render_incidents_list
 
 
 def render_jefatura(user: dict):
-    """
-    Vista principal de JEFATURA.
-    """
-
     st.subheader("📋 Panel de Jefatura")
 
-    st.write(
-        "Gestión académica y organizativa del centro.\n\n"
-        "Funciones previstas:\n"
-        "- Incidencias\n"
-        "- Alumnado\n"
-        "- Convivencia\n"
-        "- Informes"
-    )
+    render_incidents_list(user, mode="all")
+
