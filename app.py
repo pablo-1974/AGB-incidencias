@@ -9,6 +9,8 @@ from ui.sidebar import render_sidebar
 
 from db.init import check_db
 from db.users import authenticate_user
+from db.incidents import has_any_open_incident
+
 
 
 # ==============================
@@ -79,7 +81,7 @@ def main():
     # USUARIO AUTENTICADO
     # ==============================
     user = st.session_state["user"]
-
+    
     # HEADER
     render_header(
         app_name=APP_NAME,
@@ -90,6 +92,19 @@ def main():
 
     # SIDEBAR
     render_sidebar(user)
+
+    
+    # ==============================
+    # AVISO GLOBAL DE INCIDENCIAS ABIERTAS
+    # ==============================
+    if user.get("role") in {"admin", "jefatura"}:
+        try:
+            if has_any_open_incident():
+                st.warning("⚠️ Existen incidencias abiertas en el sistema.")
+        except Exception as e:
+            st.error("Error al comprobar el estado de las incidencias.")
+            st.exception(e)
+
 
     # ==============================
     # ROUTING DE VISTAS
