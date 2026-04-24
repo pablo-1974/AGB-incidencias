@@ -1,19 +1,9 @@
 # tabs/admin.py
 import streamlit as st
+from tabs.incidents_list import render_incidents_list
 
 
 def render_admin(user: dict):
-    """
-    Vista principal del rol ADMIN.
-    Funciones técnicas y de administración del sistema.
-    """
+    st.subheader("🛠️ Administración")
 
-    st.subheader("🛠️ Administración del sistema")
-
-    st.write(
-        "Área de administración técnica.\n\n"
-        "Funciones previstas:\n"
-        "- Gestión de usuarios\n"
-        "- Reseteo de contraseñas\n"
-        "- Auditoría del sistema"
-    )
+    render_incidents_list(user, mode="all")
