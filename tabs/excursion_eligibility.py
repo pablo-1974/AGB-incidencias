@@ -1,9 +1,13 @@
 # tabs/excursion_eligibility.py
 import streamlit as st
 from datetime import date
+from pathlib import Path
+
+from dateutil.relativedelta import relativedelta
 
 from db.incidents import get_excursion_eligibility
 from db.students import get_all_groups
+from utils.pdf_excursion import pdf_no_aptos_excursion
 
 
 def _render_result_table(title: str, rows: list[dict]):
@@ -74,7 +78,11 @@ def render_excursion_eligibility():
         grupos=grupos_sel,
     )
 
-    # Ordenación final garantizada (por seguridad)
+    # Periodo exacto (mes anterior)
+    fecha_desde = fecha_excursion - relativedelta(months=1)
+    fecha_hasta = fecha_excursion - relativedelta(days=1)
+
+    # Ordenación final
     sancionados.sort(key=lambda x: (x["grupo"], x["alumno"]))
     amnistiables.sort(key=lambda x: (x["grupo"], x["alumno"]))
 
@@ -86,13 +94,34 @@ def render_excursion_eligibility():
     st.markdown(f"## 📄 Actividad: **{actividad}**")
     st.caption(
         f"Periodo analizado: "
-        f"{(fecha_excursion.replace(day=fecha_excursion.day) )} (mes anterior a la excursión)"
+        f"{fecha_desde.strftime('%d/%m/%Y')} – {fecha_hasta.strftime('%d/%m/%Y')}"
     )
 
     st.divider()
 
+    # ---- SANCIONADOS ----
     _render_result_table("🔴 Sancionados (no aptos)", sancionados)
+
+    # ---- PDF ----
+    if sancionados:
+        pdf_bytes = pdf_no_aptos_excursion(
+            rows=sancionados,
+            actividad=actividad,
+            fecha_excursion=fecha_excursion,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta,
+            logo_path=Path("logo.png"),  # usa None si aún no tienes logo
+        )
+
+        st.download_button(
+            "📄 Descargar PDF (No aptos para excursión)",
+            data=pdf_bytes,
+            file_name=f"no_aptos_{actividad.replace(' ', '_')}_{fecha_excursion.isoformat()}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
     st.divider()
 
+    # ---- AMNISTIABLES ----
     _render_result_table("🟡 Posibles amnistiados", amnistiables)
