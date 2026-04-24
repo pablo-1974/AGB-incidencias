@@ -1,60 +1,69 @@
 # ui/login.py
 import streamlit as st
 from pathlib import Path
+
 from ui.styles import apply_global_styles
 from db.users import authenticate_user
 
 
-def render_login(app_name: str, institution_name: str, logo_path: str | None = None):
+def render_login(
+    app_name: str,
+    institution_name: str,
+    logo_path: str | None = None,
+):
+    # CSS global (ya correcto)
     apply_global_styles()
 
-    # Ocultar sidebar
+    # Ocultar sidebar SOLO en login
     st.markdown(
         """
         <style>
-        [data-testid="stSidebar"] { display: none; }
+        [data-testid="stSidebar"] {
+            display: none;
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # Contenedor principal
-    st.markdown('<div class="login-page">', unsafe_allow_html=True)
-    st.markdown('<div class="card login-card">', unsafe_allow_html=True)
+    # Un poco de aire arriba
+    st.markdown("##")
 
-    # Logo
-    if logo_path and Path(logo_path).exists():
-        st.image(logo_path, width=90)
+    # Centrado horizontal REAL (Streamlit)
+    left, center, right = st.columns([1, 2, 1])
 
-    # Títulos
-    st.markdown(
-        f"""
-        <h1 class="login-title">{app_name}</h1>
-        <h2 class="login-subtitle">{institution_name}</h2>
-        """,
-        unsafe_allow_html=True,
-    )
+    with center:
+        # Tarjeta visual
+        st.markdown('<div class="card">', unsafe_allow_html=True)
 
-    st.divider()
+        # Logo
+        if logo_path and Path(logo_path).exists():
+            st.image(logo_path, width=80)
 
-    # 🔑 FORMULARIO (ESTO ES LO QUE FALTABA)
-    email = st.text_input("Email")
-    password = st.text_input("Contraseña", type="password")
+        # Título y subtítulo
+        st.markdown(
+            f"""
+            <div class="login-title">{app_name}</div>
+            <div class="login-subtitle">{institution_name}</div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    if st.button("Entrar", use_container_width=True):
-        result = authenticate_user(email, password)
+        # Campos
+        email = st.text_input("Email")
+        password = st.text_input("Contraseña", type="password")
 
-        if not result:
-            st.error("Credenciales incorrectas.")
-            return
+        # Botón
+        if st.button("Entrar", use_container_width=True):
+            result = authenticate_user(email, password)
 
-        status, user = result
+            if not result:
+                st.error("Credenciales incorrectas.")
+                return
 
-        # Login correcto
-        st.session_state["user"] = user
-        st.session_state["view"] = "home"
-        st.rerun()
+            status, user = result
+            st.session_state["user"] = user
+            st.session_state["view"] = "home"
+            st.rerun()
 
-    # Cierre contenedores
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
