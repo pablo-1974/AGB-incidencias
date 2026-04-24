@@ -203,9 +203,17 @@ def render_admin(user: dict):
     # ==========================
     # ANÁLISIS ALUMNO
     # ==========================
-    
     st.subheader("🧒 Análisis por alumno")
     render_student_analysis(user)
+    
+    st.divider()
+
+    
+    # ==========================
+    # APTOS EXCURSIÓN
+    # ==========================
+    st.subheader("🎒 No aptos para excursiones")
+    render_excursion_eligibility()
     
     st.divider()
     
