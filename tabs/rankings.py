@@ -9,6 +9,11 @@ from db.incidents import (
     get_teachers_ranking,
 )
 
+from pathlib import Path
+
+from utils.pdf_ranking_students import pdf_ranking_students
+from utils.pdf_ranking_teachers import pdf_ranking_teachers
+from utils.pdf_ranking_groups import pdf_ranking_groups
 
 def render_rankings(role: str):
     """
@@ -65,7 +70,32 @@ def render_rankings(role: str):
                 use_container_width=True,
                 hide_index=True,
             )
+            
+            # Preparar datos para PDF
+            pdf_rows = [
+                {
+                    "rank": r[0],
+                    "alumno": r[1],
+                    "grupo": r[2],
+                    "partes": r[3],
+                }
+                for r in rows
+            ]
 
+            pdf_bytes = pdf_ranking_students(
+                rows=pdf_rows,
+                titulo="Ranking de alumnos con más incidencias",
+                logo_path=Path("logo.png"),
+            )
+
+            st.download_button(
+                "📄 Descargar PDF (Ranking de alumnos)",
+                data=pdf_bytes,
+                file_name="ranking_alumnos.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+            
     # ==================================================
     # RANKING DE GRUPOS
     # ==================================================
@@ -92,7 +122,29 @@ def render_rankings(role: str):
                 use_container_width=True,
                 hide_index=True,
             )
+            
+            pdf_rows = [
+                {
+                    "rank": r[0],
+                    "grupo": r[1],
+                    "partes": r[2],
+                }
+                for r in rows
+            ]
 
+            pdf_bytes = pdf_ranking_groups(
+                rows=pdf_rows,
+                titulo="Ranking de grupos con más incidencias",
+                logo_path=Path("logo.png"),
+            )
+
+            st.download_button(
+                "📄 Descargar PDF (Ranking de grupos)",
+                data=pdf_bytes,
+                file_name="ranking_grupos.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
     # ==================================================
     # RANKING DE PROFESORES
     # ==================================================
@@ -119,3 +171,26 @@ def render_rankings(role: str):
                 use_container_width=True,
                 hide_index=True,
             )
+
+            pdf_rows = [
+                {
+                    "rank": r[0],
+                    "profesor": r[1],
+                    "partes": r[2],
+                }
+                for r in rows
+            ]
+            
+            pdf_bytes = pdf_ranking_teachers(
+                rows=pdf_rows,
+                titulo="Ranking de profesores por incidencias",
+                logo_path=Path("logo.png"),
+            )
+            
+            st.download_button(
+                "📄 Descargar PDF (Ranking de profesores)",
+                data=pdf_bytes,
+                file_name="ranking_profesores.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+             )
