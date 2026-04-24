@@ -2,6 +2,11 @@
 from datetime import datetime
 from db.connection import get_db
 
+from utils.enums import (
+    ESTADO_ABIERTO,
+    ESTADO_CERRADO,
+)
+
 
 # ======================================================
 # CONSULTAS
@@ -21,7 +26,7 @@ def get_incidents(
 ):
     """
     Devuelve incidencias según filtros.
-    
+
     mode:
       - "own": solo del usuario (requiere user_id)
       - "all": todas
@@ -121,7 +126,7 @@ def create_incident(
                     estado,
                     created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'abierto', %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     user_id,
@@ -132,6 +137,7 @@ def create_incident(
                     "",  # hora no obligatoria
                     descripcion,
                     gravedad,
+                    ESTADO_ABIERTO,
                     datetime.now().isoformat(),
                 ),
             )
@@ -159,7 +165,7 @@ def close_incident(
                 UPDATE incidents
                 SET
                     gravedad_final = %s,
-                    estado = 'cerrado',
+                    estado = %s,
                     reviewed_by = %s,
                     reviewed_by_name = %s,
                     closed_at = %s
@@ -167,6 +173,7 @@ def close_incident(
                 """,
                 (
                     gravedad_final,
+                    ESTADO_CERRADO,
                     reviewer_id,
                     reviewer_name,
                     datetime.now().isoformat(),
@@ -178,18 +185,21 @@ def close_incident(
 # ======================================================
 # AVISO INCIDENCIAS ABIERTAS
 # ======================================================
+
 def has_any_open_incident() -> bool:
     """
     Indica si existe al menos una incidencia abierta en el sistema.
     """
+
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT 1
                 FROM incidents
-                WHERE estado != 'cerrado'
+                WHERE estado != %s
                 LIMIT 1
-                """
+                """,
+                (ESTADO_CERRADO,),
             )
             return cur.fetchone() is not None
