@@ -97,9 +97,8 @@ def main():
     view = st.session_state["view"]
     
     if view == "home":
-        st.title("🏠 Inicio")
-        st.write("Bienvenido a la aplicación de incidencias.")
-        st.write("Aquí se mostrarán las opciones según tu rol.")
+        from tabs.home import render_home
+        render_home(user)
     
     elif view == "change_password":
         from ui.change_password import render_change_password
