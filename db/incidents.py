@@ -173,3 +173,23 @@ def close_incident(
                     incident_id,
                 ),
             )
+
+
+# ======================================================
+# AVISO INCIDENCIAS ABIERTAS
+# ======================================================
+def has_any_open_incident() -> bool:
+    """
+    Indica si existe al menos una incidencia abierta en el sistema.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT 1
+                FROM incidents
+                WHERE estado != 'cerrado'
+                LIMIT 1
+                """
+            )
+            return cur.fetchone() is not None
