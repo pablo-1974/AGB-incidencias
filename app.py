@@ -95,20 +95,16 @@ def main():
     # ROUTING DE VISTAS
     # ==============================
     view = st.session_state["view"]
-
+    
     if view == "home":
         st.title("🏠 Inicio")
         st.write("Bienvenido a la aplicación de incidencias.")
         st.write("Aquí se mostrarán las opciones según tu rol.")
-
+    
     elif view == "change_password":
-        st.title("🔐 Cambiar contraseña")
-        st.info(
-            "Es tu primer acceso o no tienes contraseña definida. "
-            "Debes establecer una contraseña antes de continuar."
-        )
-        # 👉 aquí conectaremos la vista real de cambio de contraseña
-
+        from ui.change_password import render_change_password
+        render_change_password()
+    
     else:
         st.warning("Vista no reconocida.")
 
