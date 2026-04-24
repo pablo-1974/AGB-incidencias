@@ -6,6 +6,7 @@ from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
 
 from utils.text import normalize_for_sort
+from utils.enums import GRAVEDADES
 
 def render_incident_create(user: dict):
     """
