@@ -295,7 +295,10 @@ def count_incidents_closed_this_week() -> int:
 # RANKINGS
 # ======================================================
 
-def get_students_ranking():
+def get_students_ranking(
+    fecha_desde: str | None = None,
+    fecha_hasta: str | None = None,
+):
     """
     Ranking de alumnos.
     Devuelve:
@@ -303,17 +306,32 @@ def get_students_ranking():
       - alumno
       - grupo
       - num_incidencias
+    Permite filtrar por fecha (opcional).
     """
+    where = []
+    params = []
+
+    if fecha_desde:
+        where.append("fecha >= %s")
+        params.append(fecha_desde)
+
+    if fecha_hasta:
+        where.append("fecha <= %s")
+        params.append(fecha_hasta)
+
+    where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """
+                f"""
                 WITH alumno_grupo_counts AS (
                     SELECT
                         alumno,
                         grupo,
                         COUNT(*) AS cnt
                     FROM incidents
+                    {where_sql}
                     GROUP BY alumno, grupo
                 ),
                 alumno_totals AS (
@@ -339,53 +357,92 @@ def get_students_ranking():
                 JOIN alumno_main_group amg
                   ON amg.alumno = at.alumno
                 ORDER BY at.total_cnt DESC, at.alumno
-                """
+                """,
+                params,
             )
             return cur.fetchall()
 
-def get_groups_ranking():
+def get_groups_ranking(
+    fecha_desde: str | None = None,
+    fecha_hasta: str | None = None,
+):
     """
     Ranking de grupos.
     Devuelve:
       - posicion
       - grupo
       - num_incidencias
+    Permite filtrar por fecha (opcional).
     """
+    where = []
+    params = []
+
+    if fecha_desde:
+        where.append("fecha >= %s")
+        params.append(fecha_desde)
+
+    if fecha_hasta:
+        where.append("fecha <= %s")
+        params.append(fecha_hasta)
+
+    where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, grupo) AS posicion,
                     grupo,
                     COUNT(*) AS num_incidencias
                 FROM incidents
+                {where_sql}
                 GROUP BY grupo
                 ORDER BY num_incidencias DESC, grupo
-                """
+                """,
+                params,
             )
             return cur.fetchall()
 
-def get_teachers_ranking():
+def get_teachers_ranking(
+    fecha_desde: str | None = None,
+    fecha_hasta: str | None = None,
+):
     """
     Ranking de profesores.
     Devuelve:
       - posicion
       - profesor
       - num_incidencias
+    Permite filtrar por fecha (opcional).
     """
+    where = []
+    params = []
+
+    if fecha_desde:
+        where.append("fecha >= %s")
+        params.append(fecha_desde)
+
+    if fecha_hasta:
+        where.append("fecha <= %s")
+        params.append(fecha_hasta)
+
+    where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, teacher_name) AS posicion,
                     teacher_name AS profesor,
                     COUNT(*) AS num_incidencias
                 FROM incidents
+                {where_sql}
                 GROUP BY teacher_name
                 ORDER BY num_incidencias DESC, profesor
-                """
+                """,
+                params,
             )
             return cur.fetchall()
 
