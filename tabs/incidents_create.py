@@ -2,13 +2,14 @@
 import streamlit as st
 from datetime import date
 
-from db.students import get_all_groups, get_all_students
+from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
 
 
 def render_incident_create(user: dict):
     """
     Formulario para crear una nueva incidencia.
+    Grupo -> Alumno dependiente.
     Todos los campos son obligatorios.
     """
 
@@ -16,13 +17,12 @@ def render_incident_create(user: dict):
     st.write("Completa el formulario para enviar la incidencia a Jefatura.")
 
     # =========================
-    # CARGA DE OPCIONES (DB)
+    # CARGA DE GRUPOS
     # =========================
     try:
         grupos = get_all_groups()
-        alumnos = get_all_students()
     except Exception as e:
-        st.error("❌ Error al cargar grupos o alumnos.")
+        st.error("❌ Error al cargar los grupos.")
         st.exception(e)
         return
 
@@ -36,9 +36,21 @@ def render_incident_create(user: dict):
             ["— Selecciona grupo —"] + grupos
         )
 
+        # ALUMNO DEPENDIENTE DEL GRUPO
+        if grupo != "— Selecciona grupo —":
+            try:
+                alumnos = get_students_by_group(grupo)
+            except Exception as e:
+                st.error("❌ Error al cargar alumnos.")
+                st.exception(e)
+                return
+            alumno_options = ["— Selecciona alumno —"] + alumnos
+        else:
+            alumno_options = ["— Selecciona grupo primero —"]
+
         alumno = st.selectbox(
             "Alumno",
-            ["— Selecciona alumno —"] + alumnos
+            alumno_options
         )
 
         fecha = st.date_input(
@@ -73,7 +85,7 @@ def render_incident_create(user: dict):
         st.error("Debes seleccionar un grupo.")
         return
 
-    if alumno == "— Selecciona alumno —":
+    if alumno in ("— Selecciona grupo primero —", "— Selecciona alumno —"):
         st.error("Debes seleccionar un alumno.")
         return
 
