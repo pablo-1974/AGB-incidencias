@@ -1,14 +1,48 @@
 # utils/enums.py
 
-ROLES_ADMINISTRATIVOS = {"admin", "jefatura"}
+# ==============================
+# ROLES
+# ==============================
+
+ROLE_ADMIN = "admin"
+ROLE_JEFATURA = "jefatura"
+ROLE_PROFESOR = "profesor"
+ROLE_CONVIVENCIA = "convivencia"
+ROLE_DIRECTOR = "director"
+
+ROLES_ADMINISTRATIVOS = {
+    ROLE_ADMIN,
+    ROLE_JEFATURA,
+}
+
+ROLES_TODOS = {
+    ROLE_ADMIN,
+    ROLE_JEFATURA,
+    ROLE_PROFESOR,
+    ROLE_CONVIVENCIA,
+    ROLE_DIRECTOR,
+}
+
+
+# ==============================
+# INCIDENCIAS
+# ==============================
+
+ESTADO_ABIERTO = "abierto"
+ESTADO_CERRADO = "cerrado"
 
 ESTADOS_INCIDENCIA = [
-    "abierto",
-    "cerrado",
+    ESTADO_ABIERTO,
+    ESTADO_CERRADO,
 ]
 
+
+GRAVEDAD_LEVE = "leve"
+GRAVEDAD_GRAVE = "grave"
+GRAVEDAD_MUY_GRAVE = "muy grave"
+
 GRAVEDADES = [
-    "leve",
-    "grave",
-    "muy grave",
+    GRAVEDAD_LEVE,
+    GRAVEDAD_GRAVE,
+    GRAVEDAD_MUY_GRAVE,
 ]
