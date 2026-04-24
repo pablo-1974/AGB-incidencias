@@ -102,28 +102,25 @@ def create_user(
     role: str,
     active: bool = True,
 ):
-    """
-    Crea un usuario nuevo.
-    """
     if role not in ROLES_TODOS:
         raise ValueError("Rol no válido")
 
     password_hash = hash_password(password)
-    active_int = 1 if active else 0   # ✅ conversión correct
+    active_int = 1 if active else 0  # sigue siendo correcto
 
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 INSERT INTO users (name, email, password_hash, role, active)
-                VALUES (%s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s::int)
                 """,
                 (
                     name,
                     email.lower(),
                     password_hash,
                     role,
-                    active,
+                    active_int,   # aquí puede venir 0/1 o True/False: SQL lo fuerza
                 ),
             )
         conn.commit()
