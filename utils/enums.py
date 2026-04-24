@@ -5,19 +5,19 @@
 # ==============================
 
 ROLE_ADMIN = "admin"
-ROLE_JEFATURA = "jefatura"
+ROLE_JEFE = "jefe"
 ROLE_PROFESOR = "profesor"
 ROLE_CONVIVENCIA = "convivencia"
 ROLE_DIRECTOR = "director"
 
 ROLES_ADMINISTRATIVOS = {
     ROLE_ADMIN,
-    ROLE_JEFATURA,
+    ROLE_JEFE,
 }
 
 ROLES_TODOS = {
     ROLE_ADMIN,
-    ROLE_JEFATURA,
+    ROLE_JEFE,
     ROLE_PROFESOR,
     ROLE_CONVIVENCIA,
     ROLE_DIRECTOR,
