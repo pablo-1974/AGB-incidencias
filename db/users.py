@@ -83,3 +83,12 @@ def authenticate_user(email: str, password: str):
         "name": user["name"],
         "role": user["role"],
     }
+
+def has_any_user() -> bool:
+    """
+    Devuelve True si existe al menos un usuario en la base de datos.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT EXISTS (SELECT 1 FROM users);")
+            return cur.fetchone()[0]
