@@ -4,6 +4,7 @@ import streamlit as st
 from tabs.incidents_list import render_incidents_list
 from tabs.incidents_create import render_incident_create
 from tabs.rankings import render_rankings
+from tabs.student_analysis import render_student_analysis
 
 def render_convivencia(user: dict):
     st.subheader("🧩 Área de Convivencia")
@@ -18,9 +19,19 @@ def render_convivencia(user: dict):
     with tabs[1]:
         render_incident_create(user)
 
+    st.divider()
 
     # ==========================
     # RANKINGS
     # ==========================
     st.subheader("📊 Rankings")
     render_rankings(user["role"])
+    
+    st.divider()
+
+    # ==========================
+    # ANÁLISIS ALUMNO
+    # ==========================
+    st.subheader("🧒 Análisis por alumno")
+    render_student_analysis(user)
+
