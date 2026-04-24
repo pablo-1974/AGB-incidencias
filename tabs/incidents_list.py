@@ -6,7 +6,7 @@ from db.connection import get_db
 
 def render_incidents_list(user: dict, mode: str = "own"):
     """
-    Lista incidencias con filtros avanzados.
+    Lista incidencias con filtros avanzados y rango de fechas.
 
     mode:
       - "own" -> solo incidencias del usuario
@@ -50,38 +50,41 @@ def render_incidents_list(user: dict, mode: str = "own"):
     # =========================
     # FILTROS
     # =========================
-    cols = st.columns(6 if mode == "all" else 5)
-    col = 0
+    cols = st.columns(7 if mode == "all" else 6)
+    i = 0
 
     if mode == "all":
-        with cols[col]:
+        with cols[i]:
             profesor_sel = st.selectbox(
                 "Profesor",
                 ["— Todos —"] + profesores,
                 format_func=lambda x: x if isinstance(x, str) else x[1],
             )
-        col += 1
+        i += 1
     else:
         profesor_sel = None
 
-    with cols[col]:
+    with cols[i]:
         grupo_sel = st.selectbox("Grupo", ["— Todos —"] + grupos)
-    col += 1
+    i += 1
 
-    with cols[col]:
+    with cols[i]:
         alumno_sel = st.selectbox("Alumno", ["— Todos —"] + alumnos)
-    col += 1
+    i += 1
 
-    with cols[col]:
+    with cols[i]:
         estado_sel = st.selectbox("Estado", ["— Todos —"] + estados)
-    col += 1
+    i += 1
 
-    with cols[col]:
+    with cols[i]:
         gravedad_sel = st.selectbox("Gravedad", ["— Todas —"] + gravedades)
-    col += 1
+    i += 1
 
-    with cols[col]:
-        fecha_sel = st.date_input("Fecha", value=None)
+    with cols[i]:
+        fecha_desde = st.date_input("Desde", value=None)
+
+    with cols[i + 1]:
+        fecha_hasta = st.date_input("Hasta", value=None)
 
     # =========================
     # WHERE DINÁMICO
@@ -113,9 +116,13 @@ def render_incidents_list(user: dict, mode: str = "own"):
         where.append("gravedad_inicial = %s")
         params.append(gravedad_sel)
 
-    if fecha_sel:
-        where.append("fecha = %s")
-        params.append(fecha_sel.isoformat())
+    if fecha_desde:
+        where.append("fecha >= %s")
+        params.append(fecha_desde.isoformat())
+
+    if fecha_hasta:
+        where.append("fecha <= %s")
+        params.append(fecha_hasta.isoformat())
 
     where_sql = f"WHERE {' AND '.join(where)}" if where else ""
 
@@ -135,7 +142,7 @@ def render_incidents_list(user: dict, mode: str = "own"):
             teacher_name
         FROM incidents
         {where_sql}
-        ORDER BY id DESC
+        ORDER BY fecha DESC, hora DESC, id DESC
     """
 
     try:
