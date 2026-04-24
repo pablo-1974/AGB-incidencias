@@ -5,6 +5,7 @@ import pandas as pd
 from tabs.incidents_list import render_incidents_list
 from tabs.incidents_create import render_incident_create
 from tabs.incidents_close import render_incidents_close
+from tabs.rankings import render_rankings
 
 from db.incidents import (
     count_open_incidents,
@@ -187,6 +188,10 @@ def render_admin(user: dict):
                 st.error(str(e))
 
     st.divider()
+    
+    render_rankings(user["role"])
+
+    
     # ==========================
     # NAVEGACIÓN DIRECTA (BOTÓN)
     # ==========================
