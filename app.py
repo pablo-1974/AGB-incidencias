@@ -9,9 +9,7 @@ from ui.sidebar import render_sidebar
 # ==============================
 # CONFIGURACIÓN GENERAL
 # ==============================
-APP_NAME = "Incidencias de alumnado"
-INSTITUTION_NAME = "AGB Antonio García Bellido"
-LOGO_PATH = "logo.png"
+from config import APP_NAME, INSTITUTION_NAME, LOGO_PATH, APP_YEAR
 
 
 # ==============================
