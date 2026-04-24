@@ -6,6 +6,7 @@ from tabs.incidents_create import render_incident_create
 from tabs.rankings import render_rankings
 from tabs.student_analysis import render_student_analysis
 from tabs.excursion_eligibility import render_excursion_eligibility
+from tabs.teacher_analysis import render_teacher_analysis
 
 def render_director(user: dict):
     """
@@ -39,6 +40,14 @@ def render_director(user: dict):
     # ==========================
     st.subheader("🧒 Análisis por alumno")
     render_student_analysis(user)
+    
+    st.divider()
+    
+    # ==========================
+    # ANÁLISIS PROFESOR
+    # ==========================
+    st.subheader("👨‍🏫 Análisis por profesor")
+    render_teacher_analysis(user)
     
     st.divider()
     
