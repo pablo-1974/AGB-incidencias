@@ -188,7 +188,9 @@ def render_admin(user: dict):
                 st.error(str(e))
 
     st.divider()
-    
+
+
+    st.subheader("📊 Rankings")
     render_rankings(user["role"])
 
     
