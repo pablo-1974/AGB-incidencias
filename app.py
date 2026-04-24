@@ -97,7 +97,7 @@ def main():
     # ==============================
     # AVISO GLOBAL DE INCIDENCIAS ABIERTAS
     # ==============================
-    if user.get("role") in {"admin", "jefatura"}:
+    if user.get("role") in ROLES_ADMINISTRATIVOS:
         try:
             if has_any_open_incident():
                 st.warning("⚠️ Existen incidencias abiertas en el sistema.")
