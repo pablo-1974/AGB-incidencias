@@ -1,18 +1,9 @@
 # tabs/convivencia.py
 import streamlit as st
+from tabs.incidents_list import render_incidents_list
 
 
 def render_convivencia(user: dict):
-    """
-    Vista principal del rol CONVIVENCIA.
-    """
-
     st.subheader("🧩 Área de Convivencia")
 
-    st.write(
-        "Seguimiento y resolución de incidencias.\n\n"
-        "Funciones previstas:\n"
-        "- Casos abiertos\n"
-        "- Historial de incidencias\n"
-        "- Medidas aplicadas"
-    )
+    render_incidents_list(user, mode="all")
