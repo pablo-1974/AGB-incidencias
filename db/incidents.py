@@ -1,12 +1,12 @@
 # db/incidents.py
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from db.connection import get_db
 
 from utils.enums import (
     ESTADO_ABIERTO,
     ESTADO_CERRADO,
+    GRAVEDAD_MUY_GRAVE,
 )
-
 
 # ======================================================
 # CONSULTAS
@@ -183,7 +183,7 @@ def close_incident(
 
 
 # ======================================================
-# AVISO INCIDENCIAS ABIERTAS
+# AVISO GLOBAL
 # ======================================================
 
 def has_any_open_incident() -> bool:
@@ -203,3 +203,90 @@ def has_any_open_incident() -> bool:
                 (ESTADO_CERRADO,),
             )
             return cur.fetchone() is not None
+
+
+# ======================================================
+# KPIs — DASHBOARD JEFATURA
+# ======================================================
+
+def _start_of_current_week_iso() -> str:
+    """
+    Devuelve la fecha ISO del lunes de la semana actual.
+    """
+    today = date.today()
+    monday = today - timedelta(days=today.weekday())
+    return monday.isoformat()
+
+
+def count_open_incidents() -> int:
+    """
+    Número total de incidencias abiertas (pendientes).
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM incidents
+                WHERE estado != %s
+                """,
+                (ESTADO_CERRADO,),
+            )
+            return cur.fetchone()[0]
+
+
+def count_open_very_serious_incidents() -> int:
+    """
+    Número de incidencias abiertas con gravedad inicial 'muy grave'.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM incidents
+                WHERE estado != %s
+                  AND gravedad_inicial = %s
+                """,
+                (ESTADO_CERRADO, GRAVEDAD_MUY_GRAVE),
+            )
+            return cur.fetchone()[0]
+
+
+def count_incidents_created_this_week() -> int:
+    """
+    Número de incidencias creadas desde el lunes de la semana actual.
+    """
+    since = _start_of_current_week_iso()
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM incidents
+                WHERE fecha >= %s
+                """,
+                (since,),
+            )
+            return cur.fetchone()[0]
+
+
+def count_incidents_closed_this_week() -> int:
+    """
+    Número de incidencias cerradas desde el lunes de la semana actual.
+    """
+    since = _start_of_current_week_iso()
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM incidents
+                WHERE estado = %s
+                  AND closed_at >= %s
+                """,
+                (ESTADO_CERRADO, since),
+            )
+            return cur.fetchone()[0]
