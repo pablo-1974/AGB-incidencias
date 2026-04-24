@@ -39,3 +39,13 @@ def render_login(
 
     # Títulos
     st.markdown(
+        f"""
+        <h1 class="login-title">{app_name}</h1>
+        <h2 class="login-subtitle">{institution_name}</h2>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Cerrar tarjeta y fondo
+    st.markdown("</div>", unsafe_allow_html=True)  # .login-card
+    st.markdown("</div>", unsafe_allow_html=True)  # .login-page
