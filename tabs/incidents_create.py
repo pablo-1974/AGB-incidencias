@@ -2,7 +2,7 @@
 import streamlit as st
 from datetime import date
 
-from db.connection import get_db
+from db.students import get_all_groups, get_all_students
 from db.incidents import create_incident
 
 
@@ -16,17 +16,11 @@ def render_incident_create(user: dict):
     st.write("Completa el formulario para enviar la incidencia a Jefatura.")
 
     # =========================
-    # CARGA DE OPCIONES (UI)
+    # CARGA DE OPCIONES (DB)
     # =========================
     try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT DISTINCT grupo FROM students ORDER BY grupo")
-                grupos = [r[0] for r in cur.fetchall() if r[0]]
-
-                cur.execute("SELECT alumno FROM students ORDER BY alumno")
-                alumnos = [r[0] for r in cur.fetchall() if r[0]]
-
+        grupos = get_all_groups()
+        alumnos = get_all_students()
     except Exception as e:
         st.error("❌ Error al cargar grupos o alumnos.")
         st.exception(e)
