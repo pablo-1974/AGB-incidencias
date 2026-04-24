@@ -5,6 +5,7 @@ import pandas as pd
 from db.connection import get_db
 from db.incidents import get_incidents
 
+from utils.text import normalize_for_sort
 
 def render_incidents_list(user: dict, mode: str = "own"):
     """
