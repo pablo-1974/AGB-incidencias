@@ -4,6 +4,8 @@ import streamlit as st
 from db.incidents import get_incidents, count_open_incidents
 from db.students import get_all_students
 from utils.enums import GRAVEDAD_MUY_GRAVE
+from utils.pdf_student_history import pdf_student_history
+from pathlib import Path
 
 
 def render_student_analysis(user: dict):
@@ -105,3 +107,54 @@ def render_student_analysis(user: dict):
                 {descripcion}
                 """
             )
+    # -------------------------------
+    # Preparar datos para PDF
+    # -------------------------------
+    rows_formateadas = []
+
+    for r in rows:
+        (
+            _id,
+            fecha,
+            hora,
+            grupo,
+            _alumno,
+            descripcion,
+            gravedad_ini,
+            gravedad_fin,
+            estado,
+            profesor,
+        ) = r
+
+        rows_formateadas.append({
+            "fecha": fecha,
+            "hora": hora or "",
+            "profesor": profesor,
+            "gravedad": gravedad_fin or gravedad_ini,
+            "descripcion": descripcion,
+        })
+
+    # El grupo del alumno (todos son el mismo en este contexto)
+    grupo_alumno = rows[0][3] if rows else None
+
+    st.divider()
+
+    # -------------------------------
+    # PDF HISTORIAL (DURO)
+    # -------------------------------
+    pdf_bytes = pdf_student_history(
+        rows=rows_formateadas,
+        alumno=alumno_sel,
+        grupo=grupo_alumno,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        logo_path=Path("logo.png"),  # o None
+    )
+
+    st.download_button(
+        "📄 Descargar PDF (Historial del alumno)",
+        data=pdf_bytes,
+        file_name=f"historial_{alumno_sel.replace(' ', '_')}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
