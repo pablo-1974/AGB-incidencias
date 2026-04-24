@@ -1,6 +1,7 @@
 # db/incidents.py
 from datetime import datetime, date, timedelta
 from db.connection import get_db
+from dateutil.relativedelta import relativedelta
 
 from utils.enums import (
     ESTADO_ABIERTO,
@@ -446,3 +447,76 @@ def get_teachers_ranking(
             )
             return cur.fetchall()
 
+# ======================================================
+# ELEGIBLES EXCURSIÓN
+# ======================================================
+def get_excursion_eligibility(
+    *,
+    fecha_excursion: str,
+    grupos: list[str],
+):
+    """
+    Devuelve dos listas:
+      - sancionados
+      - posibles_amnistiados
+
+    Cada elemento contiene:
+      grupo, alumno, total_faltas, faltas_graves
+    """
+
+    fecha_exc = datetime.fromisoformat(fecha_excursion).date()
+    fecha_desde = fecha_exc - relativedelta(months=1)
+    fecha_hasta = fecha_exc - relativedelta(days=1)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    alumno,
+                    grupo,
+                    COUNT(*) AS total_faltas,
+                    SUM(
+                        CASE
+                            WHEN gravedad_final IN ('grave', 'muy grave')
+                            THEN 1 ELSE 0
+                        END
+                    ) AS faltas_graves
+                FROM incidents
+                WHERE estado = %s
+                  AND fecha BETWEEN %s AND %s
+                  AND grupo = ANY(%s)
+                  AND alumno IS NOT NULL
+                GROUP BY alumno, grupo
+                ORDER BY grupo, alumno
+                """,
+                (
+                    ESTADO_CERRADO,
+                    fecha_desde.isoformat(),
+                    fecha_hasta.isoformat(),
+                    grupos,
+                ),
+            )
+
+            rows = cur.fetchall()
+
+    sancionados = []
+    posibles_amnistiados = []
+
+    for alumno, grupo, total, graves in rows:
+        if graves >= 1 or total >= 2:
+            sancionados.append({
+                "grupo": grupo,
+                "alumno": alumno,
+                "total": total,
+                "graves": graves or 0,
+            })
+        elif total == 1 and graves == 0:
+            posibles_amnistiados.append({
+                "grupo": grupo,
+                "alumno": alumno,
+                "total": total,
+                "graves": 0,
+            })
+
+    return sancionados, posibles_amnistiados
