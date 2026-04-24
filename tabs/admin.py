@@ -13,8 +13,11 @@ def render_admin(user: dict):
         ["📄 Incidencias", "➕ Nueva incidencia", "✅ Cerrar incidencia"]
     )
 
-    with tabsrender_incidents_list(user, mode="all")
+    with tabs[0]:
+        render_incidents_list(user, mode="all")
 
-    with tabsrender_incident_create(user)
+    with tabs[1]:
+        render_incident_create(user)
 
-    with tabsrender_incidents_close(user)
+    with tabs[2]:
+        render_incidents_close(user)
