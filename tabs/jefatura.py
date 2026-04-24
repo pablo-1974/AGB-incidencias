@@ -7,6 +7,7 @@ from tabs.incidents_close import render_incidents_close
 from tabs.rankings import render_rankings
 from tabs.student_analysis import render_student_analysis
 from tabs.excursion_eligibility import render_excursion_eligibility
+from tabs.teacher_analysis import render_teacher_analysis
 
 from db.incidents import (
     count_open_incidents,
@@ -83,8 +84,7 @@ def render_jefatura(user: dict):
     render_rankings(user["role"])
     
     st.divider()
-    
-    
+        
     # ==========================
     # ANÁLISIS ALUMNO
     # ==========================
@@ -93,6 +93,13 @@ def render_jefatura(user: dict):
     
     st.divider()
 
+    # ==========================
+    # ANÁLISIS PROFESOR
+    # ==========================
+    st.subheader("👨‍🏫 Análisis por profesor")
+    render_teacher_analysis(user)
+    
+    st.divider()
     
     # ==========================
     # APTOS EXCURSIÓN
