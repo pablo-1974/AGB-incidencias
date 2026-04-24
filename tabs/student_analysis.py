@@ -19,12 +19,38 @@ def render_student_analysis(user: dict):
 
     alumno_sel = st.selectbox("Alumno", alumnos)
 
+    st.divider()
+
+    # -------------------------------
+    # Filtro por fechas
+    # -------------------------------
+    c1, c2 = st.columns(2)
+
+    fecha_desde = c1.date_input(
+        "Desde",
+        value=None,
+        format="YYYY-MM-DD",
+        key="student_analysis_fecha_desde",
+    )
+
+    fecha_hasta = c2.date_input(
+        "Hasta",
+        value=None,
+        format="YYYY-MM-DD",
+        key="student_analysis_fecha_hasta",
+    )
+
+    fecha_desde_str = fecha_desde.isoformat() if fecha_desde else None
+    fecha_hasta_str = fecha_hasta.isoformat() if fecha_hasta else None
+
     # -------------------------------
     # Carga de incidencias
     # -------------------------------
     rows = get_incidents(
         mode="all",
-        alumno=alumno_sel,
+        alumno=alumno_sel,  
+        fecha_desde=fecha_desde_str,
+        fecha_hasta=fecha_hasta_str,
     )
 
     if not rows:
