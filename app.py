@@ -1,31 +1,26 @@
 # app.py
 import streamlit as st
 
+from config import APP_NAME, INSTITUTION_NAME, LOGO_PATH, APP_YEAR
+
 from ui.login import render_login
 from ui.home import render_header, render_footer
 from ui.sidebar import render_sidebar
 
+from db.init import check_db
 
 # ==============================
-# CONFIGURACIÓN GENERAL
-# ==============================
-from config import APP_NAME, INSTITUTION_NAME, LOGO_PATH, APP_YEAR
-
-
-# ==============================
-# MOCK AUTENTICACIÓN (TEMPORAL)
+# AUTENTICACIÓN (PLACEHOLDER)
 # ==============================
 def authenticate(email: str, password: str):
     """
-    Autenticación provisional.
-    Sustituir por lógica real (BD).
+    Autenticación REAL se implementará con:
+      - db.users
+      - security.passwords
+
+    De momento:
+      - devuelve None (login aún no operativo contra BD)
     """
-    if email and password:
-        return {
-            "name": "Pablo Ceballos Roa",
-            "role": "admin",
-            "email": email,
-        }
     return None
 
 
@@ -33,18 +28,30 @@ def authenticate(email: str, password: str):
 # MAIN
 # ==============================
 def main():
+    # --------------------------
+    # Configuración Streamlit
+    # --------------------------
     st.set_page_config(
         page_title=APP_NAME,
         layout="wide",
         initial_sidebar_state="collapsed",
     )
 
-    # Inicializar estado
-    if "user" not in st.session_state:
-        st.session_state["user"] = None
+    # --------------------------
+    # Comprobación BD (Neon)
+    # --------------------------
+    try:
+        check_db()
+    except Exception as e:
+        st.error("❌ No se puede conectar con la base de datos.")
+        st.exception(e)
+        return
 
-    if "view" not in st.session_state:
-        st.session_state["view"] = "home"
+    # --------------------------
+    # Estado de sesión
+    # --------------------------
+    st.session_state.setdefault("user", None)
+    st.session_state.setdefault("view", "home")
 
     # ==============================
     # LOGIN
@@ -58,14 +65,16 @@ def main():
 
         if ok:
             user = authenticate(email, password)
+
             if user:
                 st.session_state["user"] = user
                 st.session_state["view"] = "home"
                 st.rerun()
             else:
-                st.error("Credenciales incorrectas")
+                st.error("Credenciales incorrectas.")
 
-        return  # OBLIGATORIO: no seguir renderizando
+        # MUY IMPORTANTE: cortar aquí
+        return
 
     # ==============================
     # USUARIO AUTENTICADO
@@ -86,26 +95,26 @@ def main():
     # ==============================
     # ROUTING DE VISTAS
     # ==============================
-    view = st.session_state.get("view", "home")
+    view = st.session_state["view"]
 
     if view == "home":
         st.title("🏠 Inicio")
         st.write("Bienvenido a la aplicación de incidencias.")
-        st.write("Aquí irán los accesos por rol.")
+        st.write("Aquí se mostrarán las opciones según tu rol.")
 
     elif view == "change_password":
         st.title("🔐 Cambiar contraseña")
-        st.info("Aquí irá el formulario de cambio de contraseña.")
+        st.info("Funcionalidad pendiente de implementar.")
 
     else:
-        st.warning("Vista no reconocida")
+        st.warning("Vista no reconocida.")
 
     # ==============================
     # FOOTER
     # ==============================
     render_footer(
         institution_name=INSTITUTION_NAME,
-        year=2026,
+        year=APP_YEAR,
     )
 
 
