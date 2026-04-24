@@ -22,9 +22,11 @@ def render_incidents_list(user: dict, mode: str = "own"):
             with conn.cursor() as cur:
                 cur.execute("SELECT DISTINCT grupo FROM incidents ORDER BY grupo")
                 grupos = [r[0] for r in cur.fetchall() if r[0]]
+                grupos.sort(key=normalize_for_sort)
 
                 cur.execute("SELECT DISTINCT alumno FROM incidents ORDER BY alumno")
                 alumnos = [r[0] for r in cur.fetchall() if r[0]]
+                alumnos.sort(key=normalize_for_sort)
 
                 cur.execute("SELECT DISTINCT estado FROM incidents ORDER BY estado")
                 estados = [r[0] for r in cur.fetchall() if r[0]]
@@ -40,6 +42,7 @@ def render_incidents_list(user: dict, mode: str = "own"):
                         "SELECT DISTINCT teacher_id, teacher_name FROM incidents ORDER BY teacher_name"
                     )
                     profesores = [(r[0], r[1]) for r in cur.fetchall() if r[1]]
+                    profesores.sort(key=lambda x: normalize_for_sort(x[1]))
 
     except Exception as e:
         st.error("❌ Error al cargar filtros.")
