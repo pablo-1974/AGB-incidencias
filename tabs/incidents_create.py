@@ -5,8 +5,8 @@ from datetime import date
 from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
 
-from utils.text import normalize_for_sort
 from utils.enums import GRAVEDADES
+
 
 def render_incident_create(user: dict):
     """
@@ -19,11 +19,10 @@ def render_incident_create(user: dict):
     st.write("Completa el formulario para enviar la incidencia a Jefatura.")
 
     # =========================
-    # CARGA DE GRUPOS
+    # CARGA DE GRUPOS (ya vienen ordenados)
     # =========================
     try:
         grupos = get_all_groups()
-        grupos.sort(key=normalize_for_sort)
     except Exception as e:
         st.error("❌ Error al cargar los grupos.")
         st.exception(e)
@@ -43,7 +42,6 @@ def render_incident_create(user: dict):
         if grupo != "— Selecciona grupo —":
             try:
                 alumnos = get_students_by_group(grupo)
-                alumnos.sort(key=normalize_for_sort)
             except Exception as e:
                 st.error("❌ Error al cargar alumnos.")
                 st.exception(e)
@@ -52,10 +50,7 @@ def render_incident_create(user: dict):
         else:
             alumno_options = ["— Selecciona grupo primero —"]
 
-        alumno = st.selectbox(
-            "Alumno",
-            alumno_options
-        )
+        alumno = st.selectbox("Alumno", alumno_options)
 
         fecha = st.date_input(
             "Fecha de la incidencia",
@@ -64,12 +59,7 @@ def render_incident_create(user: dict):
 
         gravedad = st.selectbox(
             "Gravedad de la incidencia",
-            [
-                "— Selecciona gravedad —",
-                "leve",
-                "grave",
-                "muy grave",
-            ],
+            ["— Selecciona gravedad —"] + GRAVEDADES,
         )
 
         descripcion = st.text_area(
@@ -114,9 +104,7 @@ def render_incident_create(user: dict):
             descripcion=descripcion.strip(),
             gravedad=gravedad,
         )
-
         st.success("✅ Incidencia enviada correctamente a Jefatura.")
-
     except Exception as e:
         st.error("❌ Error al enviar la incidencia.")
         st.exception(e)
