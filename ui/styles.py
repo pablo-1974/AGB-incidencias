@@ -18,10 +18,10 @@ def apply_global_styles():
            ========================= */
         :root {
             /* Identidad azul turquesa */
-            --brand-primary: #14b8a6;        /* azul turquesa */
-            --brand-primary-dark: #0f8f8a;   /* hover */
-            --brand-bg-soft: #ecfeff;        /* fondo login */
-        
+            --brand-primary: #14b8a6;
+            --brand-primary-dark: #0f8f8a;
+            --brand-bg-soft: #ecfeff;
+
             --gray-50: #f9fafb;
             --gray-100: #f3f4f6;
             --gray-200: #e5e7eb;
@@ -29,7 +29,7 @@ def apply_global_styles():
             --gray-500: #6b7280;
             --gray-700: #374151;
             --gray-900: #111827;
-        
+
             --card-bg: #ffffff;
         }
 
@@ -41,13 +41,12 @@ def apply_global_styles():
             color: var(--gray-900);
         }
 
-        /* Quitar padding superior de Streamlit */
         .block-container {
             padding-top: 1rem !important;
         }
 
         /* =========================
-           CARD (login, contenedores)
+           CARD
            ========================= */
         .card {
             background: var(--card-bg);
@@ -104,7 +103,7 @@ def apply_global_styles():
         input:focus {
             outline: none !important;
             border-color: var(--brand-primary) !important;
-            box-shadow: 0 0 0 3px rgba(109, 93, 252, 0.25) !important;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25) !important;
         }
 
         /* =========================
@@ -132,31 +131,6 @@ def apply_global_styles():
             border-bottom: 1px solid var(--gray-200);
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
-        }
-
-        .header-inner {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header-title {
-            font-weight: 600;
-            line-height: 1.1;
-        }
-
-        .header-subtitle {
-            font-size: 0.75rem;
-            color: var(--gray-500);
-        }
-
-        .header-right {
-            margin-left: auto;
-            text-align: right;
-            font-size: 0.85rem;
-            line-height: 1.2;
         }
 
         /* =========================
