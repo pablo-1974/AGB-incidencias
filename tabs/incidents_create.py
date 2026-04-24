@@ -5,6 +5,7 @@ from datetime import date
 from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
 
+from utils.text import normalize_for_sort
 
 def render_incident_create(user: dict):
     """
@@ -21,6 +22,7 @@ def render_incident_create(user: dict):
     # =========================
     try:
         grupos = get_all_groups()
+        grupos.sort(key=normalize_for_sort)
     except Exception as e:
         st.error("❌ Error al cargar los grupos.")
         st.exception(e)
@@ -40,6 +42,7 @@ def render_incident_create(user: dict):
         if grupo != "— Selecciona grupo —":
             try:
                 alumnos = get_students_by_group(grupo)
+                alumnos.sort(key=normalize_for_sort)
             except Exception as e:
                 st.error("❌ Error al cargar alumnos.")
                 st.exception(e)
