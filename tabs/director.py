@@ -5,6 +5,7 @@ from tabs.incidents_list import render_incidents_list
 from tabs.incidents_create import render_incident_create
 from tabs.rankings import render_rankings
 from tabs.student_analysis import render_student_analysis
+from tabs.excursion_eligibility import render_excursion_eligibility
 
 def render_director(user: dict):
     """
