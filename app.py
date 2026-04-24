@@ -6,12 +6,14 @@ from config import APP_NAME, INSTITUTION_NAME, LOGO_PATH, APP_YEAR
 from ui.login import render_login
 from ui.home import render_header, render_footer
 from ui.sidebar import render_sidebar
+from ui.first_admin import render_create_first_admin
 
 from db.init import check_db
-from db.users import authenticate_user
+from db.users import has_any_user
 from db.incidents import has_any_open_incident
 
 from utils.enums import ROLES_ADMINISTRATIVOS
+
 
 # ==============================
 # MAIN
@@ -27,7 +29,7 @@ def main():
     )
 
     # --------------------------
-    # Comprobación BD (Neon)
+    # Comprobación BD
     # --------------------------
     try:
         check_db()
@@ -43,6 +45,14 @@ def main():
     st.session_state.setdefault("view", "home")
 
     # ==============================
+    # BOOTSTRAP DEL SISTEMA
+    # ==============================
+    # Si no existe ningún usuario, permitir crear el primer admin
+    if not has_any_user():
+        render_create_first_admin()
+        return
+
+    # ==============================
     # LOGIN
     # ==============================
     if st.session_state["user"] is None:
@@ -51,14 +61,13 @@ def main():
             institution_name=INSTITUTION_NAME,
             logo_path=LOGO_PATH,
         )
-        # MUY IMPORTANTE: no seguir renderizando la app
         return
 
     # ==============================
     # USUARIO AUTENTICADO
     # ==============================
     user = st.session_state["user"]
-    
+
     # HEADER
     render_header(
         app_name=APP_NAME,
@@ -70,7 +79,6 @@ def main():
     # SIDEBAR
     render_sidebar(user)
 
-    
     # ==============================
     # AVISO GLOBAL DE INCIDENCIAS ABIERTAS
     # ==============================
@@ -82,20 +90,19 @@ def main():
             st.error("Error al comprobar el estado de las incidencias.")
             st.exception(e)
 
-
     # ==============================
     # ROUTING DE VISTAS
     # ==============================
     view = st.session_state["view"]
-    
+
     if view == "home":
         from tabs.home import render_home
         render_home(user)
-    
+
     elif view == "change_password":
         from ui.change_password import render_change_password
         render_change_password()
-    
+
     else:
         st.warning("Vista no reconocida.")
 
