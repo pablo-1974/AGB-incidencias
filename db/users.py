@@ -4,6 +4,7 @@ from security.passwords import verify_password
 
 from utils.enums import ROLES_TODOS
 
+from security.passwords import hash_password
 
 def get_user_by_email(email: str) -> dict | None:
     """
@@ -92,3 +93,36 @@ def has_any_user() -> bool:
         with conn.cursor() as cur:
             cur.execute("SELECT EXISTS (SELECT 1 FROM users);")
             return cur.fetchone()[0]
+
+def create_user(
+    *,
+    name: str,
+    email: str,
+    password: str,
+    role: str,
+    active: bool = True,
+):
+    """
+    Crea un usuario nuevo.
+    """
+    if role not in ROLES_TODOS:
+        raise ValueError("Rol no válido")
+
+    password_hash = hash_password(password)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO users (name, email, password_hash, role, active)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (
+                    name,
+                    email.lower(),
+                    password_hash,
+                    role,
+                    active,
+                ),
+            )
+        conn.commit()
