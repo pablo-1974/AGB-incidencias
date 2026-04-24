@@ -8,7 +8,7 @@ from db.connection import get_db
 def render_incidents_close(user: dict):
     """
     Cierre y revisión de incidencias.
-    Funcionalidad genérica reutilizable por roles autorizados.
+    Gravedad final obligatoria.
     """
 
     st.subheader("✅ Cerrar incidencias")
@@ -69,13 +69,25 @@ def render_incidents_close(user: dict):
     # --------------------------
     with st.form("close_incident_form"):
         gravedad_final = st.selectbox(
-            "Gravedad final",
-            ["leve", "grave", "muy grave"]
+            "Gravedad final (obligatoria)",
+            [
+                "— Selecciona gravedad final —",
+                "leve",
+                "grave",
+                "muy grave",
+            ],
         )
 
         submit = st.form_submit_button("Cerrar incidencia")
 
     if not submit:
+        return
+
+    # --------------------------
+    # VALIDACIÓN OBLIGATORIA
+    # --------------------------
+    if gravedad_final == "— Selecciona gravedad final —":
+        st.error("Debes seleccionar la gravedad final antes de cerrar la incidencia.")
         return
 
     # --------------------------
