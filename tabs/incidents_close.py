@@ -2,7 +2,6 @@
 import streamlit as st
 
 from utils.enums import GRAVEDADES
-
 from db.incidents import get_open_incidents, close_incident
 
 
@@ -15,7 +14,7 @@ def render_incidents_close(user: dict):
     st.subheader("✅ Cerrar incidencias")
 
     # --------------------------
-    # Cargar incidencias abiertas (DB)
+    # Cargar incidencias abiertas
     # --------------------------
     try:
         rows = get_open_incidents()
@@ -36,17 +35,12 @@ def render_incidents_close(user: dict):
         for r in rows
     }
 
-    selected_label = st.selectbox(
-        "Selecciona una incidencia",
-        list(options.keys())
-    )
-
+    selected_label = st.selectbox("Selecciona una incidencia", list(options.keys()))
     incident = options[selected_label]
     incident_id = incident[0]
 
     st.markdown("**Descripción:**")
     st.write(incident[4])
-
     st.markdown(f"**Gravedad inicial:** {incident[5]}")
 
     # --------------------------
@@ -55,29 +49,17 @@ def render_incidents_close(user: dict):
     with st.form("close_incident_form"):
         gravedad_final = st.selectbox(
             "Gravedad final (obligatoria)",
-            [
-                "— Selecciona gravedad final —",
-                "leve",
-                "grave",
-                "muy grave",
-            ],
+            ["— Selecciona gravedad final —"] + GRAVEDADES
         )
-
         submit = st.form_submit_button("Cerrar incidencia")
 
     if not submit:
         return
 
-    # --------------------------
-    # VALIDACIÓN OBLIGATORIA
-    # --------------------------
     if gravedad_final == "— Selecciona gravedad final —":
         st.error("Debes seleccionar la gravedad final antes de cerrar la incidencia.")
         return
 
-    # --------------------------
-    # CIERRE (DB)
-    # --------------------------
     try:
         close_incident(
             incident_id=incident_id,
@@ -85,10 +67,9 @@ def render_incidents_close(user: dict):
             reviewer_id=user["id"],
             reviewer_name=user["name"],
         )
-
         st.success("✅ Incidencia cerrada correctamente.")
         st.rerun()
-
     except Exception as e:
         st.error("❌ Error al cerrar la incidencia.")
         st.exception(e)
+``
