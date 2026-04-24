@@ -1,23 +1,14 @@
 # ui/login.py
 import streamlit as st
 from pathlib import Path
-
 from ui.styles import apply_global_styles
+from db.users import authenticate_user
 
 
-def render_login(
-    app_name: str,
-    institution_name: str,
-    logo_path: str | None = None,
-):
-    """
-    Pantalla de login.
-    Estética idéntica a la app de Ausencias, con identidad azul turquesa.
-    """
-
+def render_login(app_name: str, institution_name: str, logo_path: str | None = None):
     apply_global_styles()
 
-    # Ocultar sidebar en login
+    # Ocultar sidebar
     st.markdown(
         """
         <style>
@@ -27,10 +18,8 @@ def render_login(
         unsafe_allow_html=True,
     )
 
-    # Fondo login
+    # Contenedor principal
     st.markdown('<div class="login-page">', unsafe_allow_html=True)
-
-    # Tarjeta
     st.markdown('<div class="card login-card">', unsafe_allow_html=True)
 
     # Logo
@@ -46,6 +35,26 @@ def render_login(
         unsafe_allow_html=True,
     )
 
-    # Cerrar tarjeta y fondo
-    st.markdown("</div>", unsafe_allow_html=True)  # .login-card
-    st.markdown("</div>", unsafe_allow_html=True)  # .login-page
+    st.divider()
+
+    # 🔑 FORMULARIO (ESTO ES LO QUE FALTABA)
+    email = st.text_input("Email")
+    password = st.text_input("Contraseña", type="password")
+
+    if st.button("Entrar", use_container_width=True):
+        result = authenticate_user(email, password)
+
+        if not result:
+            st.error("Credenciales incorrectas.")
+            return
+
+        status, user = result
+
+        # Login correcto
+        st.session_state["user"] = user
+        st.session_state["view"] = "home"
+        st.rerun()
+
+    # Cierre contenedores
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
