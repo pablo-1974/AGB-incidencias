@@ -11,7 +11,7 @@ from db.init import check_db
 from db.users import authenticate_user
 from db.incidents import has_any_open_incident
 
-
+from utils.enums import ROLES_ADMINISTRATIVOS
 
 # ==============================
 # MAIN
