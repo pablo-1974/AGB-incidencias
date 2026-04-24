@@ -72,4 +72,3 @@ def render_incidents_close(user: dict):
     except Exception as e:
         st.error("❌ Error al cerrar la incidencia.")
         st.exception(e)
-``
