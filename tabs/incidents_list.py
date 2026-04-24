@@ -1,16 +1,15 @@
 # tabs/incidents_list.py
 import streamlit as st
 import pandas as pd
+
 from db.connection import get_db
+from db.incidents import get_incidents
 
 
 def render_incidents_list(user: dict, mode: str = "own"):
     """
     Lista incidencias con filtros avanzados y rango de fechas.
-
-    mode:
-      - "own" -> solo incidencias del usuario
-      - "all" -> todas las incidencias (aparece filtro Profesor)
+    UI pura. SQL delegado a db/incidents.py.
     """
 
     st.subheader("📄 Incidencias")
@@ -87,82 +86,35 @@ def render_incidents_list(user: dict, mode: str = "own"):
         fecha_hasta = st.date_input("Hasta", value=None)
 
     # =========================
-    # WHERE DINÁMICO
+    # LLAMADA A LA CAPA DB
     # =========================
-    where = []
-    params = []
-
-    if mode == "own":
-        where.append("teacher_id = %s")
-        params.append(user["id"])
-
-    if mode == "all" and profesor_sel not in (None, "— Todos —"):
-        where.append("teacher_id = %s")
-        params.append(profesor_sel[0])
-
-    if grupo_sel != "— Todos —":
-        where.append("grupo = %s")
-        params.append(grupo_sel)
-
-    if alumno_sel != "— Todos —":
-        where.append("alumno = %s")
-        params.append(alumno_sel)
-
-    if estado_sel != "— Todos —":
-        where.append("estado = %s")
-        params.append(estado_sel)
-
-    if gravedad_sel != "— Todas —":
-        where.append("gravedad_inicial = %s")
-        params.append(gravedad_sel)
-
-    if fecha_desde:
-        where.append("fecha >= %s")
-        params.append(fecha_desde.isoformat())
-
-    if fecha_hasta:
-        where.append("fecha <= %s")
-        params.append(fecha_hasta.isoformat())
-
-    where_sql = f"WHERE {' AND '.join(where)}" if where else ""
-
-    # =========================
-    # CONSULTA FINAL
-    # =========================
-    query = f"""
-        SELECT
-            fecha,
-            hora,
-            grupo,
-            alumno,
-            descripcion,
-            gravedad_inicial,
-            gravedad_final,
-            estado,
-            teacher_name
-        FROM incidents
-        {where_sql}
-        ORDER BY fecha DESC, hora DESC, id DESC
-    """
-
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, params)
-                rows = cur.fetchall()
-
-    except Exception as e:
-        st.error("❌ Error al cargar incidencias.")
-        st.exception(e)
-        return
+    rows = get_incidents(
+        mode=mode,
+        user_id=user["id"],
+        profesor_id=(
+            profesor_sel[0]
+            if mode == "all" and profesor_sel not in (None, "— Todos —")
+            else None
+        ),
+        grupo=None if grupo_sel == "— Todos —" else grupo_sel,
+        alumno=None if alumno_sel == "— Todos —" else alumno_sel,
+        estado=None if estado_sel == "— Todos —" else estado_sel,
+        gravedad=None if gravedad_sel == "— Todas —" else gravedad_sel,
+        fecha_desde=fecha_desde.isoformat() if fecha_desde else None,
+        fecha_hasta=fecha_hasta.isoformat() if fecha_hasta else None,
+    )
 
     if not rows:
         st.info("No hay incidencias con esos filtros.")
         return
 
+    # =========================
+    # DATAFRAME
+    # =========================
     df = pd.DataFrame(
         rows,
         columns=[
+            "ID",
             "Fecha",
             "Hora",
             "Grupo",
