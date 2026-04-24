@@ -61,4 +61,4 @@ def verify_password(password: str, stored_hash: str) -> bool:
     except Exception:
         # Hash malformado o error de verificación
         return False
-``
+
