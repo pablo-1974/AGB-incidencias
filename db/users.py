@@ -124,3 +124,22 @@ def create_user(
                 ),
             )
         conn.commit()
+
+def get_all_teachers() -> list[str]:
+    """
+    Devuelve la lista de nombres de todos los profesores activos.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT name
+                FROM users
+                WHERE role = 'profesor'
+                  AND active = 1
+                ORDER BY name
+                """
+            )
+            rows = cur.fetchall()
+
+    return [r[0] for r in rows]
