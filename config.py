@@ -1,29 +1,19 @@
 # config.py
-from pathlib import Path
 
-# ==============================
-# APLICACIÓN
-# ==============================
-APP_NAME = "Incidencias de alumnado"
-INSTITUTION_NAME = "AGB Antonio García Bellido"
-APP_YEAR = 2026
+import os
 
-# ==============================
-# RUTAS
-# ==============================
-BASE_DIR = Path(__file__).resolve().parent
-LOGO_PATH = str(BASE_DIR / "logo.png")
 
-# ==============================
-# STREAMLIT
-# ==============================
-LAYOUT = "wide"
-SIDEBAR_STATE = "collapsed"
+class Settings:
+    # Información de la app
+    APP_NAME = "Incidencias"
+    INSTITUTION_NAME = "IES Antonio García Bellido"
 
-# ==============================
-# ROLES (para uso futuro)
-# ==============================
-ROLE_ADMIN = "admin"
-ROLE_JEFATURA = "jefatura"
-ROLE_PROFESOR = "profesor"
-ROLE_CONVIVENCIA = "convivencia"
+    # Seguridad
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+    # Base de datos
+    DATABASE_URL = os.environ.get("DATABASE_URL")
+
+
+# Instancia única de configuración
+settings = Settings()
