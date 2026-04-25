@@ -110,4 +110,33 @@
 
 </div>
 
+<!-- ========================================================= -->
+<!-- RECORDATORIOS -->
+<!-- ========================================================= -->
+<div class="card p-4">
+  <h2 class="font-semibold mb-3">🔔 Recordatorios pendientes</h2>
+
+  {% if reminders %}
+    <ul class="space-y-2">
+      {% for r in reminders %}
+        <li class="p-3 rounded-lg border bg-yellow-50 border-yellow-300">
+          <div class="font-semibold">
+            {{ r.fecha }} · {{ r.alumno }} ({{ r.grupo }})
+          </div>
+          <div class="text-sm text-gray-700">
+            {{ r.note or "Sin nota" }}
+          </div>
+          <div class="text-xs text-gray-500">
+            Incidencia #{{ r.incident_id }}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="text-sm text-gray-600">
+      No hay recordatorios pendientes 🎉
+    </div>
+  {% endif %}
+</div>
+
 {% endblock %}
