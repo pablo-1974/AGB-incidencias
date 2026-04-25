@@ -6,6 +6,34 @@ from utils.enums import ROLES_TODOS
 
 from security.passwords import hash_password
 
+
+def get_user_by_id(user_id: int):
+    """
+    Devuelve el usuario por ID o None si no existe.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, name, email, role
+                FROM users
+                WHERE id = %s
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+
+    if not row:
+        return None
+
+    return {
+        "id": row[0],
+        "name": row[1],
+        "email": row[2],
+        "role": row[3],
+    }
+
+
 def get_user_by_email(email: str) -> dict | None:
     """
     Devuelve un usuario por email o None si no existe.
