@@ -1,10 +1,8 @@
 # db/users.py
 from db.connection import get_db
-from security.passwords import verify_password
+from security.passwords import verify_password, hash_password
 
 from utils.enums import ROLES_TODOS
-
-from security.passwords import hash_password
 
 
 def get_user_by_id(user_id: int):
