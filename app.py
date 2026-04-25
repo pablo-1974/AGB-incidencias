@@ -10,6 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
 
+from db.users import has_any_user
+from auth import load_user_dep
+
 from config import settings
 
 # Routers principales
@@ -73,8 +76,19 @@ app.include_router(rankings_pdf_router)
 # Ruta raíz: redirige al dashboard
 # ------------------------------------------------------------
 @app.get("/")
-def root():
-    return RedirectResponse(url="/dashboard")
+def root(request: Request):
+    # 1) No hay ningún usuario → crear admin
+    if not has_any_user():
+        return RedirectResponse("/register-first", status_code=303)
+
+    # 2) Hay usuarios pero no sesión → login
+    try:
+        load_user_dep(request)
+    except Exception:
+        return RedirectResponse("/login", status_code=303)
+
+    # 3) Usuario autenticado → dashboard
+    return RedirectResponse("/dashboard", status_code=303)
 
 
 # ------------------------------------------------------------
