@@ -1,6 +1,7 @@
 # tabs/teacher_analysis.py
 import streamlit as st
 from pathlib import Path
+from config import LOGO_PATH
 
 from db.incidents import get_incidents
 from db.users import get_all_teachers   # o como obtengas profesores
@@ -110,7 +111,7 @@ def render_teacher_analysis(user: dict):
         profesor=profesor_sel,
         fecha_desde=fecha_desde_pdf,
         fecha_hasta=fecha_hasta_pdf,
-        logo_path=Path("logo.png"),
+        logo_path=LOGO_PATH,
     )
 
     st.download_button(
