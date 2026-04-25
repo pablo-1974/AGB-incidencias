@@ -4,6 +4,7 @@
 fastapi
 uvicorn[standard]
 jinja2
+itsdangerous
 
 # Base de datos
 psycopg[binary]
