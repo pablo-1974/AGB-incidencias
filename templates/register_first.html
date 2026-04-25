@@ -1,0 +1,70 @@
+<!-- templates/register_first.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Crear administrador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      background:#f4f2ff;
+      font-family: system-ui, Arial, sans-serif;
+      padding: 40px 0;
+    }
+    .card {
+      width: 380px;
+      margin: auto;
+      background: #fff;
+      padding: 24px 22px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    }
+    h1 { font-size: 20px; margin-bottom: 12px; }
+    p { color:#666; margin-bottom:18px; }
+    label { font-weight:600; display:block; margin-bottom:6px; }
+    input {
+      width:100%; padding:10px;
+      border:1px solid #ccc;
+      border-radius:6px;
+      margin-bottom:12px;
+    }
+    button {
+      width:100%; padding:12px;
+      background:#4a35d6; color:#fff;
+      border:0; border-radius:6px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    button:hover { background:#3b29b3; }
+    .logo { text-align:center; margin-bottom:12px; }
+    .logo img { max-width:120px; }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="logo">
+      <img src="{{ logo_path }}" alt="Logo">
+    </div>
+
+    <h1>Crear administrador</h1>
+    <p>
+      Como la base de datos está vacía, crea el primer usuario administrador.
+    </p>
+
+    <form method="post">
+      <label>Nombre</label>
+      <input type="text" name="name" required>
+
+      <label>Email</label>
+      <input type="email" name="email" required>
+
+      <label>Contraseña</label>
+      <input type="password" name="password" required>
+
+      <button type="submit">Crear administrador</button>
+    </form>
+  </div>
+</body>
+</html>
