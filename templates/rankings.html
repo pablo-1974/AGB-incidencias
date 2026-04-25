@@ -1,0 +1,80 @@
+<!-- templates/rankings.html -->
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-xl font-semibold mb-6">🏆 Rankings de incidencias</h1>
+
+<!-- ========================================================= -->
+<!-- FORMULARIO DE FILTROS -->
+<!-- ========================================================= -->
+<form method="get" class="card grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
+
+  <!-- Tipo ranking -->
+  <div>
+    <label class="label">Ranking</label>
+    <select name="tipo" class="input">
+      <option value="alumnos" {% if tipo == "alumnos" %}selected{% endif %}>Alumnos</option>
+      <option value="profesores" {% if tipo == "profesores" %}selected{% endif %}>Profesores</option>
+      <option value="grupos" {% if tipo == "grupos" %}selected{% endif %}>Grupos</option>
+    </select>
+  </div>
+
+  <!-- Desde -->
+  <div>
+    <label class="label">Desde</label>
+    <input type="date" name="from" value="{{ fecha_desde or '' }}" class="input">
+  </div>
+
+  <!-- Hasta -->
+  <div>
+    <label class="label">Hasta</label>
+    <input type="date" name="to" value="{{ fecha_hasta or '' }}" class="input">
+  </div>
+
+  <!-- Botón -->
+  <div class="flex items-end col-span-1 sm:col-span-2">
+    <button class="btn-primary w-full">Aplicar</button>
+  </div>
+
+</form>
+
+{% if rows %}
+
+<!-- ========================================================= -->
+<!-- TABLA RANKING -->
+<!-- ========================================================= -->
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>
+          {% if tipo == "alumnos" %}Alumno{% endif %}
+          {% if tipo == "profesores" %}Profesor{% endif %}
+          {% if tipo == "grupos" %}Grupo{% endif %}
+        </th>
+        <th>Incidencias</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ r.nombre }}</td>
+        <td><strong>{{ r.total }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+
+<div class="card text-center text-gray-600">
+  No hay datos para los filtros seleccionados.
+</div>
+
+{% endif %}
+
+{% endblock %}
