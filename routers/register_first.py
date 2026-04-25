@@ -8,7 +8,6 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from db.users import has_any_user, create_user
-from security.passwords import hash_password
 
 router = APIRouter()
 
@@ -46,7 +45,7 @@ def register_first_submit(
     create_user(
         name=name,
         email=email,
-        password_hash=hash_password(password),
+        password=password,  # ✅ en claro, se hashea dentro
         role="admin",
     )
 
