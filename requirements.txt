@@ -1,6 +1,16 @@
 # requirements.txt
-streamlit>=1.32
+
+# Backend web
+fastapi
+uvicorn[standard]
+jinja2
+
+# Base de datos
+psycopg[binary]
+
+# Utilidades
 pandas
 python-dateutil
-psycopg[binary]
+
+# PDFs
 reportlab
