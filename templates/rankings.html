@@ -69,6 +69,17 @@
   </table>
 </div>
 
+<div class="mt-6 text-right">
+  <a
+    href="/rankings/pdf?tipo={{ tipo }}
+          {% if fecha_desde %}&from={{ fecha_desde }}{% endif %}
+          {% if fecha_hasta %}&to={{ fecha_hasta }}{% endif %}"
+    class="btn-primary"
+  >
+    📄 Descargar PDF
+  </a>
+</div>
+
 {% else %}
 
 <div class="card text-center text-gray-600">
