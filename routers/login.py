@@ -1,6 +1,10 @@
 # routers/login.py
 """
 Login y logout de la aplicación.
+
+- Autenticación de usuarios
+- Gestión de primer login / reset de contraseña
+- Redirección según rol
 """
 
 from fastapi import APIRouter, Request, Form
@@ -12,6 +16,10 @@ from security.passwords import verify_password
 
 router = APIRouter()
 
+
+# ============================================================
+# LOGIN (GET)
+# ============================================================
 
 @router.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
@@ -28,6 +36,10 @@ def login_form(request: Request):
         ),
     )
 
+
+# ============================================================
+# LOGIN (POST)
+# ============================================================
 
 @router.post("/login", response_class=HTMLResponse)
 def login_submit(
@@ -70,14 +82,9 @@ def login_submit(
 
     # Primer login o reset de contraseña
     if user["password_hash"] is None or user.get("must_change_password"):
-        # Guardamos usuario en sesión temporal
         request.session.clear()
         request.session["first_login_user_id"] = user["id"]
-
-        return RedirectResponse(
-            url="/first-login",
-            status_code=303,
-        )
+        return RedirectResponse(url="/first-login", status_code=303)
 
     # Validación de contraseña normal
     if not verify_password(password, user["password_hash"]):
@@ -93,12 +100,20 @@ def login_submit(
             ),
         )
 
-    # Login correcto → sesión normal
+    # ✅ LOGIN CORRECTO → SESIÓN NORMAL
     request.session.clear()
     request.session["user_id"] = user["id"]
 
+    # ✅ REDIRECCIÓN SEGÚN ROL
+    if user["role"] == "admin":
+        return RedirectResponse(url="/admin/dashboard", status_code=303)
+
     return RedirectResponse(url="/dashboard", status_code=303)
 
+
+# ============================================================
+# LOGOUT (GET)
+# ============================================================
 
 @router.get("/logout")
 def logout(request: Request):
