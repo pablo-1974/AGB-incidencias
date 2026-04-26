@@ -1,5 +1,5 @@
 {# ----------------------------------------------------------------------
-   templates/admin/incidents_list.html
+   templates/incidents_list.html
    Listado global de incidencias (vista común, permisos por rol)
    ---------------------------------------------------------------------- #}
 
@@ -8,6 +8,69 @@
 {% block dashboard_content %}
 
 <h1 class="text-xl font-semibold mb-6">📋 Listado de incidencias</h1>
+
+<form method="get" class="card mb-6 grid grid-cols-1 md:grid-cols-6 gap-4 text-sm">
+
+  <div>
+    <label class="font-semibold">Desde</label>
+    <input
+      type="date"
+      name="fecha_desde"
+      value="{{ filters.fecha_desde or '' }}"
+      class="form-input w-full"
+    >
+  </div>
+
+  <div>
+    <label class="font-semibold">Hasta</label>
+    <input
+      type="date"
+      name="fecha_hasta"
+      value="{{ filters.fecha_hasta or '' }}"
+      class="form-input w-full"
+    >
+  </div>
+
+  <div>
+    <label class="font-semibold">Alumno</label>
+    <input
+      type="text"
+      name="alumno"
+      value="{{ filters.alumno or '' }}"
+      class="form-input w-full"
+      placeholder="Nombre del alumno"
+    >
+  </div>
+
+  <div>
+    <label class="font-semibold">Gravedad</label>
+    <select name="gravedad" class="form-select w-full">
+      <option value="">Todas</option>
+      <option value="leve" {% if filters.gravedad == "leve" %}selected{% endif %}>Leve</option>
+      <option value="grave" {% if filters.gravedad == "grave" %}selected{% endif %}>Grave</option>
+      <option value="muy grave" {% if filters.gravedad == "muy grave" %}selected{% endif %}>Muy grave</option>
+    </select>
+  </div>
+
+  {% if show_profesor_filter %}
+  <div>
+    <label class="font-semibold">Profesor (ID)</label>
+    <input
+      type="number"
+      name="profesor_id"
+      value="{{ filters.profesor_id or '' }}"
+      class="form-input w-full"
+    >
+  </div>
+  {% endif %}
+
+  <div class="flex items-end">
+    <button type="submit" class="btn-primary w-full">
+      🔍 Filtrar
+    </button>
+  </div>
+
+</form>
 
 {% if incidents %}
 <div class="overflow-x-auto">
