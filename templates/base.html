@@ -15,6 +15,8 @@
   {% if logo_url %}
     <link rel="icon" type="image/png" href="{{ logo_url }}">
   {% endif %}
+
+  <link rel="apple-touch-icon" href="{{ logo_url }}">
 </head>
 
 <body class="min-h-screen bg-gray-50 text-gray-900">
@@ -63,16 +65,13 @@
   <nav class="bg-gray-100 border-b">
     <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-6 text-sm">
   
-      Inicio
-  
-      Análisis alumno
-  
-      Análisis profesor
-  
-      Rankings
+      <a href="/dashboard" class="app-link">Inicio</a>
+      <a href="/analysis/student" class="app-link">Análisis alumno</a>
+      <a href="/analysis/teacher" class="app-link">Análisis profesor</a>
+      <a href="/rankings" class="app-link">Rankings</a>
   
       <div class="ml-auto flex gap-4">
-        Salir
+        <a href="/logout" class="app-link">Salir</a>
       </div>
   
     </div>
