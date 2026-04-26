@@ -39,7 +39,8 @@ def incidents_list(
     gravedad = qp.get("gravedad") or None
 
     # Solo relevante para roles de gestión
-    profesor_id = qp.get("profesor_id")
+    profesor_id_raw = qp.get("profesor_id")
+    profesor_id = int(profesor_id_raw) if profesor_id_raw else None
 
     # --------------------------------------------------
     # Decisión por rol + carga de incidencias
