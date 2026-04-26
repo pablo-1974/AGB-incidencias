@@ -51,6 +51,16 @@
   </div>
 
   <div>
+     <label class="block text-sm font-semibold mb-1">Franja horaria</label>
+     <select name="hora" class="form-select w-full" required>
+       <option value="">— Seleccionar franja horaria —</option>
+       {% for f in franjas %}
+         <option value="{{ f }}">{{ f }}</option>
+       {% endfor %}
+     </select>
+  </div>
+   
+  <div>
     <label class="block text-sm font-semibold mb-1">Gravedad</label>
     <select name="gravedad" class="form-select w-full" required>
       <option>— Selecciona gravedad —</option>
