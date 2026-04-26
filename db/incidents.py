@@ -104,6 +104,7 @@ def create_incident(
     grupo: str,
     alumno: str,
     fecha: str,
+    hora: str,
     descripcion: str,
     gravedad: str,
 ):
@@ -135,7 +136,7 @@ def create_incident(
                     grupo,
                     alumno,
                     fecha,
-                    "",  # hora no obligatoria
+                    hora,
                     descripcion,
                     gravedad,
                     ESTADO_ABIERTO,
