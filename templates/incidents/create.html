@@ -1,0 +1,73 @@
+{# ----------------------------------------------------------------------
+   templates/incidents/create.html
+   Formulario para crear una incidencia
+   ---------------------------------------------------------------------- #}
+
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_content %}
+
+<h1 class="text-xl font-semibold mb-6">📝 Nueva incidencia</h1>
+
+<form method="post" class="card space-y-6">
+
+  <div>
+    <label class="block text-sm font-semibold mb-1">Grupo</label>
+    <select name="grupo" class="form-select w-full" required>
+      <option>— Selecciona grupo —</option>
+      {% for g in grupos %}
+        <option value="{{ g }}">{{ g }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="block text-sm font-semibold mb-1">Alumno</label>
+    <input
+      type="text"
+      name="alumno"
+      class="form-input w-full"
+      placeholder="Introduce el alumno"
+      required
+    >
+  </div>
+
+  <div>
+    <label class="block text-sm font-semibold mb-1">Fecha</label>
+    <input
+      type="date"
+      name="fecha"
+      class="form-input"
+      required
+    >
+  </div>
+
+  <div>
+    <label class="block text-sm font-semibold mb-1">Gravedad</label>
+    <select name="gravedad" class="form-select w-full" required>
+      <option>— Selecciona gravedad —</option>
+      {% for g in gravedades %}
+        <option value="{{ g }}">{{ g }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="block text-sm font-semibold mb-1">Descripción</label>
+    <textarea
+      name="descripcion"
+      rows="5"
+      class="form-textarea w-full"
+      required
+    ></textarea>
+  </div>
+
+  <div class="flex justify-end">
+    <button type="submit" class="btn-primary">
+      📩 Enviar incidencia
+    </button>
+  </div>
+
+</form>
+
+{% endblock %}
