@@ -73,4 +73,30 @@
 
 </form>
 
+<script>
+  const grupoSelect = document.getElementById("grupo");
+  const alumnoSelect = document.getElementById("alumno");
+
+  grupoSelect.addEventListener("change", async () => {
+    const grupo = grupoSelect.value;
+
+    alumnoSelect.innerHTML = '<option value="">— Seleccionar alumno —</option>';
+    alumnoSelect.disabled = true;
+
+    if (!grupo) return;
+
+    const response = await fetch(`/incidents/students/${grupo}`);
+    const alumnos = await response.json();
+
+    for (const alumno of alumnos) {
+      const option = document.createElement("option");
+      option.value = alumno;
+      option.textContent = alumno;
+      alumnoSelect.appendChild(option);
+    }
+
+    alumnoSelect.disabled = false;
+  });
+</script>
+
 {% endblock %}
