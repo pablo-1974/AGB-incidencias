@@ -46,3 +46,13 @@ GRAVEDADES = [
     GRAVEDAD_GRAVE,
     GRAVEDAD_MUY_GRAVE,
 ]
+
+FRANJAS_HORARIAS = (
+    "1ª",
+    "2ª",
+    "3ª",
+    "Recreo",
+    "4ª",
+    "5ª",
+    "6ª",
+)
