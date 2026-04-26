@@ -54,13 +54,21 @@
   </header>
 
   <!-- ========================================================= -->
-<!-- NAVBAR -->
-<!-- ========================================================= -->
-{% if user %}
-  {% if user.role == "admin" %}
-    {% include "navbars/admin.html" %}
+  <!-- NAVBAR -->
+  <!-- ========================================================= -->
+  {% if user %}
+    {% if user.role == "admin" %}
+      {% include "navbars/admin.html" %}
+    {% elif user.role in ("director", "secretario") %}
+      {% include "navbars/director.html" %}
+    {% elif user.role == "jefe" %}
+      {% include "navbars/jefe.html" %}
+    {% elif user.role == "convivencia" %}
+      {% include "navbars/convivencia.html" %}
+    {% elif user.role in ("profesor", "orientador") %}
+      {% include "navbars/profesor.html" %}
+    {% endif %}
   {% endif %}
-{% endif %}
 
   <!-- ========================================================= -->
   <!-- MAIN -->
