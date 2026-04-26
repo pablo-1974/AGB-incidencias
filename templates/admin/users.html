@@ -1,0 +1,168 @@
+{# ----------------------------------------------------------------------
+   templates/admin/users.html
+   Gestión de usuarios (ADMIN)
+   Lista, creación, edición, activación y reset de contraseña
+   ---------------------------------------------------------------------- #}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-xl font-semibold mb-6">🧑‍💼 Gestión de usuarios</h1>
+
+{# =========================================================
+   CREAR USUARIO
+   ========================================================= #}
+<div class="card mb-8">
+
+  <h2 class="font-semibold mb-4">➕ Añadir usuario</h2>
+
+  <form method="post" action="/admin/users/create" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+
+    <div class="sm:col-span-1">
+      <label class="label">Nombre</label>
+      <input type="text" name="name" class="input" required>
+    </div>
+
+    <div class="sm:col-span-1">
+      <label class="label">Email</label>
+      <input type="email" name="email" class="input" required>
+    </div>
+
+    <div class="sm:col-span-1">
+      <label class="label">Rol</label>
+      <select name="role" class="input">
+        <option value="profesor">Profesor</option>
+        <option value="convivencia">Convivencia</option>
+        <option value="director">Director</option>
+        <option value="jefe">Jefe</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+
+    <div class="sm:col-span-1 flex items-end">
+      <button type="submit" class="btn-primary w-full">
+        Crear usuario
+      </button>
+    </div>
+
+  </form>
+
+  <p class="text-xs text-gray-500 mt-3">
+    El usuario deberá definir su contraseña en el primer acceso.
+  </p>
+
+</div>
+
+
+{# =========================================================
+   LISTADO DE USUARIOS
+   ========================================================= #}
+<div class="card">
+
+  <h2 class="font-semibold mb-4">👥 Usuarios registrados</h2>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        <th>Primer login</th>
+        <th>Último acceso</th>
+        <th class="nowrap">Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td>{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>
+          {% if u.active == 1 %}
+            <span class="text-green-600 font-semibold">Activo</span>
+          {% else %}
+            <span class="text-red-600 font-semibold">Inactivo</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.must_change_password %}
+            <span class="text-orange-600">Pendiente</span>
+          {% else %}
+            ✓
+          {% endif %}
+        </td>
+        <td class="text-sm text-gray-600">
+          {{ u.last_login_at.strftime('%d/%m/%Y %H:%M') if u.last_login_at else '—' }}
+        </td>
+
+        <td class="nowrap space-x-1">
+
+          {# ---- EDITAR ---- #}
+          <details class="inline-block">
+            <summary class="btn-muted cursor-pointer">✏️</summary>
+            <div class="absolute z-10 mt-2 p-4 card w-72">
+
+              <form method="post" action="/admin/users/update/{{ u.id }}" class="space-y-2">
+
+                <div>
+                  <label class="label">Nombre</label>
+                  <input type="text" name="name" value="{{ u.name }}" class="input" required>
+                </div>
+
+                <div>
+                  <label class="label">Email</label>
+                  <input type="email" name="email" value="{{ u.email }}" class="input" required>
+                </div>
+
+                <div>
+                  <label class="label">Rol</label>
+                  <select name="role" class="input">
+                    {% for r in ['profesor','convivencia','director','jefe','admin'] %}
+                      <option value="{{ r }}" {% if r == u.role %}selected{% endif %}>
+                        {{ r }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <button class="btn-primary w-full">Guardar</button>
+              </form>
+
+            </div>
+          </details>
+
+          {# ---- ACTIVAR / DESACTIVAR ---- #}
+          <form method="post" action="/admin/users/toggle/{{ u.id }}" class="inline">
+            <button
+              type="submit"
+              class="btn-muted"
+              title="Activar / desactivar"
+            >
+              {% if u.active == 1 %}⛔{% else %}✅{% endif %}
+            </button>
+          </form>
+
+          {# ---- RESET PASSWORD ---- #}
+          <form method="post" action="/admin/users/reset-password/{{ u.id }}" class="inline">
+            <button
+              type="submit"
+              class="btn-muted"
+              title="Resetear contraseña"
+            >
+              🔐
+            </button>
+          </form>
+
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+{% endblock %}
