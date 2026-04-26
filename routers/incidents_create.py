@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from auth import load_user_dep
 from context import ctx
-from datetime import date
+from datetime import date, datetime
 
 from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
@@ -49,6 +49,10 @@ def incident_create_form(
 # ENVÍO (POST)
 # ----------------------------------------------------------------------
 
+# routers/incidents_create.py
+
+from datetime import date, datetime   # ← importa aquí
+
 @router.post("/incidents/create")
 def incident_create_submit(
     request: Request,
@@ -60,30 +64,50 @@ def incident_create_submit(
     gravedad: str = Form(...),
     descripcion: str = Form(...),
 ):
+    # ---------------------------
+    # Validación de grupo
+    # ---------------------------
     if not grupo:
         return RedirectResponse("/incidents/create?error=grupo", status_code=303)
 
+    # ---------------------------
+    # Validación de alumno
+    # ---------------------------
     if not alumno:
         return RedirectResponse("/incidents/create?error=alumno", status_code=303)
 
+    # ---------------------------
+    # Validación de franja
+    # ---------------------------
     if hora not in FRANJAS_HORARIAS:
         return RedirectResponse("/incidents/create?error=hora", status_code=303)
 
+    # ---------------------------
+    # ✅ VALIDACIÓN DE FECHA (AQUÍ)
+    # ---------------------------
     if not fecha:
         return RedirectResponse("/incidents/create?error=fecha", status_code=303)
 
     try:
-        from datetime import datetime
         datetime.strptime(fecha, "%Y-%m-%d")
     except ValueError:
         return RedirectResponse("/incidents/create?error=fecha", status_code=303)
 
+    # ---------------------------
+    # Validación de gravedad
+    # ---------------------------
     if gravedad not in GRAVEDADES:
         return RedirectResponse("/incidents/create?error=gravedad", status_code=303)
 
+    # ---------------------------
+    # Validación de descripción
+    # ---------------------------
     if not descripcion.strip():
         return RedirectResponse("/incidents/create?error=descripcion", status_code=303)
 
+    # ---------------------------
+    # Crear incidencia
+    # ---------------------------
     create_incident(
         user_id=user["id"],
         user_name=user["name"],
@@ -96,7 +120,6 @@ def incident_create_submit(
     )
 
     return RedirectResponse("/admin/dashboard", status_code=303)
-
 
 # ----------------------------------------------------------------------
 # GRUPO (GET)
