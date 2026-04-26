@@ -13,8 +13,8 @@ Acceso exclusivo para el rol admin.
 Incluye salvaguardas para evitar dejar el sistema sin administradores.
 """
 
-from fastapi import APIRouter, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Form, HTTPException, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from context import ctx
 from auth import load_user_dep
@@ -27,6 +27,9 @@ from db.users import (
     set_user_active,
     reset_user_password,
 )
+
+import io
+import openpyxl
 
 router = APIRouter()
 
@@ -218,10 +221,6 @@ def admin_users_reset_password(
 # IMPORTAR USUARIOS (EXCEL)
 # ----------------------------------------------------------------------
 
-import openpyxl
-from fastapi import UploadFile, File
-
-
 @router.post("/admin/users/import")
 def admin_users_import(
     user=load_user_dep,
@@ -300,11 +299,6 @@ def admin_users_import(
 # ----------------------------------------------------------------------
 # EXPORTAR USUARIOS (EXCEL)
 # ----------------------------------------------------------------------
-
-import io
-import openpyxl
-from fastapi.responses import Response
-
 
 @router.get("/admin/users/export")
 def export_users(
