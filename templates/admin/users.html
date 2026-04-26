@@ -89,6 +89,7 @@
 
     <tbody>
     {% for u in users %}
+    {% set is_self = (u.id == user.id) %}
       <tr>
         <td>{{ u.name }}</td>
         <td>{{ u.email }}</td>
@@ -148,7 +149,8 @@
           </details>
 
           {# ---- ACTIVAR / DESACTIVAR ---- #}
-          <form method="post" action="/admin/users/toggle/{{ u.id }}" class="inline">
+           {% if not is_self %}
+           <form method="post" action="/admin/users/toggle/{{ u.id }}" class="inline">
             <button
               type="submit"
               class="btn-muted"
@@ -158,6 +160,7 @@
               {% if u.active == 1 %}⛔{% else %}✅{% endif %}
             </button>
           </form>
+          {% endif %}
 
           {# ---- RESET PASSWORD ---- #}
           <form method="post" action="/admin/users/reset-password/{{ u.id }}" class="inline">
