@@ -1,28 +1,14 @@
 {# ----------------------------------------------------------------------
    templates/base_dashboard.html
    Layout base para dashboards por rol
-   Incluye navegación y zona de trabajo
+   Define únicamente la zona de trabajo
    ---------------------------------------------------------------------- #}
 
 {% extends "base.html" %}
 
 {% block content %}
-
-{# =========================================================
-   NAVEGACIÓN DEL DASHBOARD (POR ROL)
-   El template hijo decide qué navbar incluir
-   ========================================================= #}
-{% block dashboard_navbar %}
-{% endblock %}
-
-{# =========================================================
-   CONTENIDO PRINCIPAL DEL DASHBOARD
-   ========================================================= #}
-<div class="px-4 py-2">
-
-  {% block dashboard_content %}
-  {% endblock %}
-
-</div>
-
+  <div class="px-4 py-2">
+    {% block dashboard_content %}
+    {% endblock %}
+  </div>
 {% endblock %}
