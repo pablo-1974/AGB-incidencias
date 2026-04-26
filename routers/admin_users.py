@@ -1,8 +1,16 @@
 # routers/admin_users.py
 """
 Gestión de usuarios (ADMIN).
-Listado, creación, edición, activación y reset de contraseña.
+
+Funcionalidades:
+- Listar usuarios
+- Crear usuario (sin contraseña → primer login)
+- Editar nombre, email y rol
+- Activar / desactivar usuario
+- Resetear contraseña (forzar primer login)
+
 Acceso exclusivo para el rol admin.
+Incluye salvaguardas para evitar dejar el sistema sin administradores.
 """
 
 from fastapi import APIRouter, Request, Form, HTTPException
@@ -24,6 +32,34 @@ router = APIRouter()
 
 
 # ----------------------------------------------------------------------
+# UTILIDADES
+# ----------------------------------------------------------------------
+
+def _count_active_admins() -> int:
+    """
+    Devuelve el número de administradores activos.
+    """
+    from db.connection import get_db
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM users
+                WHERE role = 'admin'
+                  AND active = 1
+                """
+            )
+            return cur.fetchone()[0]
+
+
+def _require_admin(user: dict):
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403)
+
+
+# ----------------------------------------------------------------------
 # LISTADO DE USUARIOS
 # ----------------------------------------------------------------------
 
@@ -35,8 +71,7 @@ def admin_users(
     """
     Pantalla principal de gestión de usuarios.
     """
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403)
+    _require_admin(user)
 
     users = get_all_users()
 
@@ -64,14 +99,13 @@ def admin_users_create(
     role: str = Form(...),
 ):
     """
-    Crea un usuario nuevo (sin contraseña).
-    Fuerza primer login.
+    Crea un usuario nuevo sin contraseña.
+    El usuario deberá definirla en su primer acceso.
     """
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403)
+    _require_admin(user)
 
     if role not in ROLES_TODOS:
-        raise HTTPException(status_code=400, detail="Rol no válido")
+        return RedirectResponse("/admin/users?status=error", status_code=303)
 
     create_user_admin(
         name=name.strip(),
@@ -80,11 +114,11 @@ def admin_users_create(
         created_by=user["id"],
     )
 
-    return RedirectResponse("/admin/users", status_code=303)
+    return RedirectResponse("/admin/users?status=created", status_code=303)
 
 
 # ----------------------------------------------------------------------
-# EDITAR USUARIO (nombre / email / rol)
+# EDITAR USUARIO (NOMBRE / EMAIL / ROL)
 # ----------------------------------------------------------------------
 
 @router.post("/admin/users/update/{user_id}")
@@ -99,15 +133,19 @@ def admin_users_update(
     """
     Actualiza nombre, email y rol de un usuario.
     """
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403)
+    _require_admin(user)
 
     if role not in ROLES_TODOS:
-        raise HTTPException(status_code=400, detail="Rol no válido")
+        return RedirectResponse("/admin/users?status=error", status_code=303)
 
     target = get_user_by_id(user_id)
     if not target:
-        raise HTTPException(status_code=404)
+        return RedirectResponse("/admin/users?status=error", status_code=303)
+
+    # Evitar quitar el último admin
+    if target["role"] == "admin" and role != "admin":
+        if _count_active_admins() <= 1:
+            return RedirectResponse("/admin/users?status=error", status_code=303)
 
     update_user_admin(
         user_id=user_id,
@@ -116,7 +154,7 @@ def admin_users_update(
         role=role,
     )
 
-    return RedirectResponse("/admin/users", status_code=303)
+    return RedirectResponse("/admin/users?status=updated", status_code=303)
 
 
 # ----------------------------------------------------------------------
@@ -132,19 +170,23 @@ def admin_users_toggle(
     """
     Activa o desactiva un usuario.
     """
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403)
+    _require_admin(user)
 
     target = get_user_by_id(user_id)
     if not target:
-        raise HTTPException(status_code=404)
+        return RedirectResponse("/admin/users?status=error", status_code=303)
+
+    # Evitar desactivar el último admin activo
+    if target["role"] == "admin" and target["active"] == 1:
+        if _count_active_admins() <= 1:
+            return RedirectResponse("/admin/users?status=error", status_code=303)
 
     set_user_active(
         user_id=user_id,
         active=not bool(target["active"]),
     )
 
-    return RedirectResponse("/admin/users", status_code=303)
+    return RedirectResponse("/admin/users?status=toggled", status_code=303)
 
 
 # ----------------------------------------------------------------------
@@ -159,15 +201,14 @@ def admin_users_reset_password(
 ):
     """
     Resetea la contraseña de un usuario.
-    Fuerza primer login.
+    Fuerza el flujo de primer login.
     """
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403)
+    _require_admin(user)
 
     target = get_user_by_id(user_id)
     if not target:
-        raise HTTPException(status_code=404)
+        return RedirectResponse("/admin/users?status=error", status_code=303)
 
     reset_user_password(user_id=user_id)
 
-    return RedirectResponse("/admin/users", status_code=303)
+    return RedirectResponse("/admin/users?status=reset", status_code=303)
