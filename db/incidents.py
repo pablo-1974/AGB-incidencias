@@ -238,7 +238,8 @@ def count_open_incidents() -> int:
                 """,
                 (ESTADO_CERRADO,),
             )
-            return cur.fetchone()[0]
+            row = cur.fetchone()
+            return next(iter(row.values()))
 
 
 def count_open_very_serious_incidents() -> int:
@@ -256,7 +257,8 @@ def count_open_very_serious_incidents() -> int:
                 """,
                 (ESTADO_CERRADO, GRAVEDAD_MUY_GRAVE),
             )
-            return cur.fetchone()[0]
+            row = cur.fetchone()
+            return next(iter(row.values()))
 
 
 def count_incidents_created_this_week() -> int:
@@ -275,7 +277,8 @@ def count_incidents_created_this_week() -> int:
                 """,
                 (since,),
             )
-            return cur.fetchone()[0]
+            row = cur.fetchone()
+            return next(iter(row.values()))
 
 
 def count_incidents_closed_this_week() -> int:
@@ -295,7 +298,8 @@ def count_incidents_closed_this_week() -> int:
                 """,
                 (ESTADO_CERRADO, since),
             )
-            return cur.fetchone()[0]
+            row = cur.fetchone()
+            return next(iter(row.values()))
 
 # ======================================================
 # RANKINGS
@@ -508,7 +512,12 @@ def get_excursion_eligibility(
     sancionados = []
     posibles_amnistiados = []
 
-    for alumno, grupo, total, graves in rows:
+    for r in rows:
+        alumno = r["alumno"]
+        grupo = r["grupo"]
+        total = r["total_faltas"]
+        graves = r["faltas_graves"]
+    
         if graves >= 1 or total >= 2:
             sancionados.append({
                 "grupo": grupo,
