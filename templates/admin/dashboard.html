@@ -6,12 +6,17 @@
 
 {% extends "base_dashboard.html" %}
 
-{% block content %}
-
 {# =========================================================
    BARRA DE NAVEGACIÓN ADMIN
    ========================================================= #}
-{% include "admin/_navbar.html" %}
+{% block dashboard_navbar %}
+  {% include "admin/_navbar.html" %}
+{% endblock %}
+
+{# =========================================================
+   CONTENIDO DEL DASHBOARD
+   ========================================================= #}
+{% block dashboard_content %}
 
 <h1 class="text-xl font-semibold mb-6">🧑‍💼 Dashboard de administración</h1>
 
@@ -20,16 +25,12 @@
   Estado general del sistema.
 </p>
 
-{# =========================================================
-   KPIs PRINCIPALES
-   ========================================================= #}
+{# KPIs PRINCIPALES #}
 <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10">
 
   <div class="card">
     <div class="text-sm text-gray-500">Usuarios totales</div>
-    <div class="text-2xl font-semibold">
-      {{ kpis.total_users }}
-    </div>
+    <div class="text-2xl font-semibold">{{ kpis.total_users }}</div>
   </div>
 
   <div class="card">
@@ -55,9 +56,7 @@
 
 </div>
 
-{# =========================================================
-   ACCESOS RÁPIDOS
-   ========================================================= #}
+{# ACCESOS RÁPIDOS #}
 <div class="card mb-10">
 
   <h2 class="font-semibold mb-4">⚡ Accesos rápidos</h2>
@@ -73,25 +72,19 @@
 
     <div class="card opacity-60 cursor-not-allowed">
       <div class="font-semibold mb-1">📊 Análisis</div>
-      <div class="text-sm text-gray-500">
-        Próximamente
-      </div>
+      <div class="text-sm text-gray-500">Próximamente</div>
     </div>
 
     <div class="card opacity-60 cursor-not-allowed">
       <div class="font-semibold mb-1">🧾 Auditoría</div>
-      <div class="text-sm text-gray-500">
-        Próximamente
-      </div>
+      <div class="text-sm text-gray-500">Próximamente</div>
     </div>
 
   </div>
 
 </div>
 
-{# =========================================================
-   TABLA RESUMEN – ÚLTIMOS USUARIOS CREADOS
-   ========================================================= #}
+{# TABLA RESUMEN #}
 <div class="card">
 
   <h2 class="font-semibold mb-4">🆕 Últimos usuarios creados</h2>
@@ -121,8 +114,7 @@
             {% endif %}
           </td>
           <td class="text-sm text-gray-600">
-            {{ u.created_at.strftime('%d/%m/%Y %H:%M')
-               if u.created_at else '—' }}
+            {{ u.created_at.strftime('%d/%m/%Y %H:%M') if u.created_at else '—' }}
           </td>
         </tr>
         {% endfor %}
