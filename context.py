@@ -23,7 +23,8 @@ def ctx(request, user=None, **extra):
         "institution_name": settings.INSTITUTION_NAME,
         "year": settings.APP_YEAR,
         "now_dt": now,
-
+        "logo_url": "/static/logo.png",
+        
         # Layout
         "hide_chrome": extra.get("hide_chrome", False),
     }
