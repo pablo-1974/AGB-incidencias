@@ -7,6 +7,7 @@ from utils.enums import (
     ESTADO_ABIERTO,
     ESTADO_CERRADO,
     GRAVEDAD_MUY_GRAVE,
+    GRAVEDAD_GRAVE,
 )
 
 # ======================================================
@@ -524,3 +525,47 @@ def get_excursion_eligibility(
             })
 
     return sancionados, posibles_amnistiados
+
+# ======================================================
+# COLA DE CIERRE
+# ======================================================
+
+def get_open_incidents_for_closing():
+    """
+    Devuelve incidencias abiertas ordenadas por:
+    1) gravedad (muy grave > grave > resto)
+    2) fecha
+    3) orden horario
+    """
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    id,
+                    fecha,
+                    hora,
+                    alumno,
+                    descripcion,
+                    gravedad_inicial,
+                    teacher_name
+                FROM incidents
+                WHERE estado = %s
+                ORDER BY
+                    CASE gravedad_inicial
+                        WHEN %s THEN 1
+                        WHEN %s THEN 2
+                        ELSE 3
+                    END,
+                    fecha ASC,
+                    hora_orden ASC,
+                    id ASC
+                """,
+                (
+                    ESTADO_ABIERTO,
+                    GRAVEDAD_MUY_GRAVE,
+                    GRAVEDAD_GRAVE,
+                ),
+            )
+            return cur.fetchall()
