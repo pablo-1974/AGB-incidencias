@@ -24,6 +24,7 @@ from routers.rankings import router as rankings_router
 from routers.rankings_pdf import router as rankings_pdf_router
 from routers.admin_users import router as admin_users_router
 from routers.admin_dashboard import router as admin_dashboard_router
+from routers.incidents_create import router as incidents_create_router
 
 # Auth / login
 from routers.login import router as login_router
@@ -74,6 +75,7 @@ app.include_router(rankings_router)
 app.include_router(rankings_pdf_router)
 app.include_router(admin_users_router)
 app.include_router(admin_dashboard_router)
+app.include_router(incidents_create_router)
 
 # ------------------------------------------------------------
 # Ruta raíz: redirige al dashboard
