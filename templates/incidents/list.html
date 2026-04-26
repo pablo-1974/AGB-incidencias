@@ -92,3 +92,52 @@
 </form>
 
 {% if incidents %}
+
+<div class="overflow-x-auto">
+  <table class="table table-zebra w-full text-sm">
+    <thead>
+      <tr>
+        <th>Nº</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Alumno</th>
+        <th>Gravedad inicial</th>
+        <th>Gravedad final</th>
+        <th>Profesor</th>
+        <th>Descripción</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in incidents %}
+      <tr>
+        <td>{{ i.id }}</td>
+        <td>{{ i.fecha }}</td>
+        <td>{{ i.franja or "—" }}</td>
+        <td>{{ i.alumno }}</td>
+        <td>{{ i.gravedad_inicial }}</td>
+        <td>{{ i.gravedad_final or "—" }}</td>
+        <td>{{ i.teacher_name }}</td>
+        <td class="max-w-lg truncate">{{ i.descripcion }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+
+<p class="text-sm text-gray-500">
+  No hay incidencias registradas.
+</p>
+
+{% endif %}
+
+<script>
+  document.querySelectorAll(".auto-submit").forEach(el => {
+    el.addEventListener("change", () => {
+      el.form.submit();
+    });
+  });
+</script>
+
+{% endblock %}
