@@ -15,9 +15,12 @@ itsdangerous==2.2.0
 # --- Base de datos ---
 psycopg[binary]
 
+
 # --- Utilidades ---
 pandas==2.2.1
 python-dateutil==2.9.0.post0
+openpyxl>=3.1.0
+
 
 # --- PDFs ---
 reportlab==4.1.0
