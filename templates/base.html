@@ -9,14 +9,12 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- CSS propio (opcional) -->
+  <!-- CSS propio -->
   <link rel="stylesheet" href="/static/styles.css">
 
   {% if logo_url %}
     <link rel="icon" type="image/png" href="{{ logo_url }}">
   {% endif %}
-
-  <link rel="apple-touch-icon" href="{{ logo_url }}">
 </head>
 
 <body class="min-h-screen bg-gray-50 text-gray-900">
@@ -25,6 +23,7 @@
   {% set user = user if user is defined else None %}
 
   {% if not hide_chrome %}
+
   <!-- ========================================================= -->
   <!-- HEADER -->
   <!-- ========================================================= -->
@@ -36,12 +35,8 @@
       {% endif %}
 
       <div>
-        <div class="font-semibold">
-          {{ app_name }}
-        </div>
-        <div class="text-xs text-gray-500">
-          {{ institution_name }}
-        </div>
+        <div class="font-semibold">{{ app_name }}</div>
+        <div class="text-xs text-gray-500">{{ institution_name }}</div>
       </div>
 
       <div class="ml-auto text-right text-sm text-gray-700">
@@ -59,26 +54,44 @@
   </header>
 
   <!-- ========================================================= -->
-  <!-- NAV -->
+  <!-- NAVBAR ÚNICA (DINÁMICA POR ROL) -->
   <!-- ========================================================= -->
   {% if user %}
   <nav class="bg-gray-100 border-b">
     <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-6 text-sm">
-  
+
       <div class="flex items-center gap-6">
-        <a href="/dashboard" class="app-link">Inicio</a>
-        <a href="/analysis/student" class="app-link">Análisis alumno</a>
-        <a href="/analysis/teacher" class="app-link">Análisis profesor</a>
-        <a href="/rankings" class="app-link">Rankings</a>
+
+        {% if user.role == "admin" %}
+
+          <a href="/admin/dashboard" class="app-link">Inicio</a>
+          <a href="#" class="app-link">Incidencias</a>
+          <a href="#" class="app-link">Análisis</a>
+          <a href="#" class="app-link">Rankings</a>
+          <a href="#" class="app-link">Excursión</a>
+          <a href="#" class="app-link">Gestión alumnos</a>
+          <a href="/admin/users" class="app-link">Gestión usuarios</a>
+          <a href="#" class="app-link">Backup</a>
+
+        {% else %}
+
+          <a href="/dashboard" class="app-link">Inicio</a>
+          <a href="/analysis/student" class="app-link">Análisis alumno</a>
+          <a href="/analysis/teacher" class="app-link">Análisis profesor</a>
+          <a href="/rankings" class="app-link">Rankings</a>
+
+        {% endif %}
+
       </div>
-  
+
       <div class="ml-auto flex gap-4">
         <a href="/logout" class="app-link">Salir</a>
       </div>
-  
+
     </div>
   </nav>
   {% endif %}
+
   {% endif %}
 
   <!-- ========================================================= -->
