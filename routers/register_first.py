@@ -8,7 +8,6 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from db.users import has_any_user, create_user_admin
-from auth.passwords import hash_password  # o donde tengas el hash
 
 router = APIRouter()
 
@@ -32,12 +31,11 @@ def register_first_submit(
     request: Request,
     name: str = Form(...),
     email: str = Form(...),
-    password: str = Form(...),
 ):
     if has_any_user():
         return RedirectResponse("/login", status_code=303)
 
-    # Crear usuario admin SIN romper el modelo actual
+    # Crear primer admin SIN contraseña
     create_user_admin(
         name=name.strip(),
         email=email.strip(),
@@ -45,15 +43,5 @@ def register_first_submit(
         created_by=None,
     )
 
-    # Establecer contraseña inicial directamente
-    from db.users import set_user_password
-    from db.users import get_user_by_email
-
-    user = get_user_by_email(email)
-    set_user_password(
-        user_id=user["id"],
-        password_hash=hash_password(password),
-        must_change_password=False,
-    )
-
+    # Al ir a /login, se activará el flujo /first-login automáticamente
     return RedirectResponse("/login", status_code=303)
