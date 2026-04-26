@@ -2,80 +2,74 @@
 
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
+from datetime import date
+
+from auth import load_user_dep
+from context import ctx
 
 from db.incidents import get_incidents
-from db.students import get_all_students
+from db.students import get_all_groups, get_students_by_group
+
 from utils.enums import GRAVEDAD_MUY_GRAVE
-from context import ctx
-from auth import load_user_dep
 
 router = APIRouter()
+
+INICIO_CURSO = "2025-09-01"
 
 
 @router.get("/analysis/student", response_class=HTMLResponse)
 def analysis_student(
     request: Request,
+    grupo: str | None = None,
     alumno: str | None = None,
     from_: str | None = None,
     to: str | None = None,
     user=Depends(load_user_dep),
 ):
     """
-    Análisis de incidencias por alumno.
+    Historial de incidencias por alumno.
+    Filtros automáticos: grupo, alumno, fechas.
     """
 
-    # ---------------------------------
-    # 1. Alumnos disponibles
-    # ---------------------------------
-    alumnos = get_all_students()
+    # --------------------------------------------------
+    # 1. Fechas por defecto
+    # --------------------------------------------------
+    fecha_desde = from_ or INICIO_CURSO
+    fecha_hasta = to or date.today().isoformat()
 
-    # Pantalla inicial (sin alumno seleccionado)
-    if not alumno:
-        return request.app.state.templates.TemplateResponse(
-            "student_analysis.html",  # ✅ nombre real del template
-            ctx(
-                request,
-                user,
-                title="Análisis por alumno",
-                alumnos=alumnos,
-                alumno_sel=None,
-                fecha_desde=from_,
-                fecha_hasta=to,
-                rows=[],
-                kpis=None,
-            ),
-        )
+    # --------------------------------------------------
+    # 2. Filtros disponibles
+    # --------------------------------------------------
+    grupos = get_all_groups()
+    alumnos = get_students_by_group(grupo) if grupo else []
 
-    # ---------------------------------
-    # 2. Cargar incidencias
-    # ---------------------------------
+    # --------------------------------------------------
+    # 3. Cargar incidencias filtradas
+    # --------------------------------------------------
     rows_raw = get_incidents(
         mode="all",
+        grupo=grupo,
         alumno=alumno,
-        fecha_desde=from_,
-        fecha_hasta=to,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
     )
 
-    # ---------------------------------
-    # 3. Preparar filas + KPIs
-    # ---------------------------------
+    # --------------------------------------------------
+    # 4. Preparar filas y KPIs
+    # --------------------------------------------------
     rows = []
     abiertas = 0
     muy_graves = 0
 
     for r in rows_raw:
-        (
-            _id,
-            fecha,
-            hora,
-            grupo,
-            _alumno,
-            descripcion,
-            gravedad_ini,
-            gravedad_fin,
-            estado,
-            profesor,
-        ) = r
+        fecha = r["fecha"]
+        hora = r["franja"]
+        grupo_row = r["grupo"]
+        descripcion = r["descripcion"]
+        gravedad_ini = r["gravedad_inicial"]
+        gravedad_fin = r["gravedad_final"]
+        estado = r["estado"]
+        profesor = r["teacher_name"]
 
         gravedad = gravedad_fin or gravedad_ini
 
@@ -88,7 +82,7 @@ def analysis_student(
         rows.append({
             "fecha": fecha,
             "hora": hora,
-            "grupo": grupo,
+            "grupo": grupo_row,
             "profesor": profesor,
             "descripcion": descripcion,
             "grav_ini": gravedad_ini,
@@ -103,19 +97,21 @@ def analysis_student(
         "muy_graves": muy_graves,
     }
 
-    # ---------------------------------
-    # 4. Renderizado final
-    # ---------------------------------
+    # --------------------------------------------------
+    # 5. Render
+    # --------------------------------------------------
     return request.app.state.templates.TemplateResponse(
-        "student_analysis.html",  # ✅ nombre real del template
+        "student_analysis.html",
         ctx(
             request,
             user,
-            title="Análisis por alumno",
+            title="Historial por alumno",
+            grupos=grupos,
             alumnos=alumnos,
+            grupo_sel=grupo,
             alumno_sel=alumno,
-            fecha_desde=from_,
-            fecha_hasta=to,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta,
             rows=rows,
             kpis=kpis,
         ),
