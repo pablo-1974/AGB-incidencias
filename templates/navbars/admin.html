@@ -80,11 +80,24 @@
       </span>
 
       <!-- ================================================= -->
-      <!-- Gestión alumnos (pendiente) -->
+      <!-- Gestión alumnos -->
       <!-- ================================================= -->
-      <span class="app-link opacity-50 cursor-not-allowed">
-        Gestión alumnos
-      </span>
+      <div class="relative group">
+        <span class="app-link cursor-pointer select-none">
+          Gestión alumnos
+        </span>
+        <div class="absolute hidden group-hover:block bg-white border rounded shadow-lg mt-2 min-w-[220px] z-50">
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100">
+            📋 Listar alumnos
+          </a>
+          <span class="block px-4 py-2 text-gray-400 cursor-not-allowed">
+            📥 Importar alumnos
+          </span>
+          <span class="block px-4 py-2 text-gray-400 cursor-not-allowed">
+            📤 Exportar alumnos
+          </span>
+        </div>
+      </div>
 
       <!-- ================================================= -->
       <!-- Gestión usuarios -->
@@ -116,9 +129,12 @@
     </div>
 
     <!-- ================================================= -->
-    <!-- Cerrar sesión -->
+    <!-- Cambio de contraseña · Cerrar sesión -->
     <!-- ================================================= -->
     <div class="ml-auto flex gap-4">
+      <a href="/change-password" class="app-link">
+        Cambiar contraseña
+      </a>
       <a href="/logout" class="app-link">
         Salir
       </a>
