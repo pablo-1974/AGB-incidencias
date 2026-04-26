@@ -15,7 +15,7 @@ from datetime import date
 
 from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
-from utils.enums import GRAVEDADES
+from utils.enums import GRAVEDADES, FRANJAS_HORARIAS
 
 router = APIRouter()
 
@@ -55,6 +55,7 @@ def incident_create_submit(
     grupo: str = Form(...),
     alumno: str = Form(...),
     fecha: str = Form(...),
+    hora: str = Form(...),
     gravedad: str = Form(...),
     descripcion: str = Form(...),
 ):
@@ -64,6 +65,9 @@ def incident_create_submit(
 
     if not alumno or alumno.startswith("—"):
         return RedirectResponse("/incidents/create?error=alumno", status_code=303)
+
+    if hora not in FRANJAS_HORARIAS:
+    return RedirectResponse("/incidents/create?error=hora", status_code=303)
 
     if gravedad not in GRAVEDADES:
         return RedirectResponse("/incidents/create?error=gravedad", status_code=303)
@@ -78,6 +82,7 @@ def incident_create_submit(
         grupo=grupo,
         alumno=alumno,
         fecha=fecha,
+        hora=hora,
         descripcion=descripcion.strip(),
         gravedad=gravedad,
     )
