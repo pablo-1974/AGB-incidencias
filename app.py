@@ -76,18 +76,18 @@ app.include_router(rankings_pdf_router)
 # Ruta raíz: redirige al dashboard
 # ------------------------------------------------------------
 @app.api_route("/", methods=["GET", "HEAD"])
-def root(request: Request, user=Depends(load_user_dep)):
+def root(request: Request):
 
-    # Respuesta limpia para health-checks / scanners
+    # HEAD limpio para Render / health checks
     if request.method == "HEAD":
         return JSONResponse({"ok": True})
 
-    # Bootstrap inicial
+    # Base de datos vacía → bootstrap
     if not has_any_user():
         return RedirectResponse("/register-first", status_code=303)
 
-    # No autenticado
-    if not user:
+    # No sesión → login
+    if not request.session.get("user_id"):
         return RedirectResponse("/login", status_code=303)
 
     # Usuario autenticado
