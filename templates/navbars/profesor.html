@@ -18,9 +18,19 @@
       <!-- ================================================= -->
       <!-- Incidencias -->
       <!-- ================================================= -->
-      <a href="/incidents/create" class="app-link">
-        Crear incidencia
-      </a>
+      <div class="relative group">
+        <span class="app-link cursor-pointer select-none">
+          Incidencias
+        </span>
+        <div class="absolute left-0 top-full hidden group-hover:block bg-white border rounded shadow-lg min-w-[220px] z-50">
+          <a href="/incidents/create" class="block px-4 py-2 hover:bg-gray-100">
+            📝 Abrir incidencia
+          </a>
+          <a href="/incidents/list" class="block px-4 py-2 hover:bg-gray-100">
+            📋 Listar incidencias
+          </a>
+          </div>
+      </div>
 
     </div>
 
