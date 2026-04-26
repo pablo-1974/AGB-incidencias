@@ -218,26 +218,47 @@ def admin_users_reset_password(
 # IMPORTAR USUARIOS (EXCEL)
 # ----------------------------------------------------------------------
 
-@router.post("/users/import")
-def import_users(
+import openpyxl
+from fastapi import UploadFile, File
+
+
+@router.post("/admin/users/import")
+def admin_users_import(
+    user=load_user_dep,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(admin_required)
 ):
-    if not file.filename.endswith(".xlsx"):
-        raise HTTPException(status_code=400, detail="El archivo debe ser .xlsx")
+    """
+    Importa usuarios desde un archivo Excel (.xlsx).
 
-    wb = openpyxl.load_workbook(file.file)
-    ws = wb.active
+    Columnas requeridas:
+    - Nombre
+    - Email
+    - Rol
 
+    Comportamiento:
+    - Email nuevo → crear usuario (sin contraseña)
+    - Email existente → actualizar nombre y rol
+    - NO se eliminan usuarios
+    """
+    _require_admin(user)
+
+    if not file.filename.lower().endswith(".xlsx"):
+        return RedirectResponse("/admin/users?status=error", status_code=303)
+
+    try:
+        wb = openpyxl.load_workbook(file.file)
+        ws = wb.active
+    except Exception:
+        return RedirectResponse("/admin/users?status=error", status_code=303)
+
+    # Validar cabecera
     headers = [cell.value for cell in ws[1]]
     expected = ["Nombre", "Email", "Rol"]
 
     if headers[:3] != expected:
-        raise HTTPException(
-            status_code=400,
-            detail="Las primeras columnas deben ser: Nombre, Email, Rol"
-        )
+        return RedirectResponse("/admin/users?status=error", status_code=303)
+
+    from db.users import get_user_by_email, create_user_admin, update_user_admin
 
     created = 0
     updated = 0
@@ -245,31 +266,34 @@ def import_users(
     for row in ws.iter_rows(min_row=2, values_only=True):
         name, email, role = row[:3]
 
-        if not email:
+        if not email or not role or role not in ROLES_TODOS:
             continue
 
-        user = db.query(User).filter(User.email == email).first()
-        if user:
-            user.name = name
-            user.role = role
+        email = email.strip()
+        name = name.strip() if name else ""
+
+        existing = get_user_by_email(email)
+
+        if existing:
+            update_user_admin(
+                user_id=existing["id"],
+                name=name or existing["name"],
+                email=email,
+                role=role,
+            )
             updated += 1
         else:
-            new_user = User(
+            create_user_admin(
                 name=name,
                 email=email,
                 role=role,
-                active=1,
-                must_change_password=True,
-                created_by=current_user.id
+                created_by=user["id"],
             )
-            db.add(new_user)
             created += 1
 
-    db.commit()
-
     return RedirectResponse(
-        url=f"/admin/users?status=imported&created={created}&updated={updated}",
-        status_code=303
+        f"/admin/users?status=imported&created={created}&updated={updated}",
+        status_code=303,
     )
 
 
@@ -277,14 +301,21 @@ def import_users(
 # EXPORTAR USUARIOS (EXCEL)
 # ----------------------------------------------------------------------
 
-# routers/admin_users.py
+import io
+import openpyxl
+from fastapi.responses import Response
 
-@router.get("/users/export")
+
+@router.get("/admin/users/export")
 def export_users(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(admin_required)
+    user=load_user_dep,
 ):
-    users = db.query(User).order_by(User.name).all()
+    """
+    Exporta los usuarios a un archivo Excel (.xlsx).
+    """
+    _require_admin(user)
+
+    users = get_all_users()
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -296,28 +327,30 @@ def export_users(
         "Rol",
         "Activo",
         "Primer login pendiente",
-        "Último acceso"
+        "Último acceso",
     ])
 
     for u in users:
         ws.append([
-            u.name,
-            u.email,
-            u.role,
-            "Sí" if u.active else "No",
-            "Sí" if u.must_change_password or not u.password_hash else "No",
-            u.last_login_at.strftime("%Y-%m-%d %H:%M") if u.last_login_at else ""
+            u["name"],
+            u["email"],
+            u["role"],
+            "Sí" if u["active"] == 1 else "No",
+            "Sí" if u["must_change_password"] or not u["password_hash"] else "No",
+            u["last_login_at"].strftime("%d/%m/%Y %H:%M")
+                if u["last_login_at"] else "",
         ])
 
-    file_stream = io.BytesIO()
-    wb.save(file_stream)
-    file_stream.seek(0)
+    stream = io.BytesIO()
+    wb.save(stream)
+    stream.seek(0)
 
     headers = {
         "Content-Disposition": "attachment; filename=usuarios.xlsx"
     }
+
     return Response(
-        file_stream.read(),
+        stream.read(),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers=headers
+        headers=headers,
     )
