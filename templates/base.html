@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/static/styles.css">
 
   {% if logo_url %}
-    <link rel="icon" href="{{ logo_url }}">
+    <link rel="icon" type="image/png" href="{{ logo_url }}">
   {% endif %}
 </head>
 
@@ -30,7 +30,7 @@
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
 
       {% if logo_url %}
-        <img src="{{ logo_url }}" alt="logo" class="h-8 w-8">
+        <img src="{{ logo_url }}" alt="Logo" class="h-8 w-auto">
       {% endif %}
 
       <div>
