@@ -27,7 +27,7 @@ from routers.rankings_pdf import router as rankings_pdf_router
 # Auth / login
 from routers.login import router as login_router
 from routers.register_first import router as register_first_router
-
+from routers.first_login import router as first_login_router
 
 # ------------------------------------------------------------
 # Crear aplicación
@@ -63,6 +63,7 @@ app.state.templates = templates
 # ------------------------------------------------------------
 app.include_router(login_router)
 app.include_router(register_first_router)
+app.include_router(first_login_router)
 
 app.include_router(dashboard_router)
 app.include_router(analysis_student_router)
