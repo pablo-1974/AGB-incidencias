@@ -1,0 +1,112 @@
+{# ----------------------------------------------------------------------
+   templates/admin/_navbar.html
+   Barra de navegación del administrador
+   ---------------------------------------------------------------------- #}
+
+<nav class="bg-gray-800 text-white mb-6">
+  <ul class="flex flex-wrap items-center px-4 py-3 gap-x-6 gap-y-2 text-sm">
+
+    <li>
+      <a href="/admin/dashboard" class="hover:underline">
+        Inicio
+      </a>
+    </li>
+
+    <li class="relative group">
+      <span class="cursor-default">Incidencias</span>
+      <ul class="absolute hidden group-hover:block bg-gray-700 mt-2 py-2 rounded shadow-lg text-sm">
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Crear incidencia</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Listar incidencias</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Cerrar incidencia</a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="relative group">
+      <span class="cursor-default">Análisis</span>
+      <ul class="absolute hidden group-hover:block bg-gray-700 mt-2 py-2 rounded shadow-lg text-sm">
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="/student_analysis">Historial alumno</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="/teacher_analysis">Historial profesor</a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="relative group">
+      <span class="cursor-default">Rankings</span>
+      <ul class="absolute hidden group-hover:block bg-gray-700 mt-2 py-2 rounded shadow-lg text-sm">
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="/rankings">Ranking alumnos</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Ranking grupos</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Ranking profesores</a>
+        </li>
+      </ul>
+    </li>
+
+    <li>
+      <a href="#" class="hover:underline">
+        Excursión
+      </a>
+    </li>
+
+    <li class="relative group">
+      <span class="cursor-default">Gestión alumnos</span>
+      <ul class="absolute hidden group-hover:block bg-gray-700 mt-2 py-2 rounded shadow-lg text-sm">
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Importar alumnos</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Exportar alumnos</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Listar alumnos</a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="relative group">
+      <span class="cursor-default">Gestión usuarios</span>
+      <ul class="absolute hidden group-hover:block bg-gray-700 mt-2 py-2 rounded shadow-lg text-sm">
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="/admin/users">Listar usuarios</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="/admin/users">Importar / Exportar</a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="relative group">
+      <span class="cursor-default">Backup</span>
+      <ul class="absolute hidden group-hover:block bg-gray-700 mt-2 py-2 rounded shadow-lg text-sm">
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Registro actividades</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Exportar registro</a>
+        </li>
+        <li class="px-4 py-1 hover:bg-gray-600">
+          <a href="#">Importar registro</a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="ml-auto">
+      <a href="/logout" class="hover:underline">
+        Cerrar sesión
+      </a>
+    </li>
+
+  </ul>
+</nav>
