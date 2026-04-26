@@ -105,6 +105,7 @@ def create_incident(
     alumno: str,
     fecha: str,
     hora: str,
+    hora_orden: int,
     descripcion: str,
     gravedad: str,
 ):
