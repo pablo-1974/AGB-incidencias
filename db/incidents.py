@@ -545,7 +545,7 @@ def get_open_incidents_for_closing():
                 SELECT
                     id,
                     fecha,
-                    hora,
+                    hora AS franja,
                     alumno,
                     descripcion,
                     gravedad_inicial,
