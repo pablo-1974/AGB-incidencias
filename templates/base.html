@@ -61,30 +61,20 @@
   <!-- ========================================================= -->
   {% if user %}
   <nav class="bg-gray-100 border-b">
-    <div class="max-w-7xl mx-auto px-4 py-2 flex gap-6 text-sm">
-
-      <a href="/dashboard" class="text-purple-700 hover:underline">
-        Inicio
-      </a>
-
-      <a href="/analysis/student" class="text-purple-700 hover:underline">
-        Análisis alumno
-      </a>
-
-      <a href="/analysis/teacher" class="text-purple-700 hover:underline">
-        Análisis profesor
-      </a>
-
-      <a href="/rankings" class="text-purple-700 hover:underline">
-        Rankings
-      </a>
-
+    <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-6 text-sm">
+  
+      Inicio
+  
+      Análisis alumno
+  
+      Análisis profesor
+  
+      Rankings
+  
       <div class="ml-auto flex gap-4">
-        <a href="/logout" class="text-purple-700 hover:underline">
-          Salir
-        </a>
+        Salir
       </div>
-
+  
     </div>
   </nav>
   {% endif %}
