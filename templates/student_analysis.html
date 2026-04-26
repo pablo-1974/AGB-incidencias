@@ -1,24 +1,36 @@
-<!-- templates/student_analysis.html -->
+{# templates/student_analysis.html #}
 {% extends "base.html" %}
 
 {% block content %}
 
-<h1 class="text-xl font-semibold mb-6">🧒 Análisis por alumno</h1>
+<h1 class="text-xl font-semibold mb-6">🧒 Historial por alumno</h1>
 
 <!-- ========================================================= -->
-<!-- FORMULARIO DE FILTROS -->
+<!-- FILTROS (AUTO-SUBMIT, SIN BOTÓN) -->
 <!-- ========================================================= -->
-<form method="get" class="card grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+<form method="get"
+      class="card grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-sm">
+
+  <!-- Grupo -->
+  <div>
+    <label class="font-semibold">Grupo</label>
+    <select name="grupo" class="form-select w-full auto-submit">
+      <option value="">Todos</option>
+      {% for g in grupos %}
+        <option value="{{ g }}" {% if grupo_sel == g %}selected{% endif %}>
+          {{ g }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
 
   <!-- Alumno -->
   <div>
-    <label class="label">Alumno</label>
-    <select name="alumno" class="input" required>
-      {% if not alumno_sel %}
-        <option value="" disabled selected>— Selecciona alumno —</option>
-      {% endif %}
+    <label class="font-semibold">Alumno</label>
+    <select name="alumno" class="form-select w-full auto-submit">
+      <option value="">Todos</option>
       {% for a in alumnos %}
-        <option value="{{ a }}" {% if a == alumno_sel %}selected{% endif %}>
+        <option value="{{ a }}" {% if alumno_sel == a %}selected{% endif %}>
           {{ a }}
         </option>
       {% endfor %}
@@ -27,36 +39,29 @@
 
   <!-- Desde -->
   <div>
-    <label class="label">Desde</label>
+    <label class="font-semibold">Desde</label>
     <input
       type="date"
-      name="from"
-      class="input"
-      value="{{ fecha_desde or '' }}"
+      name="from_"
+      class="form-input w-full auto-submit"
+      value="{{ fecha_desde }}"
     />
   </div>
 
   <!-- Hasta -->
   <div>
-    <label class="label">Hasta</label>
+    <label class="font-semibold">Hasta</label>
     <input
       type="date"
       name="to"
-      class="input"
-      value="{{ fecha_hasta or '' }}"
+      class="form-input w-full auto-submit"
+      value="{{ fecha_hasta }}"
     />
-  </div>
-
-  <!-- Botón -->
-  <div class="flex items-end">
-    <button type="submit" class="btn-primary w-full">
-      Aplicar filtros
-    </button>
   </div>
 
 </form>
 
-{% if alumno_sel and rows %}
+{% if rows %}
 
 <!-- ========================================================= -->
 <!-- KPIs -->
@@ -125,22 +130,33 @@
 <!-- ========================================================= -->
 <div class="mt-8">
   <a
-    href="/analysis/student/pdf?alumno={{ alumno_sel }}
-          {% if fecha_desde %}&from={{ fecha_desde }}{% endif %}
-          {% if fecha_hasta %}&to={{ fecha_hasta }}{% endif %}"
+    href="/analysis/student/pdf
+      ?{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}
+       {% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}
+       from={{ fecha_desde }}&to={{ fecha_hasta }}"
     class="btn-primary inline-block"
   >
-    📄 Descargar PDF (Historial del alumno)
+    📄 Descargar PDF (historial)
   </a>
 </div>
 
-{% elif alumno_sel %}
+{% else %}
 
-<!-- ===================== SIN INCIDENCIAS ===================== -->
 <div class="card text-center text-gray-600">
-  Este alumno no tiene incidencias registradas en el periodo seleccionado.
+  No hay incidencias para los filtros seleccionados.
 </div>
 
 {% endif %}
+
+<!-- ========================================================= -->
+<!-- AUTO-SUBMIT -->
+<!-- ========================================================= -->
+<script>
+  document.querySelectorAll(".auto-submit").forEach(el => {
+    el.addEventListener("change", () => {
+      el.form.submit();
+    });
+  });
+</script>
 
 {% endblock %}
