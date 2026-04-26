@@ -1,0 +1,134 @@
+{# ----------------------------------------------------------------------
+   templates/admin/dashboard.html
+   Dashboard principal del administrador
+   Vista global del sistema: KPIs + accesos rápidos + resumen
+   ---------------------------------------------------------------------- #}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-xl font-semibold mb-6">🧑‍💼 Dashboard de administración</h1>
+
+<p class="text-sm text-gray-600 mb-6">
+  Bienvenido, <strong>{{ user.name }}</strong>.
+  Estado general del sistema.
+</p>
+
+{# =========================================================
+   KPIs PRINCIPALES
+   ========================================================= #}
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10">
+
+  <div class="card">
+    <div class="text-sm text-gray-500">Usuarios totales</div>
+    <div class="text-2xl font-semibold">
+      {{ kpis.total_users }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="text-sm text-gray-500">Usuarios activos</div>
+    <div class="text-2xl font-semibold text-green-600">
+      {{ kpis.active_users }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="text-sm text-gray-500">Usuarios inactivos</div>
+    <div class="text-2xl font-semibold text-red-600">
+      {{ kpis.inactive_users }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="text-sm text-gray-500">Primer login pendiente</div>
+    <div class="text-2xl font-semibold text-orange-600">
+      {{ kpis.pending_first_login }}
+    </div>
+  </div>
+
+</div>
+
+{# =========================================================
+   ACCESOS RÁPIDOS
+   ========================================================= #}
+<div class="card mb-10">
+
+  <h2 class="font-semibold mb-4">⚡ Accesos rápidos</h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+    <a href="/admin/users" class="card hover:bg-gray-50">
+      <div class="font-semibold mb-1">👥 Gestión de usuarios</div>
+      <div class="text-sm text-gray-500">
+        Crear, editar y administrar usuarios
+      </div>
+    </a>
+
+    <div class="card opacity-60 cursor-not-allowed">
+      <div class="font-semibold mb-1">📊 Análisis</div>
+      <div class="text-sm text-gray-500">
+        Próximamente
+      </div>
+    </div>
+
+    <div class="card opacity-60 cursor-not-allowed">
+      <div class="font-semibold mb-1">🧾 Auditoría</div>
+      <div class="text-sm text-gray-500">
+        Próximamente
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{# =========================================================
+   TABLA RESUMEN – ÚLTIMOS USUARIOS CREADOS
+   ========================================================= #}
+<div class="card">
+
+  <h2 class="font-semibold mb-4">🆕 Últimos usuarios creados</h2>
+
+  {% if last_users %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Fecha de creación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in last_users %}
+        <tr>
+          <td>{{ u.name }}</td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.role }}</td>
+          <td>
+            {% if u.active == 1 %}
+              <span class="text-green-600 font-semibold">Activo</span>
+            {% else %}
+              <span class="text-red-600 font-semibold">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-sm text-gray-600">
+            {{ u.created_at.strftime('%d/%m/%Y %H:%M')
+               if u.created_at else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-sm text-gray-500">
+      No hay usuarios registrados todavía.
+    </p>
+  {% endif %}
+
+</div>
+
+{% endblock %}
