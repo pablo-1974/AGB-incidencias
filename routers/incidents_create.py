@@ -49,10 +49,6 @@ def incident_create_form(
 # ENVÍO (POST)
 # ----------------------------------------------------------------------
 
-# routers/incidents_create.py
-
-from datetime import date, datetime   # ← importa aquí
-
 @router.post("/incidents/create")
 def incident_create_submit(
     request: Request,
@@ -77,12 +73,6 @@ def incident_create_submit(
         return RedirectResponse("/incidents/create?error=alumno", status_code=303)
 
     # ---------------------------
-    # Validación de franja
-    # ---------------------------
-    if hora not in FRANJAS_HORARIAS:
-        return RedirectResponse("/incidents/create?error=hora", status_code=303)
-
-    # ---------------------------
     # ✅ VALIDACIÓN DE FECHA (AQUÍ)
     # ---------------------------
     if not fecha:
@@ -93,6 +83,12 @@ def incident_create_submit(
     except ValueError:
         return RedirectResponse("/incidents/create?error=fecha", status_code=303)
 
+    # ---------------------------
+    # Validación de franja
+    # ---------------------------
+    if hora not in FRANJAS_HORARIAS:
+        return RedirectResponse("/incidents/create?error=hora", status_code=303)
+        
     # ---------------------------
     # Validación de gravedad
     # ---------------------------
