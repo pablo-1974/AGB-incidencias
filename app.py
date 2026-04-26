@@ -77,7 +77,7 @@ app.include_router(rankings_pdf_router)
 app.include_router(admin_users_router)
 app.include_router(admin_dashboard_router)
 app.include_router(incidents_create_router)
-app.include_router(incidents_list_router)
+app.include_router(admin_incidents_router)
 
 # ------------------------------------------------------------
 # Ruta raíz: redirige al dashboard
