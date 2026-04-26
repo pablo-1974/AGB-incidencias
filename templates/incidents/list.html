@@ -1,6 +1,7 @@
 {# ----------------------------------------------------------------------
    templates/incidents/list.html
    Listado global de incidencias (vista común, permisos por rol)
+   Filtros automáticos (sin botón)
    ---------------------------------------------------------------------- #}
 
 {% extends "base_dashboard.html" %}
@@ -9,42 +10,60 @@
 
 <h1 class="text-xl font-semibold mb-6">📋 Listado de incidencias</h1>
 
-<form method="get" class="card mb-6 grid grid-cols-1 md:grid-cols-6 gap-4 text-sm">
+<form method="get" class="card mb-6 grid grid-cols-1 md:grid-cols-7 gap-4 text-sm">
 
+  <!-- Desde -->
   <div>
     <label class="font-semibold">Desde</label>
     <input
       type="date"
       name="fecha_desde"
       value="{{ filters.fecha_desde or '' }}"
-      class="form-input w-full"
+      class="form-input w-full auto-submit"
     >
   </div>
 
+  <!-- Hasta -->
   <div>
     <label class="font-semibold">Hasta</label>
     <input
       type="date"
       name="fecha_hasta"
       value="{{ filters.fecha_hasta or '' }}"
-      class="form-input w-full"
+      class="form-input w-full auto-submit"
     >
   </div>
 
+  <!-- Grupo -->
+  <div>
+    <label class="font-semibold">Grupo</label>
+    <select name="grupo" class="form-select w-full auto-submit">
+      <option value="">Todos</option>
+      {% for g in grupos %}
+        <option value="{{ g }}" {% if filters.grupo == g %}selected{% endif %}>
+          {{ g }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Alumno -->
   <div>
     <label class="font-semibold">Alumno</label>
-    <input
-      type="text"
-      name="alumno"
-      value="{{ filters.alumno or '' }}"
-      class="form-input w-full"
-      placeholder="Nombre del alumno"
-    >
+    <select name="alumno" class="form-select w-full auto-submit">
+      <option value="">Todos</option>
+      {% for a in alumnos %}
+        <option value="{{ a }}" {% if filters.alumno == a %}selected{% endif %}>
+          {{ a }}
+        </option>
+      {% endfor %}
+    </select>
   </div>
 
+  <!-- Gravedad -->
   <div>
     <label class="font-semibold">Gravedad</label>
-    <select name="gravedad" class="form-select w-full">
+    <select name="gravedad" class="form-select w-full auto-submit">
       <option value="">Todas</option>
       <option value="leve" {% if filters.gravedad == "leve" %}selected{% endif %}>Leve</option>
       <option value="grave" {% if filters.gravedad == "grave" %}selected{% endif %}>Grave</option>
@@ -52,61 +71,24 @@
     </select>
   </div>
 
+  <!-- Profesor -->
   {% if show_profesor_filter %}
   <div>
-    <label class="font-semibold">Profesor (ID)</label>
-    <input
-      type="number"
-      name="profesor_id"
-      value="{{ filters.profesor_id or '' }}"
-      class="form-input w-full"
-    >
+    <label class="font-semibold">Profesor</label>
+    <select name="profesor_id" class="form-select w-full auto-submit">
+      <option value="">Todos</option>
+      {% for p in profesores %}
+        <option
+          value="{{ p.id }}"
+          {% if filters.profesor_id == p.id|string %}selected{% endif %}
+        >
+          {{ p.name }}
+        </option>
+      {% endfor %}
+    </select>
   </div>
   {% endif %}
-
-  <div class="flex items-end">
-    <button type="submit" class="btn-primary w-full">
-      🔍 Filtrar
-    </button>
-  </div>
 
 </form>
 
 {% if incidents %}
-<div class="overflow-x-auto">
-  <table class="table table-zebra w-full text-sm">
-    <thead>
-      <tr>
-        <th>Nº</th>
-        <th>Fecha</th>
-        <th>Hora</th>
-        <th>Alumno</th>
-        <th>Gravedad inicial</th>
-        <th>Gravedad final</th>
-        <th>Profesor</th>
-        <th>Descripción</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for i in incidents %}
-      <tr>
-        <td>{{ i.id }}</td>
-        <td>{{ i.fecha }}</td>
-        <td>{{ i.franja }}</td>
-        <td>{{ i.alumno }}</td>
-        <td>{{ i.gravedad_inicial }}</td>
-        <td>{{ i.gravedad_final or "—" }}</td>
-        <td>{{ i.teacher_name }}</td>
-        <td class="max-w-lg truncate">{{ i.descripcion }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% else %}
-<p class="text-sm text-gray-500">
-  No hay incidencias registradas.
-</p>
-{% endif %}
-
-{% endblock %}
