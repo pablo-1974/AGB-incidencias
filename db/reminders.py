@@ -28,12 +28,12 @@ def get_pending_reminders(today: date):
 
     return [
         {
-            "id": r[0],
-            "incident_id": r[1],
-            "fecha": r[2],
-            "note": r[3],
-            "alumno": r[4],
-            "grupo": r[5],
+            "id": r["id"],
+            "incident_id": r["incident_id"],
+            "fecha": r["due_date"],
+            "note": r["note"],
+            "alumno": r["alumno"],
+            "grupo": r["grupo"],
         }
         for r in rows
     ]
