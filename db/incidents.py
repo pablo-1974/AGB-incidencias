@@ -75,7 +75,7 @@ def get_incidents(
         SELECT
             id,
             fecha,
-            hora,
+            hora AS franja,
             grupo,
             alumno,
             descripcion,
