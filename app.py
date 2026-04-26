@@ -16,7 +16,6 @@ from auth import load_user_dep
 from config import settings
 
 # Routers principales
-from routers.dashboard import router as dashboard_router
 from routers.analysis_student import router as analysis_student_router
 from routers.analysis_teacher import router as analysis_teacher_router
 from routers.analysis_student_pdf import router as analysis_student_pdf_router
@@ -67,7 +66,6 @@ app.include_router(login_router)
 app.include_router(register_first_router)
 app.include_router(first_login_router)
 
-app.include_router(dashboard_router)
 app.include_router(analysis_student_router)
 app.include_router(analysis_teacher_router)
 app.include_router(analysis_student_pdf_router)
