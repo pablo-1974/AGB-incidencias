@@ -17,7 +17,7 @@ def get_all_groups() -> list[str]:
                 WHERE grupo IS NOT NULL
                 """
             )
-            grupos = [r[0] for r in cur.fetchall()]
+            grupos = [r["grupo"] for r in cur.fetchall()]
 
     grupos.sort(key=normalize_for_sort)
     return grupos
@@ -37,7 +37,7 @@ def get_all_students() -> list[str]:
                 WHERE alumno IS NOT NULL
                 """
             )
-            alumnos = [r[0] for r in cur.fetchall()]
+            alumnos = [r["alumno"] for r in cur.fetchall()]
 
     alumnos.sort(key=normalize_for_sort)
     return alumnos
@@ -59,7 +59,7 @@ def get_students_by_group(grupo: str) -> list[str]:
                 """,
                 (grupo,),
             )
-            alumnos = [r[0] for r in cur.fetchall()]
+            alumnos = [r["alumno"] for r in cur.fetchall()]
 
     alumnos.sort(key=normalize_for_sort)
     return alumnos
@@ -110,7 +110,7 @@ def upsert_student_by_name(
                 return "added"
 
             else:
-                current_group = row[0]
+                current_group = row["grupo"]
                 if current_group != grupo:
                     # Cambio de grupo
                     cur.execute(
