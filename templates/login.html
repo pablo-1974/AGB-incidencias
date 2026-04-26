@@ -4,8 +4,7 @@
 
 {% block content %}
 
-<section class="min-h-[70vh] flex items-center justify-center px-4
-                bg-gradient-to-br from-[#C2A8F9] via-[#C9B6FF] to-[#E6D9FF]">
+<section class="min-h-[70vh] flex items-center justify-center px-4 bg-gray-50">
 
   <div class="w-full max-w-md rounded-2xl shadow-xl bg-white/95 backdrop-blur
               ring-1 ring-black/5 p-6 sm:p-8">
@@ -15,7 +14,7 @@
       {% if logo_url %}
         <img src="{{ logo_url }}" class="h-14 w-auto" alt="Logo">
       {% endif %}
-      <h1 class="text-2xl font-extrabold tracking-tight text-[#3E2AA3]">
+      <h1 class="text-2xl font-extrabold tracking-tight">
         Incidencias del alumnado
       </h1>
       <p class="text-sm text-slate-600">
@@ -39,24 +38,18 @@
         value="{{ email or '' }}"
         required
         placeholder="usuario@centro.es"
-        class="mb-3 w-full rounded-lg border border-slate-300 bg-slate-50
-               px-3 py-2 text-slate-900 outline-none
-               focus:border-[#6D5AE6] focus:ring-4 focus:ring-[#6D5AE6]/20"
-      >
-
+        class="input mb-3"
+      />
+      
       <input
         type="password"
         name="password"
         required
         placeholder="Contraseña"
-        class="mb-4 w-full rounded-lg border border-slate-300 bg-slate-50
-               px-3 py-2 text-slate-900 outline-none
-               focus:border-[#6D5AE6] focus:ring-4 focus:ring-[#6D5AE6]/20"
-      >
+        class="input mb-4"
+      />
 
-      <button type="submit"
-              class="w-full rounded-lg bg-[#4F46E5] px-4 py-2.5
-                     font-semibold text-white hover:bg-[#4338CA]">
+      <button type="submit" class="btn-primary w-full">
         Entrar
       </button>
     </form>
