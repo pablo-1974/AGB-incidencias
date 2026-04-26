@@ -23,13 +23,15 @@
 
   <div>
     <label class="block text-sm font-semibold mb-1">Alumno</label>
-    <input
-      type="text"
-      name="alumno"
-      class="form-input w-full"
-      placeholder="Introduce el alumno"
-      required
-    >
+      <select
+        name="alumno"
+        id="alumno"
+        class="form-select w-full"
+        disabled
+        required
+      >
+        <option value="">— Seleccionar alumno —</option>
+      </select>
   </div>
 
   <div>
@@ -38,6 +40,7 @@
       type="date"
       name="fecha"
       class="form-input"
+      value="{{ today }}"
       required
     >
   </div>
@@ -64,7 +67,7 @@
 
   <div class="flex justify-end">
     <button type="submit" class="btn-primary">
-      📩 Enviar incidencia
+      📩 Enviar a Jefatura
     </button>
   </div>
 
