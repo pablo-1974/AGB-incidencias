@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
 
-from db.users import has_any_user
+from db.users import has_any_user, get_user_by_id
 from auth import load_user_dep
 
 from config import settings
@@ -93,8 +93,15 @@ def root(request: Request):
     if not request.session.get("user_id"):
         return RedirectResponse("/login", status_code=303)
 
-    # Usuario autenticado
-    return RedirectResponse("/dashboard", status_code=303)
+    # Usuario autenticado → decidir dashboard por rol
+    user_id = request.session.get("user_id")
+    user = get_user_by_id(user_id)
+    
+    if user["role"] == "admin":
+        return RedirectResponse("/admin/dashboard", status_code=303)
+    
+    # Otros roles (todavía no implementados)
+    return RedirectResponse("/login", status_code=303)
 
 
 # ------------------------------------------------------------
