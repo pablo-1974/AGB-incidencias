@@ -84,7 +84,7 @@ def get_incidents(
             teacher_name
         FROM incidents
         {where_sql}
-        ORDER BY fecha DESC, hora DESC, id DESC
+        ORDER BY fecha DESC, hora_orden DESC, id DESC
     """
 
     with get_db() as conn:
@@ -124,12 +124,13 @@ def create_incident(
                     alumno,
                     fecha,
                     hora,
+                    hora_orden,
                     descripcion,
                     gravedad_inicial,
                     estado,
                     created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     user_id,
@@ -138,6 +139,7 @@ def create_incident(
                     alumno,
                     fecha,
                     hora,
+                    hora_orden,
                     descripcion,
                     gravedad,
                     ESTADO_ABIERTO,
