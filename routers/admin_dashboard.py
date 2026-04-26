@@ -3,9 +3,7 @@
 Dashboard principal del administrador.
 
 Muestra:
-- KPIs globales del sistema (usuarios)
-- Accesos rápidos a funciones administrativas
-- Resumen operativo: últimos usuarios creados
+- Aviso principal del sistema: incidencias abiertas
 
 Acceso exclusivo para el rol admin.
 """
@@ -15,7 +13,7 @@ from fastapi.responses import HTMLResponse
 
 from auth import load_user_dep
 from context import ctx
-from db.users import get_all_users
+from db.incidents import count_open_incidents
 
 router = APIRouter()
 
@@ -43,23 +41,8 @@ def admin_dashboard(
     """
     _require_admin(user)
 
-    users = get_all_users()
-
-    total_users = len(users)
-    active_users = sum(1 for u in users if u.get("active") == 1)
-    inactive_users = total_users - active_users
-
-    pending_first_login = sum(
-        1 for u in users
-        if u.get("must_change_password") or not u.get("password_hash")
-    )
-
-    # Últimos usuarios creados (máx 10)
-    last_users = sorted(
-        users,
-        key=lambda u: u.get("created_at"),
-        reverse=True
-    )[:10]
+    # KPI PRINCIPAL
+    open_incidences = count_open_incidents()
 
     return request.app.state.templates.TemplateResponse(
         "admin/dashboard.html",
@@ -68,11 +51,7 @@ def admin_dashboard(
             user=user,
             title="Dashboard de administración",
             kpis={
-                "total_users": total_users,
-                "active_users": active_users,
-                "inactive_users": inactive_users,
-                "pending_first_login": pending_first_login,
+                "open_incidences": open_incidences,
             },
-            last_users=last_users,
         ),
     )
