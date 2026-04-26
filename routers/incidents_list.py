@@ -1,11 +1,19 @@
-# routers/incidents.py
+# routers/incidents_list.py
+"""
+Listado de incidencias.
+Vista común con filtros automáticos y permisos por rol.
+"""
+
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from datetime import date
 
 from auth import load_user_dep
 from context import ctx
+
 from db.incidents import get_incidents
+from db.students import get_all_groups, get_students_by_group
+from db.users import get_all_teachers
 
 router = APIRouter()
 
@@ -20,21 +28,22 @@ def incidents_list(
     role = user["role"]
     qp = request.query_params
 
-    # ---------------------------
+    # --------------------------------------------------
     # Filtros (GET params)
-    # ---------------------------
+    # --------------------------------------------------
     fecha_desde = qp.get("fecha_desde") or INICIO_CURSO
     fecha_hasta = qp.get("fecha_hasta") or date.today().isoformat()
+
     grupo = qp.get("grupo") or None
     alumno = qp.get("alumno") or None
     gravedad = qp.get("gravedad") or None
 
-    # Solo para roles de gestión
+    # Solo relevante para roles de gestión
     profesor_id = qp.get("profesor_id")
 
-    # ---------------------------
-    # Decisión por rol
-    # ---------------------------
+    # --------------------------------------------------
+    # Decisión por rol + carga de incidencias
+    # --------------------------------------------------
     if role in ("admin", "jefe", "director", "secretario", "convivencia"):
         incidents = get_incidents(
             mode="all",
@@ -45,7 +54,6 @@ def incidents_list(
             fecha_desde=fecha_desde,
             fecha_hasta=fecha_hasta,
         )
-
         show_profesor_filter = True
 
     elif role in ("profesor", "orientador"):
@@ -58,15 +66,23 @@ def incidents_list(
             fecha_desde=fecha_desde,
             fecha_hasta=fecha_hasta,
         )
-
         show_profesor_filter = False
 
     else:
         raise HTTPException(status_code=403)
 
-    # ---------------------------
+    # --------------------------------------------------
+    # Datos para desplegables de filtros
+    # --------------------------------------------------
+    grupos = get_all_groups()
+
+    alumnos = get_students_by_group(grupo) if grupo else []
+
+    profesores = get_all_teachers() if show_profesor_filter else []
+
+    # --------------------------------------------------
     # Render
-    # ---------------------------
+    # --------------------------------------------------
     return request.app.state.templates.TemplateResponse(
         "incidents/list.html",
         ctx(
@@ -79,9 +95,12 @@ def incidents_list(
                 "fecha_hasta": fecha_hasta,
                 "grupo": grupo,
                 "alumno": alumno,
-                "profesor_id": profesor_id if show_profesor_filter else None,
                 "gravedad": gravedad,
+                "profesor_id": profesor_id if show_profesor_filter else None,
             },
             show_profesor_filter=show_profesor_filter,
+            grupos=grupos,
+            alumnos=alumnos,
+            profesores=profesores,
         ),
     )
