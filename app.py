@@ -4,8 +4,8 @@ Punto de entrada principal de la aplicación Incidencias.
 Configura FastAPI, sesiones, plantillas, estáticos y registra todos los routers.
 """
 
-from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Request, Depends
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
@@ -75,19 +75,22 @@ app.include_router(rankings_pdf_router)
 # ------------------------------------------------------------
 # Ruta raíz: redirige al dashboard
 # ------------------------------------------------------------
-@app.get("/")
-def root(request: Request):
-    # 1) No hay ningún usuario → crear admin
+@app.api_route("/", methods=["GET", "HEAD"])
+def root(request: Request, user=Depends(load_user_dep)):
+
+    # Respuesta limpia para health-checks / scanners
+    if request.method == "HEAD":
+        return JSONResponse({"ok": True})
+
+    # Bootstrap inicial
     if not has_any_user():
         return RedirectResponse("/register-first", status_code=303)
 
-    # 2) Hay usuarios pero no sesión → login
-    try:
-        load_user_dep(request)
-    except Exception:
+    # No autenticado
+    if not user:
         return RedirectResponse("/login", status_code=303)
 
-    # 3) Usuario autenticado → dashboard
+    # Usuario autenticado
     return RedirectResponse("/dashboard", status_code=303)
 
 
