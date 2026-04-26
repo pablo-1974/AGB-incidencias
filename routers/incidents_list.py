@@ -31,10 +31,10 @@ def incidents_list(
     # --------------------------------------------------
     # Filtros (GET params)
     # --------------------------------------------------
-    # fecha_desde = qp.get("fecha_desde") or INICIO_CURSO
-    # fecha_hasta = qp.get("fecha_hasta") or date.today().isoformat()
-    fecha_desde = qp.get("fecha_desde")
-    fecha_hasta = qp.get("fecha_hasta")
+    fecha_desde = qp.get("fecha_desde") or INICIO_CURSO
+    fecha_hasta = qp.get("fecha_hasta") or date.today().isoformat()
+    #fecha_desde = qp.get("fecha_desde")
+    #fecha_hasta = qp.get("fecha_hasta")
     grupo = qp.get("grupo") or None
     alumno = qp.get("alumno") or None
     gravedad = qp.get("gravedad") or None
