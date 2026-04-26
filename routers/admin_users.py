@@ -212,3 +212,112 @@ def admin_users_reset_password(
     reset_user_password(user_id=user_id)
 
     return RedirectResponse("/admin/users?status=reset", status_code=303)
+
+
+# ----------------------------------------------------------------------
+# IMPORTAR USUARIOS (EXCEL)
+# ----------------------------------------------------------------------
+
+@router.post("/users/import")
+def import_users(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required)
+):
+    if not file.filename.endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="El archivo debe ser .xlsx")
+
+    wb = openpyxl.load_workbook(file.file)
+    ws = wb.active
+
+    headers = [cell.value for cell in ws[1]]
+    expected = ["Nombre", "Email", "Rol"]
+
+    if headers[:3] != expected:
+        raise HTTPException(
+            status_code=400,
+            detail="Las primeras columnas deben ser: Nombre, Email, Rol"
+        )
+
+    created = 0
+    updated = 0
+
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        name, email, role = row[:3]
+
+        if not email:
+            continue
+
+        user = db.query(User).filter(User.email == email).first()
+        if user:
+            user.name = name
+            user.role = role
+            updated += 1
+        else:
+            new_user = User(
+                name=name,
+                email=email,
+                role=role,
+                active=1,
+                must_change_password=True,
+                created_by=current_user.id
+            )
+            db.add(new_user)
+            created += 1
+
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/admin/users?status=imported&created={created}&updated={updated}",
+        status_code=303
+    )
+
+
+# ----------------------------------------------------------------------
+# EXPORTAR USUARIOS (EXCEL)
+# ----------------------------------------------------------------------
+
+# routers/admin_users.py
+
+@router.get("/users/export")
+def export_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required)
+):
+    users = db.query(User).order_by(User.name).all()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Usuarios"
+
+    ws.append([
+        "Nombre",
+        "Email",
+        "Rol",
+        "Activo",
+        "Primer login pendiente",
+        "Último acceso"
+    ])
+
+    for u in users:
+        ws.append([
+            u.name,
+            u.email,
+            u.role,
+            "Sí" if u.active else "No",
+            "Sí" if u.must_change_password or not u.password_hash else "No",
+            u.last_login_at.strftime("%Y-%m-%d %H:%M") if u.last_login_at else ""
+        ])
+
+    file_stream = io.BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)
+
+    headers = {
+        "Content-Disposition": "attachment; filename=usuarios.xlsx"
+    }
+    return Response(
+        file_stream.read(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers
+    )
