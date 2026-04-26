@@ -10,6 +10,18 @@
 
 <h1 class="text-xl font-semibold mb-6">🧑‍💼 Gestión de usuarios</h1>
 
+{% if request.query_params.get("status") == "created" %}
+  <div class="alert ok mb-4">✅ Usuario creado correctamente.</div>
+{% elif request.query_params.get("status") == "updated" %}
+  <div class="alert ok mb-4">✅ Usuario actualizado.</div>
+{% elif request.query_params.get("status") == "toggled" %}
+  <div class="alert warn mb-4">⛔ Estado del usuario modificado.</div>
+{% elif request.query_params.get("status") == "reset" %}
+  <div class="alert warn mb-4">🔐 Contraseña reseteada. El usuario deberá definirla al entrar.</div>
+{% elif request.query_params.get("status") == "error" %}
+  <div class="alert err mb-4">❌ No se pudo realizar la acción.</div>
+{% endif %}
+
 {# =========================================================
    CREAR USUARIO
    ========================================================= #}
@@ -141,6 +153,7 @@
               type="submit"
               class="btn-muted"
               title="Activar / desactivar"
+              onclick="return confirm('¿Seguro que quieres cambiar el estado de este usuario?')"
             >
               {% if u.active == 1 %}⛔{% else %}✅{% endif %}
             </button>
@@ -152,6 +165,7 @@
               type="submit"
               class="btn-muted"
               title="Resetear contraseña"
+              onclick="return confirm('Se forzará al usuario a definir una nueva contraseña. ¿Continuar?')"
             >
               🔐
             </button>
