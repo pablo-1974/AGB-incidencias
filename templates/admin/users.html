@@ -10,6 +10,9 @@
 
 <h1 class="text-xl font-semibold mb-6">🧑‍💼 Gestión de usuarios</h1>
 
+{# =========================================================
+   MENSAJES DE ESTADO
+   ========================================================= #}
 {% if request.query_params.get("status") == "created" %}
   <div class="alert ok mb-4">✅ Usuario creado correctamente.</div>
 {% elif request.query_params.get("status") == "updated" %}
@@ -17,7 +20,15 @@
 {% elif request.query_params.get("status") == "toggled" %}
   <div class="alert warn mb-4">⛔ Estado del usuario modificado.</div>
 {% elif request.query_params.get("status") == "reset" %}
-  <div class="alert warn mb-4">🔐 Contraseña reseteada. El usuario deberá definirla al entrar.</div>
+  <div class="alert warn mb-4">
+    🔐 Contraseña reseteada. El usuario deberá definirla al entrar.
+  </div>
+{% elif request.query_params.get("status") == "imported" %}
+  <div class="alert ok mb-4">
+    ✅ Importación completada —
+    creados {{ request.query_params.get("created") }},
+    actualizados {{ request.query_params.get("updated") }}.
+  </div>
 {% elif request.query_params.get("status") == "error" %}
   <div class="alert err mb-4">❌ No se pudo realizar la acción.</div>
 {% endif %}
@@ -29,19 +40,20 @@
 
   <h2 class="font-semibold mb-4">➕ Añadir usuario</h2>
 
-  <form method="post" action="/admin/users/create" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+  <form method="post" action="/admin/users/create"
+        class="grid grid-cols-1 sm:grid-cols-4 gap-4">
 
-    <div class="sm:col-span-1">
+    <div>
       <label class="label">Nombre</label>
       <input type="text" name="name" class="input" required>
     </div>
 
-    <div class="sm:col-span-1">
+    <div>
       <label class="label">Email</label>
       <input type="email" name="email" class="input" required>
     </div>
 
-    <div class="sm:col-span-1">
+    <div>
       <label class="label">Rol</label>
       <select name="role" class="input">
         <option value="profesor">Profesor</option>
@@ -52,10 +64,8 @@
       </select>
     </div>
 
-    <div class="sm:col-span-1 flex items-end">
-      <button type="submit" class="btn-primary w-full">
-        Crear usuario
-      </button>
+    <div class="flex items-end">
+      <button type="submit" class="btn-primary w-full">Crear usuario</button>
     </div>
 
   </form>
@@ -66,6 +76,53 @@
 
 </div>
 
+{# =========================================================
+   IMPORTAR / EXPORTAR USUARIOS
+   ========================================================= #}
+<div class="card mb-8">
+
+  <h2 class="font-semibold mb-4">📦 Importar / Exportar usuarios</h2>
+
+  <div class="flex flex-col sm:flex-row gap-4 items-start">
+
+    <a href="/admin/users/export">
+      <button class="btn-muted">
+        📤 Exportar a Excel
+      </button>
+    </a>
+
+    <details>
+      <summary class="btn-muted cursor-pointer">
+        📥 Importar desde Excel
+      </summary>
+
+      <form method="post"
+            action="/admin/users/import"
+            enctype="multipart/form-data"
+            class="mt-3 space-y-3">
+
+        <input
+          type="file"
+          name="file"
+          accept=".xlsx"
+          required
+          class="input"
+        >
+
+        <button type="submit" class="btn-primary">
+          Importar
+        </button>
+
+        <p class="text-xs text-gray-500">
+          Columnas requeridas:
+          <strong>Nombre</strong>, <strong>Email</strong>, <strong>Rol</strong>.
+        </p>
+      </form>
+    </details>
+
+  </div>
+
+</div>
 
 {# =========================================================
    LISTADO DE USUARIOS
@@ -86,8 +143,8 @@
         <th class="nowrap">Acciones</th>
       </tr>
     </thead>
-
     <tbody>
+
     {% for u in users %}
     {% set is_self = (u.id == user.id) %}
       <tr>
@@ -111,65 +168,38 @@
         <td class="text-sm text-gray-600">
           {{ u.last_login_at.strftime('%d/%m/%Y %H:%M') if u.last_login_at else '—' }}
         </td>
-
         <td class="nowrap space-x-1">
 
-          {# ---- EDITAR ---- #}
           <details class="inline-block">
             <summary class="btn-muted cursor-pointer">✏️</summary>
             <div class="absolute z-10 mt-2 p-4 card w-72">
-
               <form method="post" action="/admin/users/update/{{ u.id }}" class="space-y-2">
-
-                <div>
-                  <label class="label">Nombre</label>
-                  <input type="text" name="name" value="{{ u.name }}" class="input" required>
-                </div>
-
-                <div>
-                  <label class="label">Email</label>
-                  <input type="email" name="email" value="{{ u.email }}" class="input" required>
-                </div>
-
-                <div>
-                  <label class="label">Rol</label>
-                  <select name="role" class="input">
-                    {% for r in ['profesor','convivencia','director','jefe','admin'] %}
-                      <option value="{{ r }}" {% if r == u.role %}selected{% endif %}>
-                        {{ r }}
-                      </option>
-                    {% endfor %}
-                  </select>
-                </div>
-
+                <input type="text" name="name" value="{{ u.name }}" class="input" required>
+                <input type="email" name="email" value="{{ u.email }}" class="input" required>
+                <select name="role" class="input">
+                  {% for r in ['profesor','convivencia','director','jefe','admin'] %}
+                    <option value="{{ r }}" {% if r == u.role %}selected{% endif %}>
+                      {{ r }}
+                    </option>
+                  {% endfor %}
+                </select>
                 <button class="btn-primary w-full">Guardar</button>
               </form>
-
             </div>
           </details>
 
-          {# ---- ACTIVAR / DESACTIVAR ---- #}
-           {% if not is_self %}
-           <form method="post" action="/admin/users/toggle/{{ u.id }}" class="inline">
-            <button
-              type="submit"
-              class="btn-muted"
-              title="Activar / desactivar"
-              onclick="return confirm('¿Seguro que quieres cambiar el estado de este usuario?')"
-            >
+          {% if not is_self %}
+          <form method="post" action="/admin/users/toggle/{{ u.id }}" class="inline">
+            <button class="btn-muted"
+              onclick="return confirm('¿Cambiar estado del usuario?')">
               {% if u.active == 1 %}⛔{% else %}✅{% endif %}
             </button>
           </form>
           {% endif %}
 
-          {# ---- RESET PASSWORD ---- #}
           <form method="post" action="/admin/users/reset-password/{{ u.id }}" class="inline">
-            <button
-              type="submit"
-              class="btn-muted"
-              title="Resetear contraseña"
-              onclick="return confirm('Se forzará al usuario a definir una nueva contraseña. ¿Continuar?')"
-            >
+            <button class="btn-muted"
+              onclick="return confirm('Forzar cambio de contraseña?')">
               🔐
             </button>
           </form>
