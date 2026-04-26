@@ -10,7 +10,7 @@ Muestra:
 Acceso exclusivo para el rol admin.
 """
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 
 from auth import load_user_dep
@@ -36,7 +36,7 @@ def _require_admin(user: dict):
 @router.get("/admin/dashboard", response_class=HTMLResponse)
 def admin_dashboard(
     request: Request,
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
 ):
     """
     Dashboard principal del administrador.
