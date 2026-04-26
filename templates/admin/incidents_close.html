@@ -1,0 +1,48 @@
+{# ----------------------------------------------------------------------
+   templates/admin/incidents_close.html
+   Cola de incidencias pendientes de cierre
+   ---------------------------------------------------------------------- #}
+
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_content %}
+
+<h1 class="text-xl font-semibold mb-6">✅ Incidencias pendientes de revisión</h1>
+
+{% if incidents %}
+  {% for i in incidents %}
+  <div class="card mb-6">
+
+    <div class="text-sm text-gray-500 mb-2">
+      #{{ i[0] }} · {{ i[1] }} · {{ i[5] | upper }} · {{ i[6] }}
+    </div>
+
+    <div class="mb-2">
+      <strong>Grupo:</strong> {{ i[2] }} ·
+      <strong>Alumno:</strong> {{ i[3] }}
+    </div>
+
+    <p class="mb-4">{{ i[4] }}</p>
+
+    <form method="post" action="/admin/incidents/close/{{ i[0] }}" class="flex items-center gap-4">
+      <select name="gravedad_final" class="form-select" required>
+        <option>— Selecciona gravedad final —</option>
+        {% for g in gravedades %}
+          <option value="{{ g }}">{{ g }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn-primary">
+        ✅ Cerrar incidencia
+      </button>
+    </form>
+
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="text-sm text-gray-500">
+    ✅ No hay incidencias pendientes.
+  </p>
+{% endif %}
+
+{% endblock %}
