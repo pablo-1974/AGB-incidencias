@@ -15,7 +15,7 @@ from datetime import date, datetime
 
 from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
-from utils.enums import GRAVEDADES, FRANJAS_HORARIAS
+from utils.enums import GRAVEDADES, FRANJAS_HORARIAS, FRANJA_ORDEN
 
 router = APIRouter()
 
@@ -111,6 +111,7 @@ def incident_create_submit(
         alumno=alumno,
         fecha=fecha,
         hora=hora,
+        hora_orden=FRANJA_ORDEN[hora],
         descripcion=descripcion.strip(),
         gravedad=gravedad,
     )
