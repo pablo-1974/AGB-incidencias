@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from context import ctx
 from auth import load_user_dep
 
-router = APIRouter()
+router = APIRouter(prefix="/dashboard")
 
 
 @router.get("/", response_class=HTMLResponse)
