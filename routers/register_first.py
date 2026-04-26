@@ -7,16 +7,14 @@ Solo accesible si la base de datos está vacía.
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from db.users import has_any_user, create_user
+from db.users import has_any_user, create_user_admin
+from auth.passwords import hash_password  # o donde tengas el hash
 
 router = APIRouter()
 
 
 @router.get("/register-first", response_class=HTMLResponse)
 def register_first_form(request: Request):
-    """
-    Muestra el formulario de creación del primer admin.
-    """
     if has_any_user():
         return RedirectResponse("/login", status_code=303)
 
@@ -36,17 +34,26 @@ def register_first_submit(
     email: str = Form(...),
     password: str = Form(...),
 ):
-    """
-    Crea el primer administrador.
-    """
     if has_any_user():
         return RedirectResponse("/login", status_code=303)
 
-    create_user(
-        name=name,
-        email=email,
-        password=password,  # ✅ en claro, se hashea dentro
+    # Crear usuario admin SIN romper el modelo actual
+    create_user_admin(
+        name=name.strip(),
+        email=email.strip(),
         role="admin",
+        created_by=None,
+    )
+
+    # Establecer contraseña inicial directamente
+    from db.users import set_user_password
+    from db.users import get_user_by_email
+
+    user = get_user_by_email(email)
+    set_user_password(
+        user_id=user["id"],
+        password_hash=hash_password(password),
+        must_change_password=False,
     )
 
     return RedirectResponse("/login", status_code=303)
