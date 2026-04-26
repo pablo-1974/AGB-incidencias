@@ -1,6 +1,7 @@
 # db/connection.py
 import os
 import psycopg
+from psycopg.rows import dict_row
 from contextlib import contextmanager
 
 
@@ -14,13 +15,12 @@ if not DATABASE_URL:
 @contextmanager
 def get_db():
     """
-    Devuelve una conexión PostgreSQL (Neon).
-    Uso:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(...)
+    Devuelve una conexión PostgreSQL (Neon) con filas como diccionarios.
     """
-    conn = psycopg.connect(DATABASE_URL)
+    conn = psycopg.connect(
+        DATABASE_URL,
+        row_factory=dict_row
+    )
     try:
         yield conn
         conn.commit()
