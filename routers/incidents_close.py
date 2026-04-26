@@ -65,5 +65,23 @@ def incidents_close_submit(
 ):
     _can_close(user)
 
+    # Validación defensiva
     if gravedad_final not in GRAVEDADES:
-        return Redirect
+        raise HTTPException(
+            status_code=400,
+            detail="Debe seleccionarse una gravedad final válida."
+        )
+
+    # ✅ Cierre real de la incidencia
+    close_incident(
+        incident_id=incident_id,
+        gravedad_final=gravedad_final,
+        reviewer_id=user["id"],
+        reviewer_name=user["name"],
+    )
+
+    # ✅ Redirección correcta a la cola
+    return RedirectResponse(
+        url="/incidents/close",
+        status_code=303,
+    )
