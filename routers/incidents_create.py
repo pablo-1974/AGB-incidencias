@@ -39,6 +39,7 @@ def incident_create_form(
             title="Abrir incidencia",
             grupos=grupos,
             gravedades=GRAVEDADES,
+            franjas=FRANJAS_HORARIAS,
             today=date.today().isoformat(),
         ),
     )
@@ -59,15 +60,23 @@ def incident_create_submit(
     gravedad: str = Form(...),
     descripcion: str = Form(...),
 ):
-    # VALIDACIONES (idénticas a Streamlit)
-    if not grupo or grupo.startswith("—"):
+    if not grupo:
         return RedirectResponse("/incidents/create?error=grupo", status_code=303)
 
-    if not alumno or alumno.startswith("—"):
+    if not alumno:
         return RedirectResponse("/incidents/create?error=alumno", status_code=303)
 
     if hora not in FRANJAS_HORARIAS:
-    return RedirectResponse("/incidents/create?error=hora", status_code=303)
+        return RedirectResponse("/incidents/create?error=hora", status_code=303)
+
+    if not fecha:
+        return RedirectResponse("/incidents/create?error=fecha", status_code=303)
+
+    try:
+        from datetime import datetime
+        datetime.strptime(fecha, "%Y-%m-%d")
+    except ValueError:
+        return RedirectResponse("/incidents/create?error=fecha", status_code=303)
 
     if gravedad not in GRAVEDADES:
         return RedirectResponse("/incidents/create?error=gravedad", status_code=303)
@@ -75,7 +84,6 @@ def incident_create_submit(
     if not descripcion.strip():
         return RedirectResponse("/incidents/create?error=descripcion", status_code=303)
 
-    # CREACIÓN EN BD
     create_incident(
         user_id=user["id"],
         user_name=user["name"],
