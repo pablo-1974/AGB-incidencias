@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from auth import load_user_dep
 from context import ctx
+from datetime import date
 
 from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
@@ -35,9 +36,10 @@ def incident_create_form(
         ctx(
             request,
             user=user,
-            title="Crear incidencia",
+            title="Abrir incidencia",
             grupos=grupos,
             gravedades=GRAVEDADES,
+            today=date.today().isoformat(),
         ),
     )
 
@@ -81,3 +83,15 @@ def incident_create_submit(
     )
 
     return RedirectResponse("/admin/dashboard", status_code=303)
+
+
+# ----------------------------------------------------------------------
+# GRUPO (GET)
+# ----------------------------------------------------------------------
+
+@router.get("/incidents/students/{grupo}")
+def get_students_for_group(
+    grupo: str,
+    user: dict = Depends(load_user_dep),
+):
+    return get_students_by_group(grupo)
