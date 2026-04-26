@@ -38,16 +38,16 @@ def get_user_by_id(user_id: int) -> dict | None:
         return None
 
     return {
-        "id": row[0],
-        "name": row[1],
-        "email": row[2],
-        "role": row[3],
-        "password_hash": row[4],
-        "active": row[5],
-        "must_change_password": row[6],
-        "created_at": row[7],
-        "created_by": row[8],
-        "last_login_at": row[9],
+        "id": row["id"],
+        "name": row["name"],
+        "email": row["email"],
+        "role": row["role"],
+        "password_hash": row["password_hash"],
+        "active": row["active"],
+        "must_change_password": row["must_change_password"],
+        "created_at": row["created_at"],
+        "created_by": row["created_by"],
+        "last_login_at": row["last_login_at"],
     }
 
 
@@ -78,13 +78,13 @@ def get_user_by_email(email: str) -> dict | None:
         return None
 
     user = {
-        "id": row[0],
-        "name": row[1],
-        "email": row[2],
-        "role": row[3],
-        "password_hash": row[4],
-        "active": row[5],
-        "must_change_password": row[6],
+        "id": row["id"],
+        "name": row["name"],
+        "email": row["email"],
+        "role": row["role"],
+        "password_hash": row["password_hash"],
+        "active": row["active"],
+        "must_change_password": row["must_change_password"],
     }
 
     # Validación defensiva de rol
@@ -101,7 +101,8 @@ def has_any_user() -> bool:
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT EXISTS (SELECT 1 FROM users);")
-            return cur.fetchone()[0]
+            row = cur.fetchone()
+            return next(iter(row.values()))
 
 
 # ----------------------------------------------------------------------
@@ -306,14 +307,14 @@ def get_all_users() -> list[dict]:
 
     return [
         {
-            "id": r[0],
-            "name": r[1],
-            "email": r[2],
-            "role": r[3],
-            "active": r[4],
-            "must_change_password": r[5],
-            "created_at": r[6],
-            "last_login_at": r[7],
+            "id": r["id"],
+            "name": r["name"],
+            "email": r["email"],
+            "role": r["role"],
+            "active": r["active"],
+            "must_change_password": r["must_change_password"],
+            "created_at": r["created_at"],
+            "last_login_at": r["last_login_at"],
         }
         for r in rows
     ]
@@ -336,4 +337,4 @@ def get_all_teachers() -> list[dict]:
             )
             rows = cur.fetchall()
 
-    return [{"id": r[0], "name": r[1]} for r in rows]
+    return [{"id": r["id"], "name": r["name"]} for r in rows]
