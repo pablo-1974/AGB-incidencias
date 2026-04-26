@@ -59,39 +59,95 @@
   {% if user %}
   <nav class="bg-gray-100 border-b">
     <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-6 text-sm">
-
+  
       <div class="flex items-center gap-6">
-
+  
         {% if user.role == "admin" %}
-
-          <a href="/admin/dashboard" class="app-link">Inicio</a>
-          <a href="#" class="app-link">Incidencias</a>
-          <a href="#" class="app-link">Análisis</a>
-          <a href="#" class="app-link">Rankings</a>
-          <a href="#" class="app-link">Excursión</a>
-          <a href="#" class="app-link">Gestión alumnos</a>
-          <a href="/admin/users" class="app-link">Gestión usuarios</a>
-          <a href="#" class="app-link">Backup</a>
-
+  
+          <!-- Inicio -->
+          <a href="/admin/dashboard" class="app-link">
+            Inicio
+          </a>
+  
+          <!-- Incidencias (desplegable) -->
+          <div class="relative group">
+  
+            <span class="app-link cursor-pointer select-none">
+              Incidencias
+            </span>
+  
+            <div
+              class="absolute hidden group-hover:block
+                     bg-white border rounded shadow-lg
+                     mt-2 min-w-[200px] z-50"
+            >
+              <a href="/incidents/create"
+                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                📝 Crear incidencia
+              </a>
+              <a href="/admin/incidents"
+                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                📋 Listar incidencias
+              </a>
+              <a href="/admin/incidents/close"
+                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                ✅ Cerrar incidencias
+              </a>
+            </div>
+  
+          </div>
+  
+          <!-- Análisis -->
+          <a href="#" class="app-link">
+            Análisis
+          </a>
+  
+          <!-- Rankings -->
+          <a href="/rankings" class="app-link">
+            Rankings
+          </a>
+  
+          <!-- Excursión -->
+          <a href="#" class="app-link">
+            Excursión
+          </a>
+  
+          <!-- Gestión alumnos -->
+          <a href="#" class="app-link">
+            Gestión alumnos
+          </a>
+  
+          <!-- Gestión usuarios -->
+          <a href="/admin/users" class="app-link">
+            Gestión usuarios
+          </a>
+  
+          <!-- Backup -->
+          <a href="#" class="app-link">
+            Backup
+          </a>
+  
         {% else %}
-
+  
+          <!-- Navegación para otros roles -->
           <a href="/dashboard" class="app-link">Inicio</a>
           <a href="/analysis/student" class="app-link">Análisis alumno</a>
           <a href="/analysis/teacher" class="app-link">Análisis profesor</a>
           <a href="/rankings" class="app-link">Rankings</a>
-
+  
         {% endif %}
-
+  
       </div>
-
+  
+      <!-- Cerrar sesión -->
       <div class="ml-auto flex gap-4">
-        <a href="/logout" class="app-link">Salir</a>
+        <a href="/logout" class="app-link">
+          Salir
+        </a>
       </div>
-
+  
     </div>
   </nav>
-  {% endif %}
-
   {% endif %}
 
   <!-- ========================================================= -->
