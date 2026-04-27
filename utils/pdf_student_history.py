@@ -19,17 +19,16 @@ from reportlab.lib.styles import getSampleStyleSheet
 def pdf_student_history(
     *,
     rows: list[dict],
-    alumno: str,
-    grupo: str | None,
+    titulo: str,
     fecha_desde: date,
     fecha_hasta: date,
     logo_path: Path | None = None,
 ) -> bytes:
     """
-    PDF DURO – Historial de alumno.
+    PDF – Historial de incidencias.
 
     Columnas:
-      Nº | Fecha | Hora/Franja | Profesor | Gravedad | Descripción
+      Nº | Fecha | Hora / Franja | Profesor | Gravedad | Descripción
     """
 
     buf = BytesIO()
@@ -61,12 +60,9 @@ def pdf_student_history(
     else:
         header_cells.append("")
 
-    title_txt = f"<b>Historial de incidencias del alumno</b><br/>{alumno}"
-    if grupo:
-        title_txt += f" ({grupo})"
-
-    title_txt += (
-        f"<br/><font size=9>"
+    title_txt = (
+        f"<b>{titulo}</b><br/>"
+        f"<font size=9>"
         f"Periodo: {fecha_desde.strftime('%d/%m/%Y')} – {fecha_hasta.strftime('%d/%m/%Y')}"
         f"</font>"
     )
@@ -104,7 +100,6 @@ def pdf_student_history(
             Paragraph(r["descripcion"], style_cell),
         ])
 
-    # Anchos fijos (A4 apaisado, ~800 pt útiles)
     table = Table(
         data,
         colWidths=[
@@ -113,7 +108,7 @@ def pdf_student_history(
             70,   # Hora / Franja
             150,  # Profesor
             70,   # Gravedad
-            384,  # Descripción (MUY ancha)
+            384,  # Descripción
         ],
         repeatRows=1,
     )
