@@ -1,6 +1,6 @@
 # routers/analysis_excursion.py
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -18,7 +18,7 @@ def analysis_excursion(
     request: Request,
     actividad: str | None = None,
     fecha_excursion: str | None = None,
-    grupos: list[str] | None = None,
+    grupos: list[str] | None = Query(None),
     user=Depends(load_user_dep),
 ):
     grupos_all = get_all_groups()
