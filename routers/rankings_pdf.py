@@ -1,122 +1,99 @@
 # routers/rankings_pdf.py
 
 from collections import Counter
-from fastapi import APIRouter, Request, Depends
-from fastapi.responses import FileResponse
-from tempfile import NamedTemporaryFile
+from datetime import date
 from pathlib import Path
 
-from db.incidents import get_incidents
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import Response
+
 from auth import load_user_dep
-from utils.pdf_ranking_students import pdf_ranking_students
-from utils.pdf_ranking_teachers import pdf_ranking_teachers
-from utils.pdf_ranking_groups import pdf_ranking_groups
+from db.incidents import get_incidents
+from utils.pdf_rankings import pdf_rankings
 
 router = APIRouter()
+
+INICIO_CURSO = "2025-09-01"
 
 
 @router.get("/rankings/pdf")
 def rankings_pdf(
     request: Request,
-    tipo: str = "alumnos",
+    mode: str = "alumnos",
+    gravedad: str | None = None,
+    grupo: str | None = None,
     from_: str | None = None,
     to: str | None = None,
     user=Depends(load_user_dep),
 ):
-    """
-    PDF: Rankings de incidencias.
-    """
+    fecha_desde = from_ or INICIO_CURSO
+    fecha_hasta = to or date.today().isoformat()
 
-    # ---------------------------------
-    # 1. Cargar incidencias
-    # ---------------------------------
     rows_raw = get_incidents(
         mode="all",
-        fecha_desde=from_,
-        fecha_hasta=to,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
     )
 
     counter = Counter()
 
+    # -------- Título y columna --------
+    if mode == "alumnos":
+        columna = "Alumno"
+        if grupo:
+            titulo = f"Ranking de alumnos de {grupo}"
+        else:
+            titulo = "Ranking de alumnos"
+    elif mode == "grupos":
+        columna = "Grupo"
+        titulo = "Ranking de grupos"
+    else:
+        columna = "Profesor"
+        titulo = "Ranking de profesores"
+
+    # -------- Agregación --------
     for r in rows_raw:
-        (
-            _id,
-            fecha,
-            hora,
-            grupo,
-            alumno,
-            descripcion,
-            grav_ini,
-            grav_fin,
-            estado,
-            profesor,
-        ) = r
+        grav_real = r["gravedad_final"] or r["gravedad_inicial"]
+        if gravedad and grav_real != gravedad:
+            continue
 
-        if tipo == "alumnos":
-            counter[alumno] += 1
-        elif tipo == "profesores":
-            counter[profesor] += 1
-        elif tipo == "grupos":
-            counter[grupo] += 1
+        if mode == "alumnos":
+            if grupo and r["grupo"] != grupo:
+                continue
+            key = r["alumno"]
+        elif mode == "grupos":
+            key = r["grupo"]
+        else:
+            key = r["teacher_name"]
 
-    ranking = [
+        if key:
+            counter[key] += 1
+
+    rows = [
         {"nombre": k, "total": v}
         for k, v in counter.most_common()
     ]
 
-    if not ranking:
-        return FileResponse(
-            path=None,
-            media_type="text/plain",
+    if not rows:
+        raise HTTPException(
             status_code=404,
-            filename="sin_datos.txt",
+            detail="No hay datos para generar el ranking",
         )
 
-    # ---------------------------------
-    # 2. Generar PDF
-    # ---------------------------------
-    with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+    pdf_bytes = pdf_rankings(
+        rows=rows,
+        titulo=titulo,
+        columna=columna,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        logo_path=Path("static/logo.png"),
+    )
 
-        if tipo == "alumnos":
-            pdf_ranking_students(
-                ranking=ranking,
-                fecha_desde=from_,
-                fecha_hasta=to,
-                logo_path=Path("static/logo.png"),
-                output_path=tmp.name,
-            )
-            filename = "ranking_alumnos.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": "attachment; filename=ranking_incidencias.pdf"
+        },
+    )
 
-        elif tipo == "profesores":
-            pdf_ranking_teachers(
-                ranking=ranking,
-                fecha_desde=from_,
-                fecha_hasta=to,
-                logo_path=Path("static/logo.png"),
-                output_path=tmp.name,
-            )
-            filename = "ranking_profesores.pdf"
-
-        elif tipo == "grupos":
-            pdf_ranking_groups(
-                ranking=ranking,
-                fecha_desde=from_,
-                fecha_hasta=to,
-                logo_path=Path("static/logo.png"),
-                output_path=tmp.name,
-            )
-            filename = "ranking_grupos.pdf"
-
-        else:
-            return FileResponse(
-                path=None,
-                media_type="text/plain",
-                status_code=400,
-                filename="tipo_invalido.txt",
-            )
-
-        return FileResponse(
-            tmp.name,
-            filename=filename,
-            media_type="application/pdf",
-        )
