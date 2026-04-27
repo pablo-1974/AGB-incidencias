@@ -34,6 +34,13 @@ def pdf_student_history(
 
     buf = BytesIO()
 
+    # Asegurar que las fechas son objetos date
+    if isinstance(fecha_desde, str):
+        fecha_desde = date.fromisoformat(fecha_desde)
+    
+    if isinstance(fecha_hasta, str):
+        fecha_hasta = date.fromisoformat(fecha_hasta)
+    
     doc = SimpleDocTemplate(
         buf,
         pagesize=landscape(A4),
@@ -122,7 +129,7 @@ def pdf_student_history(
     # Filas
     for i, r in enumerate(rows, start=1):
         data.append([
-            Paragraph(cell, style_cell)
+            Paragraph(str(cell) if cell is not None else "", style_cell)
             for cell in row_cells(i, r)
         ])
     
