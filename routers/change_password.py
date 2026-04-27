@@ -3,9 +3,10 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from auth import load_user_dep, verify_password, hash_password
+from auth import load_user_dep
 from context import ctx
-from db.users import update_user_password
+from security.passwords import verify_password, hash_password
+from db.users import set_user_password
 
 router = APIRouter()
 
@@ -21,7 +22,7 @@ def change_password_view(
 ):
     """
     Muestra el formulario de cambio de contraseña.
-    Requiere usuario autenticado.
+    Usuario autenticado obligatorio.
     """
     return request.app.state.templates.TemplateResponse(
         "auth/change_password.html",
@@ -49,7 +50,13 @@ def change_password_submit(
     Procesa el cambio de contraseña.
     """
 
-    # 1️⃣ Comprobar contraseña actual
+    # 1️⃣ Verificar contraseña actual
+    if not user["password_hash"]:
+        raise HTTPException(
+            status_code=400,
+            detail="El usuario no tiene contraseña definida",
+        )
+
     if not verify_password(current_password, user["password_hash"]):
         raise HTTPException(
             status_code=400,
@@ -69,15 +76,15 @@ def change_password_submit(
             detail="La nueva contraseña debe tener al menos 6 caracteres",
         )
 
-    # 3️⃣ Hashear y guardar
+    # 3️⃣ Hashear y guardar (FUNCIÓN CORRECTA)
     new_hash = hash_password(new_password)
 
-    update_user_password(
+    set_user_password(
         user_id=user["id"],
         password_hash=new_hash,
     )
 
-    # 4️⃣ Redirección final
+    # 4️⃣ Redirección
     return RedirectResponse(
         url="/admin/dashboard",
         status_code=303,
