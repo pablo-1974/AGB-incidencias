@@ -8,7 +8,6 @@ from fastapi.responses import HTMLResponse
 from db.incidents import get_incidents
 from context import ctx
 from auth import load_user_dep
-
 from db.students import get_all_groups
 
 router = APIRouter()
@@ -34,7 +33,18 @@ def rankings(
     fecha_hasta = to or date.today().isoformat()
 
     grupos = get_all_groups()
-    
+
+    # ✅ Definir título y columna ANTES del bucle
+    if mode == "alumnos":
+        titulo = "Ranking de alumnos"
+        columna = "Alumno"
+    elif mode == "grupos":
+        titulo = "Ranking de grupos"
+        columna = "Grupo"
+    else:
+        titulo = "Ranking de profesores"
+        columna = "Profesor"
+
     rows_raw = get_incidents(
         mode="all",
         fecha_desde=fecha_desde,
@@ -47,23 +57,15 @@ def rankings(
         gravedad_real = r["gravedad_final"] or r["gravedad_inicial"]
         if gravedad and gravedad_real != gravedad:
             continue
-    
+
         if mode == "alumnos":
-            if grupo and r["grupo"] != grupo:   # 👈 filtro nuevo
+            if grupo and r["grupo"] != grupo:
                 continue
             key = r["alumno"]
-            titulo = "Ranking de alumnos"
-            columna = "Alumno"
-    
         elif mode == "grupos":
             key = r["grupo"]
-            titulo = "Ranking de grupos"
-            columna = "Grupo"
-    
         else:
             key = r["teacher_name"]
-            titulo = "Ranking de profesores"
-            columna = "Profesor"
 
         if key:
             counter[key] += 1
@@ -81,7 +83,7 @@ def rankings(
             title=titulo,
             mode=mode,
             columna=columna,
-            gravedad=gravedad,         
+            gravedad=gravedad,
             grupo_sel=grupo,
             grupos=grupos,
             fecha_desde=fecha_desde,
