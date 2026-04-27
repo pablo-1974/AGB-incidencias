@@ -6,7 +6,7 @@ from io import BytesIO
 from pathlib import Path
 from datetime import date
 
-from reportlab.lib.pagesizes import landscape, A4
+from reportlab.lib.pagesizes import A4
 from reportlab.platypus import (
     SimpleDocTemplate,
     Table,
@@ -45,7 +45,7 @@ def pdf_rankings(
 
     doc = SimpleDocTemplate(
         buf,
-        pagesize=landscape(A4),
+        pagesize=A4,
         leftMargin=24,
         rightMargin=24,
         topMargin=24,
