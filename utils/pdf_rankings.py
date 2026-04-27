@@ -90,26 +90,43 @@ def pdf_rankings(
     # ==========================
     # TABLA
     # ==========================
-    data = [[
-        Paragraph("<b>#</b>", styles["Heading4"]),
-        Paragraph(f"<b>{columna}</b>", styles["Heading4"]),
-        Paragraph("<b>Incidencias</b>", styles["Heading4"]),
-    ]]
+    if columna == "Alumno":
+        data = [[
+            Paragraph("<b>#</b>", styles["Heading4"]),
+            Paragraph("<b>Alumno</b>", styles["Heading4"]),
+            Paragraph("<b>Grupo</b>", styles["Heading4"]),
+            Paragraph("<b>Incidencias</b>", styles["Heading4"]),
+        ]]
+    else:
+        data = [[
+            Paragraph("<b>#</b>", styles["Heading4"]),
+            Paragraph(f"<b>{columna}</b>", styles["Heading4"]),
+            Paragraph("<b>Incidencias</b>", styles["Heading4"]),
+        ]]
 
     for i, r in enumerate(rows, start=1):
-        data.append([
-            Paragraph(str(i), style_cell),
-            Paragraph(str(r["nombre"]), style_cell),
-            Paragraph(str(r["total"]), style_cell),
-        ])
+        if columna == "Alumno":
+            data.append([
+                Paragraph(str(i), style_cell),
+                Paragraph(str(r["nombre"]), style_cell),
+                Paragraph(str(r["grupo"]), style_cell),
+                Paragraph(str(r["total"]), style_cell),
+            ])
+        else:
+            data.append([
+                Paragraph(str(i), style_cell),
+                Paragraph(str(r["nombre"]), style_cell),
+                Paragraph(str(r["total"]), style_cell),
+            ])
 
+    colWidths = (
+        [40, 200, 120, 80] if columna == "Alumno"
+        else [50, 350, doc.width - 400]
+    )
+    
     table = Table(
         data,
-        colWidths=[
-            50,
-            350,
-            doc.width - 400,
-        ],
+        colWidths=colWidths,
         repeatRows=1,
     )
 
