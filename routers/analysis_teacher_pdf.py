@@ -55,7 +55,7 @@ def analysis_teacher_pdf(
         )
 
     # --------------------------------------------------
-    # 3. Preparar filas 
+    # 3. Preparar filas
     # --------------------------------------------------
     if profesor:
         rows_raw = [
@@ -64,8 +64,15 @@ def analysis_teacher_pdf(
         ]
     else:
         rows_raw = []
-
-
+    
+    if not rows_raw:
+        raise HTTPException(
+            status_code=404,
+            detail="No hay incidencias para los filtros seleccionados",
+        )
+    
+    rows = []
+    
     for r in rows_raw:
         rows.append({
             "fecha": r["fecha"],
