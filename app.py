@@ -20,6 +20,8 @@ from routers.analysis_student import router as analysis_student_router
 from routers.analysis_teacher import router as analysis_teacher_router
 from routers.analysis_student_pdf import router as analysis_student_pdf_router
 from routers.analysis_teacher_pdf import router as analysis_teacher_pdf_router
+from routers.analysis_excursion import router as analysis_excursion_router
+from routers.analysis_excursion_pdf import router as analysis_excursion_pdf_router
 from routers.rankings import router as rankings_router
 from routers.rankings_pdf import router as rankings_pdf_router
 from routers.admin_users import router as admin_users_router
@@ -73,6 +75,8 @@ app.include_router(analysis_student_router)
 app.include_router(analysis_teacher_router)
 app.include_router(analysis_student_pdf_router)
 app.include_router(analysis_teacher_pdf_router)
+app.include_router(analysis_excursion_router)
+app.include_router(analysis_excursion_pdf_router)
 app.include_router(rankings_router)
 app.include_router(rankings_pdf_router)
 app.include_router(admin_users_router)
