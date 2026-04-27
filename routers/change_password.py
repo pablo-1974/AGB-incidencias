@@ -25,7 +25,7 @@ def change_password_view(
     Usuario autenticado obligatorio.
     """
     return request.app.state.templates.TemplateResponse(
-        "auth/change_password.html",
+        "change_password.html",
         ctx(
             request,
             user,
