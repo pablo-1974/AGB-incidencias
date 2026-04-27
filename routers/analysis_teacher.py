@@ -48,7 +48,7 @@ def analysis_teacher(
     # --------------------------------------------------
     rows_raw = get_incidents(
         mode="all",
-        profesor=profesor,
+        teacher_name=profesor,
         grupo=grupo,
         alumno=alumno,
         fecha_desde=fecha_desde,
