@@ -1,6 +1,6 @@
 # routers/analysis_excursion_pdf.py
 
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException, Query
 from fastapi.responses import Response
 from datetime import date
 from pathlib import Path
@@ -18,7 +18,7 @@ def analysis_excursion_pdf(
     request: Request,
     actividad: str | None = None,
     fecha_excursion: str | None = None,
-    grupos: list[str] | None = None,
+    grupos: list[str] | None = Query(None),
     user=Depends(load_user_dep),
 ):
     """
