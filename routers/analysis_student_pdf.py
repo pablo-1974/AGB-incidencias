@@ -1,9 +1,10 @@
 # routers/analysis_student_pdf.py
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import FileResponse
 from tempfile import NamedTemporaryFile
 from pathlib import Path
+from datetime import date
 
 from db.incidents import get_incidents
 from auth import load_user_dep
@@ -15,78 +16,83 @@ router = APIRouter()
 @router.get("/analysis/student/pdf")
 def analysis_student_pdf(
     request: Request,
-    alumno: str,
+    grupo: str | None = None,
+    alumno: str | None = None,
     from_: str | None = None,
     to: str | None = None,
     user=Depends(load_user_dep),
 ):
     """
-    PDF: Historial de incidencias por alumno.
+    PDF: Historial de incidencias.
+    - Global
+    - Por grupo
+    - Por alumno
     """
 
     # ---------------------------------
-    # 1. Cargar incidencias
+    # 1. Fechas por defecto (seguridad)
+    # ---------------------------------
+    fecha_desde = from_ or "2025-09-01"
+    fecha_hasta = to or date.today().isoformat()
+
+    # ---------------------------------
+    # 2. Cargar incidencias según filtros
     # ---------------------------------
     rows_raw = get_incidents(
         mode="all",
+        grupo=grupo,
         alumno=alumno,
-        fecha_desde=from_,
-        fecha_hasta=to,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
     )
 
     if not rows_raw:
-        return FileResponse(
-            path=None,
-            media_type="text/plain",
+        raise HTTPException(
             status_code=404,
-            filename="sin_datos.txt",
+            detail="No hay incidencias para los filtros seleccionados",
         )
 
     # ---------------------------------
-    # 2. Preparar datos PDF
+    # 3. Preparar filas para el PDF
     # ---------------------------------
     rows = []
 
     for r in rows_raw:
-        (
-            _id,
-            fecha,
-            hora,
-            grupo,
-            _alumno,
-            descripcion,
-            grav_ini,
-            grav_fin,
-            estado,
-            profesor,
-        ) = r
-
         rows.append({
-            "fecha": fecha,
-            "hora": hora or "",
-            "profesor": profesor,
-            "gravedad": grav_fin or grav_ini,
-            "descripcion": descripcion,
+            "fecha": r["fecha"],
+            "hora": r["franja"] or "",
+            "profesor": r["teacher_name"],
+            "gravedad": r["gravedad_final"] or r["gravedad_inicial"],
+            "descripcion": r["descripcion"],
+            "grupo": r["grupo"],
+            "alumno": r["alumno"],
         })
 
-    grupo_alumno = rows_raw[0][3]
+    # ---------------------------------
+    # 4. Título del PDF (según filtros)
+    # ---------------------------------
+    if alumno:
+        titulo = f"Historial de incidencias del alumno {alumno}"
+    elif grupo:
+        titulo = f"Historial de incidencias del grupo {grupo}"
+    else:
+        titulo = "Historial de incidencias de alumnos"
 
     # ---------------------------------
-    # 3. Generar PDF
+    # 5. Generar PDF
     # ---------------------------------
     with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         pdf_student_history(
             rows=rows,
-            alumno=alumno,
-            grupo=grupo_alumno,
-            fecha_desde=from_,
-            fecha_hasta=to,
+            titulo=titulo,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta,
             logo_path=Path("static/logo.png"),
             output_path=tmp.name,
         )
 
         return FileResponse(
             tmp.name,
-            filename=f"historial_{alumno.replace(' ', '_')}.pdf",
+            filename="historial_incidencias.pdf",
             media_type="application/pdf",
         )
