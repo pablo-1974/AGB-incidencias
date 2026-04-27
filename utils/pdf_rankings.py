@@ -1,7 +1,5 @@
 # utils/pdf_rankings.py
 
-# utils/pdf_rankings.py
-
 from io import BytesIO
 from pathlib import Path
 from datetime import date
