@@ -115,14 +115,16 @@
     </p>
   </div>
 
+  {% if rows and profesor_sel %}
   <div>
     <a
-      href="/analysis/teacher/pdf?{% if profesor_sel %}profesor={{ profesor_sel }}&{% endif %}{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}from_={{ fecha_desde }}&to={{ fecha_hasta }}"
+      href="/analysis/teacher/pdf?profesor={{ profesor_sel }}{% if grupo_sel %}&amp;grupo={{ grupo_sel }}{% endif %}{% if alumno_sel %}&amp;alumno={{ alumno_sel }}{% endif %}&amp;from_={{ fecha_desde }}&amp;to={{ fecha_hasta }}"
       class="btn-primary whitespace-nowrap"
     >
       📄 Descargar PDF
     </a>
   </div>
+  {% endif %}
 
 </div>
 
