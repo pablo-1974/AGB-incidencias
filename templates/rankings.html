@@ -10,24 +10,41 @@
 <h1 class="text-xl font-semibold mb-6">🏆 {{ title }}</h1>
 
 <!-- ========================================================= -->
-<!-- BOTONES DE RANKING -->
+<!-- BOTONES DE RANKING + PDF -->
 <!-- ========================================================= -->
-<div class="flex flex-wrap gap-2 mb-6">
+<div class="flex flex-wrap justify-between items-center gap-4 mb-6">
 
-  <a href="/rankings?mode=alumnos"
-     class="px-4 py-2 rounded {{ btn_active if mode == 'alumnos' else btn_inactive }}">
-    Alumnos
-  </a>
-  
-  <a href="/rankings?mode=grupos"
-     class="px-4 py-2 rounded {{ btn_active if mode == 'grupos' else btn_inactive }}">
-    Grupos
-  </a>
-  
-  <a href="/rankings?mode=profesores"
-     class="px-4 py-2 rounded {{ btn_active if mode == 'profesores' else btn_inactive }}">
-    Profesores
-  </a>
+  <!-- Botones de ranking -->
+  <div class="flex flex-wrap gap-2">
+
+    <a href="/rankings?mode=alumnos"
+       class="px-4 py-2 rounded {{ btn_active if mode == 'alumnos' else btn_inactive }}">
+      Alumnos
+    </a>
+
+    <a href="/rankings?mode=grupos"
+       class="px-4 py-2 rounded {{ btn_active if mode == 'grupos' else btn_inactive }}">
+      Grupos
+    </a>
+
+    <a href="/rankings?mode=profesores"
+       class="px-4 py-2 rounded {{ btn_active if mode == 'profesores' else btn_inactive }}">
+      Profesores
+    </a>
+
+  </div>
+
+  <!-- Botón PDF -->
+  {% if rows %}
+  <div>
+    <a
+      href="/rankings/pdf?mode={{ mode }}{% if gravedad %}&gravedad={{ gravedad }}{% endif %}{% if grupo_sel %}&grupo={{ grupo_sel }}{% endif %}&from_={{ fecha_desde }}&to={{ fecha_hasta }}"
+      class="btn-primary whitespace-nowrap">
+      📄 Descargar PDF
+    </a>
+  </div>
+  {% endif %}
+
 </div>
 
 <!-- ========================================================= -->
