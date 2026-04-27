@@ -83,6 +83,7 @@ def analysis_student(
             "fecha": fecha,
             "hora": hora,
             "grupo": grupo_row,
+            "alumno": r["alumno"],
             "profesor": profesor,
             "descripcion": descripcion,
             "grav_ini": gravedad_ini,
