@@ -26,9 +26,8 @@ def analysis_teacher_pdf(
 ):
     """
     PDF de historial de incidencias por profesor.
-
-    - Sin profesor → PDF general
-    - Con profesor → PDF del profesor
+    
+    - Requiere profesor seleccionado
     """
 
     # --------------------------------------------------
