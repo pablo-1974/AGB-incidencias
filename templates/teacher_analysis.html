@@ -161,6 +161,18 @@
 
 </div>
 
+<!-- ========================================================= -->
+<!-- PDF -->
+<!-- ========================================================= -->
+<div class="mt-8">
+  <a
+    href="/analysis/teacher/pdf?{% if profesor_sel %}profesor={{ profesor_sel }}&{% endif %}{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}from_={{ fecha_desde }}&to={{ fecha_hasta }}"
+    class="btn-primary inline-block"
+  >
+    📄 Descargar PDF (historial)
+  </a>
+</div>
+
 {% else %}
 
 <div class="card text-center text-gray-600">
