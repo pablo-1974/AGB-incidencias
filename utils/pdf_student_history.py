@@ -119,7 +119,10 @@ def pdf_student_history(
                 r["gravedad"],
                 r["descripcion"],
             ]
-    
+
+    # ✅ CORRECCIÓN DE NUMERACIÓN
+    rows = list(reversed(rows))
+
     # Cabecera
     data = [[
         Paragraph(f"<b>{h}</b>", styles["Heading4"])
