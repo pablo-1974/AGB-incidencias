@@ -95,11 +95,40 @@
 
 </div>
 
-<!-- ========================================================= -->
-<!-- HISTORIAL -->
-<!-- ========================================================= -->
 {% if rows %}
 
+<!-- ========================================================= -->
+<!-- CABECERA HISTORIAL + BOTÓN PDF -->
+<!-- ========================================================= -->
+<div class="flex flex-wrap justify-between items-start mb-4 gap-4">
+
+  <div>
+    <h2 class="font-semibold">
+      📋 Historial de incidencias
+      {% if profesor_sel %}
+        del profesor {{ profesor_sel }}
+      {% endif %}
+    </h2>
+
+    <p class="text-sm text-gray-500">
+      Periodo del {{ fecha_desde }} al {{ fecha_hasta }}
+    </p>
+  </div>
+
+  <div>
+    <a
+      href="/analysis/teacher/pdf?{% if profesor_sel %}profesor={{ profesor_sel }}&{% endif %}{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}from_={{ fecha_desde }}&to={{ fecha_hasta }}"
+      class="btn-primary whitespace-nowrap"
+    >
+      📄 Descargar PDF
+    </a>
+  </div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- LISTADO DE INCIDENCIAS -->
+<!-- ========================================================= -->
 <div class="space-y-4">
 
   {% for r in rows %}
@@ -127,27 +156,10 @@
 
     <!-- Datos clave -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-sm mb-3">
-
-      <div>
-        <strong>Grupo:</strong><br>
-        {{ r.grupo }}
-      </div>
-
-      <div>
-        <strong>Alumno:</strong><br>
-        {{ r.alumno }}
-      </div>
-
-      <div>
-        <strong>Gravedad inicial:</strong><br>
-        {{ r.grav_ini }}
-      </div>
-
-      <div>
-        <strong>Gravedad final:</strong><br>
-        {{ r.grav_fin or "—" }}
-      </div>
-
+      <div><strong>Grupo:</strong><br>{{ r.grupo }}</div>
+      <div><strong>Alumno:</strong><br>{{ r.alumno }}</div>
+      <div><strong>Gravedad inicial:</strong><br>{{ r.grav_ini }}</div>
+      <div><strong>Gravedad final:</strong><br>{{ r.grav_fin or "—" }}</div>
     </div>
 
     <!-- Descripción -->
@@ -161,18 +173,6 @@
 
 </div>
 
-<!-- ========================================================= -->
-<!-- PDF -->
-<!-- ========================================================= -->
-<div class="mt-8">
-  <a
-    href="/analysis/teacher/pdf?{% if profesor_sel %}profesor={{ profesor_sel }}&{% endif %}{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}from_={{ fecha_desde }}&to={{ fecha_hasta }}"
-    class="btn-primary inline-block"
-  >
-    📄 Descargar PDF (historial)
-  </a>
-</div>
-
 {% else %}
 
 <div class="card text-center text-gray-600">
@@ -180,6 +180,7 @@
 </div>
 
 {% endif %}
+
 
 <!-- ========================================================= -->
 <!-- AUTO-SUBMIT -->
