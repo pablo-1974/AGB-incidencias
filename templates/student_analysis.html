@@ -169,10 +169,7 @@
 <!-- ========================================================= -->
 <div class="mt-8">
   <a
-    href="/analysis/student/pdf
-      ?{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}
-       {% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}
-       from={{ fecha_desde }}&to={{ fecha_hasta }}"
+    href="/analysis/student/pdf?{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}from_={{ fecha_desde }}&to={{ fecha_hasta }}"
     class="btn-primary inline-block"
   >
     📄 Descargar PDF (historial)
