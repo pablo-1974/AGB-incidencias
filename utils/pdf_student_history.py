@@ -23,6 +23,7 @@ def pdf_student_history(
     fecha_desde: date,
     fecha_hasta: date,
     logo_path: Path | None = None,
+    modo: str = "general",
 ) -> bytes:
     """
     PDF – Historial de incidencias.
@@ -76,43 +77,62 @@ def pdf_student_history(
     elements.append(header)
     elements.append(Spacer(1, 14))
 
+
     # ==========================
     # TABLA PRINCIPAL
     # ==========================
-    data = [
-        [
-            Paragraph("<b>Nº</b>", styles["Heading4"]),
-            Paragraph("<b>Fecha</b>", styles["Heading4"]),
-            Paragraph("<b>Hora / Franja</b>", styles["Heading4"]),
-            Paragraph("<b>Profesor</b>", styles["Heading4"]),
-            Paragraph("<b>Gravedad</b>", styles["Heading4"]),
-            Paragraph("<b>Descripción</b>", styles["Heading4"]),
-        ]
-    ]
-
+    
+    # Decidir columnas según modo
+    if modo == "alumno":
+        headers = ["Nº", "Fecha", "Hora / Franja", "Profesor", "Gravedad", "Descripción"]
+        col_widths = [36, 70, 70, 150, 70, 404]
+    
+        def row_cells(i, r):
+            return [
+                str(i),
+                r["fecha"],
+                r["hora"] or "",
+                r["profesor"],
+                r["gravedad"],
+                r["descripcion"],
+            ]
+    
+    else:  # general / por grupo
+        headers = ["Nº", "Fecha", "Hora / Franja", "Grupo", "Alumno", "Profesor", "Gravedad", "Descripción"]
+        col_widths = [30, 60, 60, 70, 120, 120, 60, 280]
+    
+        def row_cells(i, r):
+            return [
+                str(i),
+                r["fecha"],
+                r["hora"] or "",
+                r["grupo"],
+                r["alumno"],
+                r["profesor"],
+                r["gravedad"],
+                r["descripcion"],
+            ]
+    
+    # Cabecera
+    data = [[
+        Paragraph(f"<b>{h}</b>", styles["Heading4"])
+        for h in headers
+    ]]
+    
+    # Filas
     for i, r in enumerate(rows, start=1):
         data.append([
-            Paragraph(str(i), style_cell),
-            Paragraph(r["fecha"], style_cell),
-            Paragraph(r["hora"] or "", style_cell),
-            Paragraph(r["profesor"], style_cell),
-            Paragraph(r["gravedad"], style_cell),
-            Paragraph(r["descripcion"], style_cell),
+            Paragraph(cell, style_cell)
+            for cell in row_cells(i, r)
         ])
-
+    
+    # Tabla
     table = Table(
         data,
-        colWidths=[
-            36,   # Nº
-            70,   # Fecha
-            70,   # Hora / Franja
-            150,  # Profesor
-            70,   # Gravedad
-            384,  # Descripción
-        ],
+        colWidths=col_widths,
         repeatRows=1,
     )
-
+    
     table.setStyle(TableStyle([
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
@@ -122,8 +142,8 @@ def pdf_student_history(
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ("TOPPADDING", (0, 0), (-1, -1), 4),
     ]))
-
+    
     elements.append(table)
-
+    
     doc.build(elements)
     return buf.getvalue()
