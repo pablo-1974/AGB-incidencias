@@ -40,23 +40,19 @@
   <!-- Desde -->
   <div>
     <label class="font-semibold">Desde</label>
-    <input
-      type="date"
-      name="from_"
-      class="form-input w-full auto-submit"
-      value="{{ fecha_desde }}"
-    />
+    <input type="date"
+           name="from_"
+           class="form-input w-full auto-submit"
+           value="{{ fecha_desde }}">
   </div>
 
   <!-- Hasta -->
   <div>
     <label class="font-semibold">Hasta</label>
-    <input
-      type="date"
-      name="to"
-      class="form-input w-full auto-submit"
-      value="{{ fecha_hasta }}"
-    />
+    <input type="date"
+           name="to"
+           class="form-input w-full auto-submit"
+           value="{{ fecha_hasta }}">
   </div>
 
 </form>
@@ -113,14 +109,12 @@
   <div>
     <a
       href="/analysis/student/pdf?{% if grupo_sel %}grupo={{ grupo_sel }}&amp;{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&amp;{% endif %}from_={{ fecha_desde }}&amp;to={{ fecha_hasta }}"
-      class="btn-primary whitespace-nowrap"
-    >
+      class="btn-primary whitespace-nowrap">
       📄 Descargar PDF
     </a>
   </div>
 
 </div>
-
 
 <!-- ========================================================= -->
 <!-- LISTADO DE INCIDENCIAS -->
@@ -152,32 +146,11 @@
 
     <!-- Datos clave -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 text-sm mb-3">
-      
-      <div>
-        <strong>Alumno:</strong><br>
-        {{ r.alumno }}
-      </div>
-
-      <div>
-        <strong>Grupo:</strong><br>
-        {{ r.grupo }}
-      </div>
-          
-      <div>
-        <strong>Profesor:</strong><br>
-        {{ r.profesor }}
-      </div>
-
-      <div>
-        <strong>Gravedad inicial:</strong><br>
-        {{ r.grav_ini }}
-      </div>
-
-      <div>
-        <strong>Gravedad final:</strong><br>
-        {{ r.grav_fin or "—" }}
-      </div>
-
+      <div><strong>Alumno:</strong><br>{{ r.alumno }}</div>
+      <div><strong>Grupo:</strong><br>{{ r.grupo }}</div>
+      <div><strong>Profesor:</strong><br>{{ r.profesor }}</div>
+      <div><strong>Gravedad inicial:</strong><br>{{ r.grav_ini }}</div>
+      <div><strong>Gravedad final:</strong><br>{{ r.grav_fin or "—" }}</div>
     </div>
 
     <!-- Descripción -->
@@ -191,6 +164,13 @@
 
 </div>
 
+{% else %}
+
+<div class="card text-center text-gray-600">
+  No hay incidencias para los filtros seleccionados.
+</div>
+
+{% endif %}
 
 <!-- ========================================================= -->
 <!-- AUTO-SUBMIT -->
