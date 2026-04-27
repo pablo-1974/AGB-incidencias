@@ -330,8 +330,6 @@ def get_all_teachers() -> list[dict]:
                 """
                 SELECT id, name
                 FROM users
-                WHERE role = 'profesor'
-                  AND active = 1
                 ORDER BY name
                 """
             )
