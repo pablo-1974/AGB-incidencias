@@ -9,6 +9,8 @@ from db.incidents import get_incidents
 from context import ctx
 from auth import load_user_dep
 
+from db.students import get_all_groups
+
 router = APIRouter()
 
 INICIO_CURSO = "2025-09-01"
@@ -17,8 +19,9 @@ INICIO_CURSO = "2025-09-01"
 @router.get("/rankings", response_class=HTMLResponse)
 def rankings(
     request: Request,
-    mode: str = "alumnos",              # alumnos | grupos | profesores
-    gravedad: str | None = None,         # leve | grave | muy_grave | None
+    mode: str = "alumnos",
+    gravedad: str | None = None,
+    grupo: str | None = None,
     from_: str | None = None,
     to: str | None = None,
     user=Depends(load_user_dep),
@@ -30,6 +33,8 @@ def rankings(
     fecha_desde = from_ or INICIO_CURSO
     fecha_hasta = to or date.today().isoformat()
 
+    grupos = get_all_groups()
+    
     rows_raw = get_incidents(
         mode="all",
         fecha_desde=fecha_desde,
@@ -39,19 +44,22 @@ def rankings(
     counter = Counter()
 
     for r in rows_raw:
-        # Filtro por gravedad
         gravedad_real = r["gravedad_final"] or r["gravedad_inicial"]
         if gravedad and gravedad_real != gravedad:
             continue
-
+    
         if mode == "alumnos":
+            if grupo and r["grupo"] != grupo:   # 👈 filtro nuevo
+                continue
             key = r["alumno"]
             titulo = "Ranking de alumnos"
             columna = "Alumno"
+    
         elif mode == "grupos":
             key = r["grupo"]
             titulo = "Ranking de grupos"
             columna = "Grupo"
+    
         else:
             key = r["teacher_name"]
             titulo = "Ranking de profesores"
@@ -73,7 +81,9 @@ def rankings(
             title=titulo,
             mode=mode,
             columna=columna,
-            gravedad=gravedad,
+            gravedad=gravedad,         
+            grupo_sel=grupo,
+            grupos=grupos,
             fecha_desde=fecha_desde,
             fecha_hasta=fecha_hasta,
             rows=rows,
