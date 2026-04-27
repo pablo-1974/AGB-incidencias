@@ -1,59 +1,84 @@
 <!-- templates/rankings.html -->
+
 {% extends "base.html" %}
 
 {% block content %}
 
-<h1 class="text-xl font-semibold mb-6">🏆 Rankings de incidencias</h1>
+<h1 class="text-xl font-semibold mb-6">🏆 {{ title }}</h1>
 
 <!-- ========================================================= -->
-<!-- FORMULARIO DE FILTROS -->
+<!-- BOTONES DE TIPO DE RANKING -->
 <!-- ========================================================= -->
-<form method="get" class="card grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
+<div class="flex flex-wrap gap-2 mb-6">
 
-  <!-- Tipo ranking -->
+  <a href="/rankings?mode=alumnos{% if gravedad %}&gravedad={{ gravedad }}{% endif %}&from_={{ fecha_desde }}&to={{ fecha_hasta }}"
+     class="btn {% if mode == 'alumnos' %}btn-soft{% else %}btn-primary{% endif %}">
+    Alumnos
+  </a>
+
+  <a href="/rankings?mode=grupos{% if gravedad %}&gravedad={{ gravedad }}{% endif %}&from_={{ fecha_desde }}&to={{ fecha_hasta }}"
+     class="btn {% if mode == 'grupos' %}btn-soft{% else %}btn-primary{% endif %}">
+    Grupos
+  </a>
+
+  <a href="/rankings?mode=profesores{% if gravedad %}&gravedad={{ gravedad }}{% endif %}&from_={{ fecha_desde }}&to={{ fecha_hasta }}"
+     class="btn {% if mode == 'profesores' %}btn-soft{% else %}btn-primary{% endif %}">
+    Profesores
+  </a>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- FILTROS (AUTO-SUBMIT, SIN BOTÓN) -->
+<!-- ========================================================= -->
+<form method="get"
+      class="card grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-sm">
+
+  <!-- Mantener el modo -->
+  <input type="hidden" name="mode" value="{{ mode }}">
+
+  <!-- Tipo de gravedad -->
   <div>
-    <label class="label">Ranking</label>
-    <select name="tipo" class="input">
-      <option value="alumnos" {% if tipo == "alumnos" %}selected{% endif %}>Alumnos</option>
-      <option value="profesores" {% if tipo == "profesores" %}selected{% endif %}>Profesores</option>
-      <option value="grupos" {% if tipo == "grupos" %}selected{% endif %}>Grupos</option>
+    <label class="font-semibold">Tipo</label>
+    <select name="gravedad" class="form-select w-full auto-submit">
+      <option value="">Todos</option>
+      <option value="leve" {% if gravedad == "leve" %}selected{% endif %}>Leve</option>
+      <option value="grave" {% if gravedad == "grave" %}selected{% endif %}>Grave</option>
+      <option value="muy_grave" {% if gravedad == "muy_grave" %}selected{% endif %}>Muy grave</option>
     </select>
   </div>
 
   <!-- Desde -->
   <div>
-    <label class="label">Desde</label>
-    <input type="date" name="from" value="{{ fecha_desde or '' }}" class="input">
+    <label class="font-semibold">Desde</label>
+    <input type="date"
+           name="from_"
+           value="{{ fecha_desde }}"
+           class="form-input w-full auto-submit">
   </div>
 
   <!-- Hasta -->
   <div>
-    <label class="label">Hasta</label>
-    <input type="date" name="to" value="{{ fecha_hasta or '' }}" class="input">
-  </div>
-
-  <!-- Botón -->
-  <div class="flex items-end col-span-1 sm:col-span-2">
-    <button class="btn-primary w-full">Aplicar</button>
+    <label class="font-semibold">Hasta</label>
+    <input type="date"
+           name="to"
+           value="{{ fecha_hasta }}"
+           class="form-input w-full auto-submit">
   </div>
 
 </form>
 
+<!-- ========================================================= -->
+<!-- TABLA DE RANKING -->
+<!-- ========================================================= -->
 {% if rows %}
 
-<!-- ========================================================= -->
-<!-- TABLA RANKING -->
-<!-- ========================================================= -->
 <div class="card">
   <table class="table">
     <thead>
       <tr>
         <th>#</th>
-        <th>
-          {% if tipo == "alumnos" %}Alumno{% endif %}
-          {% if tipo == "profesores" %}Profesor{% endif %}
-          {% if tipo == "grupos" %}Grupo{% endif %}
-        </th>
+        <th>{{ columna }}</th>
         <th>Incidencias</th>
       </tr>
     </thead>
@@ -69,17 +94,6 @@
   </table>
 </div>
 
-<div class="mt-6 text-right">
-  <a
-    href="/rankings/pdf?tipo={{ tipo }}
-          {% if fecha_desde %}&from={{ fecha_desde }}{% endif %}
-          {% if fecha_hasta %}&to={{ fecha_hasta }}{% endif %}"
-    class="btn-primary"
-  >
-    📄 Descargar PDF
-  </a>
-</div>
-
 {% else %}
 
 <div class="card text-center text-gray-600">
@@ -87,5 +101,14 @@
 </div>
 
 {% endif %}
+
+<!-- ========================================================= -->
+<!-- AUTO-SUBMIT -->
+<!-- ========================================================= -->
+<script>
+  document.querySelectorAll(".auto-submit").forEach(el => {
+    el.addEventListener("change", () => el.form.submit());
+  });
+</script>
 
 {% endblock %}
