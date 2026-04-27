@@ -48,12 +48,17 @@ def analysis_teacher(
     # --------------------------------------------------
     rows_raw = get_incidents(
         mode="all",
-        teacher_name=profesor,
         grupo=grupo,
         alumno=alumno,
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
     )
+    
+    if profesor:
+        rows_raw = [
+            r for r in rows_raw
+            if r["teacher_name"] == profesor
+        ]
 
     # --------------------------------------------------
     # 4. Incidencias totales del sistema (mismo periodo)
