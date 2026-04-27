@@ -555,6 +555,7 @@ def get_open_incidents_for_closing():
                     id,
                     fecha,
                     hora AS franja,
+                    grupo,
                     alumno,
                     descripcion,
                     gravedad_inicial,
