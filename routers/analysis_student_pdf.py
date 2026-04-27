@@ -23,9 +23,10 @@ def analysis_student_pdf(
 ):
     """
     PDF de historial de incidencias:
-    - Global (sin grupo ni alumno)
-    - Por grupo
-    - Por alumno
+
+    - Sin filtros → PDF general (con grupo y alumno)
+    - Con grupo    → PDF del grupo (con grupo y alumno)
+    - Con alumno   → PDF del alumno (sin grupo ni alumno en columnas)
     """
 
     # --------------------------------------------------
@@ -52,7 +53,8 @@ def analysis_student_pdf(
         )
 
     # --------------------------------------------------
-    # 3. Preparar filas para el PDF
+    # 3. Preparar filas (SIEMPRE con grupo y alumno)
+    #    El PDF decidirá qué columnas mostrar
     # --------------------------------------------------
     rows = []
 
@@ -60,6 +62,7 @@ def analysis_student_pdf(
         rows.append({
             "fecha": r["fecha"],
             "hora": r["franja"] or "",
+            "grupo": r["grupo"],
             "alumno": r["alumno"],
             "profesor": r["teacher_name"],
             "gravedad": r["gravedad_final"] or r["gravedad_inicial"],
@@ -67,17 +70,20 @@ def analysis_student_pdf(
         })
 
     # --------------------------------------------------
-    # 4. Título dinámico
+    # 4. Decidir modo y título del PDF
     # --------------------------------------------------
     if alumno:
+        modo = "alumno"
         titulo = f"Historial de incidencias del alumno {alumno}"
     elif grupo:
+        modo = "general"
         titulo = f"Historial de incidencias del grupo {grupo}"
     else:
+        modo = "general"
         titulo = "Historial de incidencias de alumnos"
 
     # --------------------------------------------------
-    # 5. Generar PDF (BYTES)
+    # 5. Generar PDF (devuelve BYTES)
     # --------------------------------------------------
     pdf_bytes = pdf_student_history(
         rows=rows,
@@ -85,6 +91,7 @@ def analysis_student_pdf(
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
         logo_path=Path("static/logo.png"),
+        modo=modo,   # 👈 AQUÍ está la clave
     )
 
     # --------------------------------------------------
