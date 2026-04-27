@@ -52,6 +52,7 @@ def rankings(
     )
 
     counter = Counter()
+    alumno_grupo = {}
 
     for r in rows_raw:
         gravedad_real = r["gravedad_final"] or r["gravedad_inicial"]
@@ -62,6 +63,7 @@ def rankings(
             if grupo and r["grupo"] != grupo:
                 continue
             key = r["alumno"]
+            alumno_grupo[key] = r["grupo"]
         elif mode == "grupos":
             key = r["grupo"]
         else:
@@ -70,10 +72,20 @@ def rankings(
         if key:
             counter[key] += 1
 
-    rows = [
-        {"nombre": k, "total": v}
-        for k, v in counter.most_common()
-    ]
+    if mode == "alumnos":
+        rows = [
+            {
+                "nombre": alumno,
+                "grupo": alumno_grupo.get(alumno),  # 👈 AQUÍ APARECE EL GRUPO
+                "total": total,
+            }
+            for alumno, total in counter.most_common()
+        ]
+    else:
+        rows = [
+            {"nombre": k, "total": v}
+            for k, v in counter.most_common()
+        ]
 
     return request.app.state.templates.TemplateResponse(
         "rankings.html",
