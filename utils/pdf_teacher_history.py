@@ -19,19 +19,28 @@ from reportlab.lib.styles import getSampleStyleSheet
 def pdf_teacher_history(
     *,
     rows: list[dict],
-    profesor: str,
+    titulo: str,
     fecha_desde: date,
     fecha_hasta: date,
     logo_path: Path | None = None,
 ) -> bytes:
     """
-    PDF DURO – Historial de profesor.
+    PDF – Historial de incidencias por profesor.
 
     Columnas:
-      Nº | Fecha | Hora/Franja | Alumno | Grupo | Gravedad | Descripción
+      Nº | Fecha | Hora / Franja | Grupo | Alumno | Gravedad | Descripción
     """
 
     buf = BytesIO()
+
+    # --------------------------------------------------
+    # Asegurar fechas como objetos date
+    # --------------------------------------------------
+    if isinstance(fecha_desde, str):
+        fecha_desde = date.fromisoformat(fecha_desde)
+
+    if isinstance(fecha_hasta, str):
+        fecha_hasta = date.fromisoformat(fecha_hasta)
 
     doc = SimpleDocTemplate(
         buf,
@@ -61,8 +70,7 @@ def pdf_teacher_history(
         header_cells.append("")
 
     title_txt = (
-        f"<b>Historial de incidencias del profesor</b><br/>"
-        f"{profesor}<br/>"
+        f"<b>{titulo}</b><br/>"
         f"<font size=9>"
         f"Periodo: {fecha_desde.strftime('%d/%m/%Y')} – {fecha_hasta.strftime('%d/%m/%Y')}"
         f"</font>"
@@ -80,40 +88,49 @@ def pdf_teacher_history(
     # ==========================
     # TABLA PRINCIPAL
     # ==========================
-    data = [
-        [
-            Paragraph("<b>Nº</b>", styles["Heading4"]),
-            Paragraph("<b>Fecha</b>", styles["Heading4"]),
-            Paragraph("<b>Hora / Franja</b>", styles["Heading4"]),
-            Paragraph("<b>Alumno</b>", styles["Heading4"]),
-            Paragraph("<b>Grupo</b>", styles["Heading4"]),
-            Paragraph("<b>Gravedad</b>", styles["Heading4"]),
-            Paragraph("<b>Descripción</b>", styles["Heading4"]),
-        ]
+
+    headers = [
+        "Nº",
+        "Fecha",
+        "Hora / Franja",
+        "Grupo",
+        "Alumno",
+        "Gravedad",
+        "Descripción",
     ]
+
+    col_widths = [
+        36,   # Nº
+        70,   # Fecha
+        70,   # Hora / Franja
+        70,   # Grupo
+        140,  # Alumno
+        70,   # Gravedad
+        344,  # Descripción
+    ]
+
+    # ✅ Numeración cronológica: 1 = incidencia más antigua
+    rows = list(reversed(rows))
+
+    data = [[
+        Paragraph(f"<b>{h}</b>", styles["Heading4"])
+        for h in headers
+    ]]
 
     for i, r in enumerate(rows, start=1):
         data.append([
             Paragraph(str(i), style_cell),
-            Paragraph(r["fecha"], style_cell),
-            Paragraph(r["hora"] or "", style_cell),
-            Paragraph(r["alumno"], style_cell),
-            Paragraph(r["grupo"], style_cell),
-            Paragraph(r["gravedad"], style_cell),
-            Paragraph(r["descripcion"], style_cell),
+            Paragraph(str(r.get("fecha", "") or ""), style_cell),
+            Paragraph(str(r.get("hora", "") or ""), style_cell),
+            Paragraph(str(r.get("grupo", "") or ""), style_cell),
+            Paragraph(str(r.get("alumno", "") or ""), style_cell),
+            Paragraph(str(r.get("gravedad", "") or ""), style_cell),
+            Paragraph(str(r.get("descripcion", "") or ""), style_cell),
         ])
 
     table = Table(
         data,
-        colWidths=[
-            36,   # Nº
-            70,   # Fecha
-            70,   # Hora / Franja
-            140,  # Alumno
-            70,   # Grupo
-            70,   # Gravedad
-            344,  # Descripción (muy ancha)
-        ],
+        colWidths=col_widths,
         repeatRows=1,
     )
 
