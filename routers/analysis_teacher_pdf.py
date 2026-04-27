@@ -42,7 +42,6 @@ def analysis_teacher_pdf(
     # --------------------------------------------------
     rows_raw = get_incidents(
         mode="all",
-        profesor=profesor,
         grupo=grupo,
         alumno=alumno,
         fecha_desde=fecha_desde,
@@ -56,9 +55,16 @@ def analysis_teacher_pdf(
         )
 
     # --------------------------------------------------
-    # 3. Preparar filas (NO incluimos profesor en filas)
+    # 3. Preparar filas 
     # --------------------------------------------------
-    rows = []
+    if profesor:
+        rows_raw = [
+            r for r in rows_raw
+            if r["teacher_name"] == profesor
+        ]
+    else:
+        rows_raw = []
+
 
     for r in rows_raw:
         rows.append({
