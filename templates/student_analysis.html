@@ -130,6 +130,11 @@
 
     <!-- Datos clave -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-sm mb-3">
+      
+      <div>
+        <strong>Alumno:</strong><br>
+        {{ r.alumno }}
+      </div>
 
       <div>
         <strong>Profesor:</strong><br>
@@ -144,11 +149,6 @@
       <div>
         <strong>Gravedad final:</strong><br>
         {{ r.grav_fin or "—" }}
-      </div>
-
-      <div>
-        <strong>Resultado:</strong><br>
-        {{ r.gravedad }}
       </div>
 
     </div>
