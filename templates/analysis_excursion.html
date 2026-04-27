@@ -9,18 +9,17 @@
 <!-- FORMULARIO -->
 <!-- ========================================================= -->
 <form method="get"
-      class="card grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-sm">
+      class="card grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-sm">
 
   <!-- Actividad -->
-  <div>
+  <div class="sm:col-span-2">
     <label class="font-semibold">Actividad</label>
-    <input
-      type="text"
+    <textarea
       name="actividad"
+      rows="3"
       placeholder="Ej.: Excursión al Museo de Ciencias"
-      value="{{ actividad or '' }}"
-      class="form-input w-full"
-    >
+      class="form-input w-full resize-none"
+    >{{ actividad or '' }}</textarea>
   </div>
 
   <!-- Fecha excursión -->
@@ -37,21 +36,23 @@
   <!-- Grupos -->
   <div>
     <label class="font-semibold">Grupos implicados</label>
-    <select
-      name="grupos"
-      multiple
-      size="6"
-      class="form-select w-full"
-    >
+    <div class="border rounded p-2 max-h-48 overflow-y-auto space-y-1 text-sm">
       {% for g in grupos_all %}
-        <option value="{{ g }}" {% if g in grupos_sel %}selected{% endif %}>
-          {{ g }}
-        </option>
+      <label class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="grupos"
+          value="{{ g }}"
+          {% if g in grupos_sel %}checked{% endif %}
+        >
+        {{ g }}
+      </label>
       {% endfor %}
-    </select>
+    </div>
   </div>
 
-  <div class="col-span-1 sm:col-span-3">
+  <!-- Botón -->
+  <div class="sm:col-span-4">
     <button class="btn-primary">
       Calcular
     </button>
@@ -89,7 +90,7 @@
   {% if sancionados %}
   <div>
     <a
-      href="/analysis/excursion/pdf?actividad={{ actividad }}&amp;fecha_excursion={{ fecha_excursion }}{% for g in grupos_sel %}&amp;grupos={{ g }}{% endfor %}"
+      href="/analysis/excursion/pdf?actividad={{ actividad }}&fecha_excursion={{ fecha_excursion }}{% for g in grupos_sel %}&grupos={{ g }}{% endfor %}"
       class="btn-primary whitespace-nowrap"
       title="Exportar alumnos no aptos"
     >
@@ -170,8 +171,6 @@
 <div class="card text-center text-gray-600">
   No hay alumnos amnistiables.
 </div>
-{% endif %}
-
 {% endif %}
 
 {% endblock %}
