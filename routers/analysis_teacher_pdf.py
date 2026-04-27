@@ -47,12 +47,6 @@ def analysis_teacher_pdf(
         fecha_hasta=fecha_hasta,
     )
 
-    if not rows_raw:
-        raise HTTPException(
-            status_code=404,
-            detail="No hay incidencias para los filtros seleccionados",
-        )
-
     # --------------------------------------------------
     # 3. Preparar filas
     # --------------------------------------------------
