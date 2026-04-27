@@ -120,11 +120,17 @@
 {% if rows %}
 
 <div class="card overflow-x-auto">
-  <table class="w-full text-sm">
     <thead class="bg-gray-50 border-b">
       <tr>
         <th class="px-4 py-2 text-left">#</th>
-        <th class="px-4 py-2 text-left">{{ columna }}</th>
+
+        {% if mode == "alumnos" %}
+          <th class="px-4 py-2 text-left">Alumno</th>
+          <th class="px-4 py-2 text-left">Grupo</th>
+        {% else %}
+          <th class="px-4 py-2 text-left">{{ columna }}</th>
+        {% endif %}
+
         <th class="px-4 py-2 text-center">Incidencias</th>
       </tr>
     </thead>
@@ -132,7 +138,14 @@
       {% for r in rows %}
       <tr class="border-b last:border-b-0">
         <td class="px-4 py-2">{{ loop.index }}</td>
-        <td class="px-4 py-2">{{ r.nombre }}</td>
+
+        {% if mode == "alumnos" %}
+          <td class="px-4 py-2">{{ r.nombre }}</td>
+          <td class="px-4 py-2">{{ r.grupo }}</td>
+        {% else %}
+          <td class="px-4 py-2">{{ r.nombre }}</td>
+        {% endif %}
+
         <td class="px-4 py-2 text-center font-semibold">
           {{ r.total }}
         </td>
