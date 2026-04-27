@@ -88,39 +88,74 @@
 <!-- ========================================================= -->
 <!-- HISTORIAL -->
 <!-- ========================================================= -->
-<h2 class="font-semibold mb-3">📋 Historial de incidencias</h2>
+<h2 class="font-semibold mb-4">
+  📋 Historial de incidencias
+  {% if alumno_sel %}
+    del alumno {{ alumno_sel }}
+  {% elif grupo_sel %}
+    de {{ grupo_sel }}
+  {% else %}
+    de alumnos
+  {% endif %}
+</h2>
 
-<div class="space-y-3">
+<div class="space-y-4">
 
   {% for r in rows %}
-  <details class="card">
-    <summary class="cursor-pointer font-semibold flex justify-between items-center">
-      <span>
-        {{ r.fecha }} · {{ r.grupo }} · {{ r.gravedad }}
-      </span>
-      <span class="text-sm">
-        {% if r.estado != "cerrado" %}
-          🟢 Abierta
-        {% else %}
-          ✅ Cerrada
-        {% endif %}
-      </span>
-    </summary>
+  <div class="card border-l-4
+              {% if r.estado != 'cerrado' %}
+                border-yellow-500
+              {% else %}
+                border-green-600
+              {% endif %}">
 
-    <div class="mt-3 text-sm space-y-1">
-      <div><strong>Profesor:</strong> {{ r.profesor }}</div>
-      <div><strong>Gravedad inicial:</strong> {{ r.grav_ini }}</div>
+    <!-- Cabecera -->
+    <div class="flex flex-wrap justify-between items-center mb-2 text-sm">
+      <div class="font-semibold">
+        📅 {{ r.fecha }} · 🏫 {{ r.grupo }}
+      </div>
+
       <div>
-        <strong>Gravedad final:</strong>
+        {% if r.estado != "cerrado" %}
+          <span class="text-yellow-600 font-semibold">🟢 Abierta</span>
+        {% else %}
+          <span class="text-green-700 font-semibold">✅ Cerrada</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Datos clave -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-sm mb-3">
+
+      <div>
+        <strong>Profesor:</strong><br>
+        {{ r.profesor }}
+      </div>
+
+      <div>
+        <strong>Gravedad inicial:</strong><br>
+        {{ r.grav_ini }}
+      </div>
+
+      <div>
+        <strong>Gravedad final:</strong><br>
         {{ r.grav_fin or "—" }}
       </div>
 
-      <div class="pt-2">
-        <strong>Descripción:</strong><br>
-        {{ r.descripcion }}
+      <div>
+        <strong>Resultado:</strong><br>
+        {{ r.gravedad }}
       </div>
+
     </div>
-  </details>
+
+    <!-- Descripción -->
+    <div class="text-sm text-gray-800">
+      <strong>Descripción:</strong><br>
+      {{ r.descripcion }}
+    </div>
+
+  </div>
   {% endfor %}
 
 </div>
