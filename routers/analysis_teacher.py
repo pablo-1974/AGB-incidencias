@@ -54,7 +54,10 @@ def analysis_teacher(
         fecha_hasta=fecha_hasta,
     )
     
-    if profesor:
+    # ⛔ Si no hay profesor seleccionado → NO mostrar incidencias
+    if not profesor:
+        rows_raw = []
+    else:
         rows_raw = [
             r for r in rows_raw
             if r["teacher_name"] == profesor
