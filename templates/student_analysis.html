@@ -64,23 +64,26 @@
 {% if rows %}
 
 <!-- ========================================================= -->
-<!-- KPIs -->
+<!-- KPIs · Visión general del periodo -->
 <!-- ========================================================= -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
 
   <div class="card text-center">
-    <div class="text-sm text-gray-500">Total incidencias</div>
-    <div class="text-3xl font-bold">{{ kpis.total }}</div>
+    <div class="text-sm text-gray-500">
+      Incidencias totales (periodo)
+    </div>
+    <div class="text-3xl font-bold">
+      {{ kpi_total_sistema }}
+    </div>
   </div>
 
   <div class="card text-center">
-    <div class="text-sm text-gray-500">Abiertas</div>
-    <div class="text-3xl font-bold text-yellow-600">{{ kpis.abiertas }}</div>
-  </div>
-
-  <div class="card text-center">
-    <div class="text-sm text-gray-500">Muy graves</div>
-    <div class="text-3xl font-bold text-red-600">{{ kpis.muy_graves }}</div>
+    <div class="text-sm text-gray-500">
+      {{ kpi_filtrado_label }}
+    </div>
+    <div class="text-3xl font-bold">
+      {{ kpi_filtrado }}
+    </div>
   </div>
 
 </div>
