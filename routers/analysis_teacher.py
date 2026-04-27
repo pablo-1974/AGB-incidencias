@@ -40,7 +40,7 @@ def analysis_teacher(
     # 2. Filtros disponibles
     # --------------------------------------------------
     profesores_raw = get_all_teachers()
-    profesores = [p["teacher_name"] for p in profesores_raw]
+    profesores = [p["name"] for p in profesores_raw]
     
     grupos = get_all_groups()
     alumnos = get_students_by_group(grupo) if grupo else []
