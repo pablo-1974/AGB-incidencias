@@ -1,90 +1,101 @@
 # routers/analysis_teacher_pdf.py
 
-from fastapi import APIRouter, Request, Depends
-from fastapi.responses import FileResponse
-from tempfile import NamedTemporaryFile
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import Response
+from datetime import date
 from pathlib import Path
 
-from db.incidents import get_incidents
 from auth import load_user_dep
+from db.incidents import get_incidents
 from utils.pdf_teacher_history import pdf_teacher_history
 
 router = APIRouter()
+
+INICIO_CURSO = "2025-09-01"
 
 
 @router.get("/analysis/teacher/pdf")
 def analysis_teacher_pdf(
     request: Request,
-    profesor: str,
+    profesor: str | None = None,
+    grupo: str | None = None,
+    alumno: str | None = None,
     from_: str | None = None,
     to: str | None = None,
     user=Depends(load_user_dep),
 ):
     """
-    PDF: Historial de incidencias por profesor.
+    PDF de historial de incidencias por profesor.
+
+    - Sin profesor → PDF general
+    - Con profesor → PDF del profesor
     """
 
-    # ---------------------------------
-    # 1. Cargar incidencias
-    # ---------------------------------
+    # --------------------------------------------------
+    # 1. Fechas por defecto
+    # --------------------------------------------------
+    fecha_desde = from_ or INICIO_CURSO
+    fecha_hasta = to or date.today().isoformat()
+
+    # --------------------------------------------------
+    # 2. Cargar incidencias
+    # --------------------------------------------------
     rows_raw = get_incidents(
         mode="all",
         profesor=profesor,
-        fecha_desde=from_,
-        fecha_hasta=to,
+        grupo=grupo,
+        alumno=alumno,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
     )
 
     if not rows_raw:
-        return FileResponse(
-            path=None,
-            media_type="text/plain",
+        raise HTTPException(
             status_code=404,
-            filename="sin_datos.txt",
+            detail="No hay incidencias para los filtros seleccionados",
         )
 
-    # ---------------------------------
-    # 2. Preparar datos PDF
-    # ---------------------------------
+    # --------------------------------------------------
+    # 3. Preparar filas (NO incluimos profesor en filas)
+    # --------------------------------------------------
     rows = []
 
     for r in rows_raw:
-        (
-            _id,
-            fecha,
-            hora,
-            grupo,
-            alumno,
-            descripcion,
-            grav_ini,
-            grav_fin,
-            estado,
-            _profesor,
-        ) = r
-
         rows.append({
-            "fecha": fecha,
-            "hora": hora or "",
-            "alumno": alumno,
-            "grupo": grupo,
-            "gravedad": grav_fin or grav_ini,
-            "descripcion": descripcion,
+            "fecha": r["fecha"],
+            "hora": r["franja"] or "",
+            "grupo": r["grupo"],
+            "alumno": r["alumno"],
+            "gravedad": r["gravedad_final"] or r["gravedad_inicial"],
+            "descripcion": r["descripcion"],
         })
 
-    # ---------------------------------
-    # 3. Generar PDF
-    # ---------------------------------
-    with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        pdf_teacher_history(
-            rows=rows,
-            profesor=profesor,
-            fecha_desde=from_,
-            fecha_hasta=to,
-            logo_path=Path("static/logo.png"),
-            output_path=tmp.name,
-        )
+    # --------------------------------------------------
+    # 4. Título del PDF
+    # --------------------------------------------------
+    if profesor:
+        titulo = f"Historial de incidencias del profesor {profesor}"
+    else:
+        titulo = "Historial de incidencias por profesor"
 
-        return FileResponse(
-            tmp.name,
-            filename=f"historial_profesor_{profesor.replace(' ', '_')}.pdf",
-            media_type="application/pdf",
-        )
+    # --------------------------------------------------
+    # 5. Generar PDF (devuelve BYTES)
+    # --------------------------------------------------
+    pdf_bytes = pdf_teacher_history(
+        rows=rows,
+        titulo=titulo,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        logo_path=Path("static/logo.png"),
+    )
+
+    # --------------------------------------------------
+    # 6. Respuesta correcta
+    # --------------------------------------------------
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": "attachment; filename=historial_profesor.pdf"
+        },
+    )
