@@ -36,6 +36,7 @@ def rankings_pdf(
     )
 
     counter = Counter()
+    alumno_grupo = {}
 
     # -------- Título y columna --------
     if mode == "alumnos":
@@ -61,6 +62,7 @@ def rankings_pdf(
             if grupo and r["grupo"] != grupo:
                 continue
             key = r["alumno"]
+            alumno_grupo[key] = r["grupo"]
         elif mode == "grupos":
             key = r["grupo"]
         else:
@@ -69,10 +71,20 @@ def rankings_pdf(
         if key:
             counter[key] += 1
 
-    rows = [
-        {"nombre": k, "total": v}
-        for k, v in counter.most_common()
-    ]
+    if mode == "alumnos":
+        rows = [
+            {
+                "nombre": alumno,
+                "grupo": alumno_grupo.get(alumno),
+                "total": total,
+            }
+            for alumno, total in counter.most_common()
+        ]
+    else:
+        rows = [
+            {"nombre": k, "total": v}
+            for k, v in counter.most_common()
+        ]
 
     if not rows:
         raise HTTPException(
