@@ -89,24 +89,38 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- HISTORIAL -->
+<!-- CABECERA HISTORIAL + BOTÓN PDF -->
 <!-- ========================================================= -->
-<h2 class="font-semibold mb-4">
-  📋 Historial de incidencias
-  {% if alumno_sel %}
-    del alumno {{ alumno_sel }}
-  {% elif grupo_sel %}
-    de {{ grupo_sel }}
-  {% else %}
-    de alumnos
-  {% endif %}
-</h2>
+<div class="flex flex-wrap justify-between items-start mb-4 gap-4">
 
-<p class="text-sm text-gray-500 mb-4">
-  Periodo del {{ fecha_desde }} al {{ fecha_hasta }}
-</p>
+  <div>
+    <h2 class="font-semibold">
+      📋 Historial de incidencias
+      {% if alumno_sel %}
+        del alumno {{ alumno_sel }}
+      {% elif grupo_sel %}
+        del grupo {{ grupo_sel }}
+      {% else %}
+        de alumnos
+      {% endif %}
+    </h2>
 
-<div class="space-y-4">
+    <p class="text-sm text-gray-500">
+      Periodo del {{ fecha_desde }} al {{ fecha_hasta }}
+    </p>
+  </div>
+
+  <div>
+    <a
+      href="/analysis/student/pdf?{% if grupo_sel %}grupo={{ grupo_sel }}&amp;{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&amp;{% endif %}from_={{ fecha_desde }}&amp;to={{ fecha_hasta }}"
+      class="btn-primary whitespace-nowrap"
+    >
+      📄 Descargar PDF
+    </a>
+  </div>
+
+</div>
+
 
   {% for r in rows %}
   <div class="card border-l-4
@@ -172,25 +186,6 @@
 
 </div>
 
-<!-- ========================================================= -->
-<!-- PDF -->
-<!-- ========================================================= -->
-<div class="mt-8">
-  <a
-    href="/analysis/student/pdf?{% if grupo_sel %}grupo={{ grupo_sel }}&{% endif %}{% if alumno_sel %}alumno={{ alumno_sel }}&{% endif %}from_={{ fecha_desde }}&to={{ fecha_hasta }}"
-    class="btn-primary inline-block"
-  >
-    📄 Descargar PDF (historial)
-  </a>
-</div>
-
-{% else %}
-
-<div class="card text-center text-gray-600">
-  No hay incidencias para los filtros seleccionados.
-</div>
-
-{% endif %}
 
 <!-- ========================================================= -->
 <!-- AUTO-SUBMIT -->
