@@ -9,7 +9,6 @@ from context import ctx
 
 from db.incidents import get_incidents
 from db.students import get_all_groups, get_students_by_group
-
 from utils.enums import GRAVEDAD_MUY_GRAVE
 
 router = APIRouter()
@@ -27,8 +26,7 @@ def analysis_student(
     user=Depends(load_user_dep),
 ):
     """
-    Historial de incidencias por alumno.
-    Filtros automáticos: grupo, alumno, fechas.
+    Historial de incidencias por alumno / grupo / global.
     """
 
     # --------------------------------------------------
@@ -44,7 +42,7 @@ def analysis_student(
     alumnos = get_students_by_group(grupo) if grupo else []
 
     # --------------------------------------------------
-    # 3. Cargar incidencias filtradas
+    # 3. Incidencias filtradas
     # --------------------------------------------------
     rows_raw = get_incidents(
         mode="all",
@@ -55,23 +53,35 @@ def analysis_student(
     )
 
     # --------------------------------------------------
-    # 4. Preparar filas y KPIs
+    # 4. Incidencias totales del sistema (mismo periodo)
+    # --------------------------------------------------
+    total_rows_raw = get_incidents(
+        mode="all",
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+    )
+
+    total_sistema = len(total_rows_raw)
+    total_filtrado = len(rows_raw)
+
+    if alumno:
+        kpi_filtrado_label = f"Incidencias del alumno {alumno}"
+    elif grupo:
+        kpi_filtrado_label = f"Incidencias del grupo {grupo}"
+    else:
+        kpi_filtrado_label = "Incidencias filtradas"
+
+    # --------------------------------------------------
+    # 5. Preparar filas y KPIs de detalle
     # --------------------------------------------------
     rows = []
     abiertas = 0
     muy_graves = 0
 
     for r in rows_raw:
-        fecha = r["fecha"]
-        hora = r["franja"]
-        grupo_row = r["grupo"]
-        descripcion = r["descripcion"]
         gravedad_ini = r["gravedad_inicial"]
         gravedad_fin = r["gravedad_final"]
         estado = r["estado"]
-        profesor = r["teacher_name"]
-
-        gravedad = gravedad_fin or gravedad_ini
 
         if estado != "cerrado":
             abiertas += 1
@@ -80,26 +90,25 @@ def analysis_student(
             muy_graves += 1
 
         rows.append({
-            "fecha": fecha,
-            "hora": hora,
-            "grupo": grupo_row,
+            "fecha": r["fecha"],
+            "hora": r["franja"],
+            "grupo": r["grupo"],
             "alumno": r["alumno"],
-            "profesor": profesor,
-            "descripcion": descripcion,
+            "profesor": r["teacher_name"],
+            "descripcion": r["descripcion"],
             "grav_ini": gravedad_ini,
             "grav_fin": gravedad_fin,
-            "gravedad": gravedad,
             "estado": estado,
         })
 
-    kpis = {
+    kpis_detalle = {
         "total": len(rows),
         "abiertas": abiertas,
         "muy_graves": muy_graves,
     }
 
     # --------------------------------------------------
-    # 5. Render
+    # 6. Render
     # --------------------------------------------------
     return request.app.state.templates.TemplateResponse(
         "student_analysis.html",
@@ -114,6 +123,9 @@ def analysis_student(
             fecha_desde=fecha_desde,
             fecha_hasta=fecha_hasta,
             rows=rows,
-            kpis=kpis,
+            kpis=kpis_detalle,
+            kpi_total_sistema=total_sistema,
+            kpi_filtrado=total_filtrado,
+            kpi_filtrado_label=kpi_filtrado_label,
         ),
     )
