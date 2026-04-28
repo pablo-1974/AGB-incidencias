@@ -8,12 +8,12 @@
     <!-- FILA SUPERIOR -->
     <div class="flex items-center justify-between">
 
-      <!-- IZQUIERDA -->
-      <a href="/" class="app-link font-semibold">
+      <!-- IZQUIERDA: INICIO -->
+      <a href="/admin/dashboard" class="font-semibold app-link">
         Inicio
       </a>
 
-      <!-- BOTÓN ☰ (solo móvil) -->
+      <!-- BOTÓN MÓVIL -->
       <button
         class="md:hidden text-2xl"
         onclick="document.getElementById('nav-mobile').classList.toggle('hidden')"
@@ -21,26 +21,37 @@
         ☰
       </button>
 
-      <!-- MENÚ DESKTOP -->
+      <!-- MENÚ CENTRAL DESKTOP -->
       <div class="hidden md:flex items-center gap-6 text-sm">
         {% include "navbar_links.html" %}
       </div>
 
-      <!-- SESIÓN DESKTOP -->
+      <!-- SESIÓN (DERECHA) DESKTOP -->
       <div class="hidden md:flex gap-4 text-sm">
-        <a href="/change-password" class="app-link">Cambiar contraseña</a>
-        <a href="/logout" class="app-link">Salir</a>
+        <a href="/change-password" class="app-link">
+          Cambiar contraseña
+        </a>
+        <a href="/logout" class="app-link">
+          Salir
+        </a>
       </div>
     </div>
 
     <!-- MENÚ MÓVIL -->
     <div id="nav-mobile" class="hidden md:hidden mt-4 space-y-3 text-sm">
+
+      <!-- enlaces principales -->
       {% include "navbar_links.html" %}
 
       <hr>
 
-      <a href="/change-password" class="block app-link">Cambiar contraseña</a>
-      <a href="/logout" class="block app-link">Salir</a>
+      <!-- sesión en móvil -->
+      <a href="/change-password" class="block app-link">
+        Cambiar contraseña
+      </a>
+      <a href="/logout" class="block app-link">
+        Salir
+      </a>
     </div>
 
   </div>
