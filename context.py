@@ -7,6 +7,7 @@ from datetime import datetime
 from config import settings
 
 from utils.enums import (
+    # Roles
     ROLE_ADMIN,
     ROLE_JEFE,
     ROLE_DIRECTOR,
@@ -14,14 +15,24 @@ from utils.enums import (
     ROLE_CONVIVENCIA,
     ROLE_ORIENTADOR,
     ROLE_PROFESOR,
+
+    # Permisos funcionales
+    PERM_ABRIR_INCIDENCIA,
+    PERM_LISTAR_INCIDENCIAS,
+    PERM_CERRAR_INCIDENCIA,
+    PERM_HISTORIAL_ALUMNO,
+    PERM_HISTORIAL_PROFESOR,
+    PERM_RANKING_ALUMNOS,
+    PERM_RANKING_GRUPOS,
+    PERM_RANKING_PROFESORES,
+    PERM_EXCURSION,
+    PERM_GESTION_ALUMNOS,
+    PERM_GESTION_USUARIOS,
+    PERM_BACKUP,
 )
-from utils.enums import (
-    PERM_ABRIR_INCIDENCIA, PERM_LISTAR_INCIDENCIAS, PERM_CERRAR_INCIDENCIA,
-    PERM_HISTORIAL_ALUMNO, PERM_HISTORIAL_PROFESOR,
-    PERM_RANKING_ALUMNOS, PERM_RANKING_GRUPOS, PERM_RANKING_PROFESORES,
-    PERM_EXCURSION, PERM_GESTION_ALUMNOS, PERM_GESTION_USUARIOS, PERM_BACKUP,
-)
+
 from utils.permissions import has_permission
+
 
 def ctx(request, user=None, **extra):
     """
@@ -30,6 +41,7 @@ def ctx(request, user=None, **extra):
     now = datetime.now()
 
     base = {
+        # Base
         "request": request,
         "user": user,
         "title": extra.get("title", settings.APP_NAME),
@@ -40,7 +52,7 @@ def ctx(request, user=None, **extra):
         "year": settings.APP_YEAR,
         "now_dt": now,
         "logo_url": "/static/logo.png",
-        
+
         # Layout
         "hide_chrome": extra.get("hide_chrome", False),
 
@@ -52,8 +64,22 @@ def ctx(request, user=None, **extra):
         "ROLE_CONVIVENCIA": ROLE_CONVIVENCIA,
         "ROLE_ORIENTADOR": ROLE_ORIENTADOR,
         "ROLE_PROFESOR": ROLE_PROFESOR,
-        
-        # ✅ Permisos funcionales
+
+        # ✅ PERMISOS FUNCIONALES DISPONIBLES EN JINJA
+        "PERM_ABRIR_INCIDENCIA": PERM_ABRIR_INCIDENCIA,
+        "PERM_LISTAR_INCIDENCIAS": PERM_LISTAR_INCIDENCIAS,
+        "PERM_CERRAR_INCIDENCIA": PERM_CERRAR_INCIDENCIA,
+        "PERM_HISTORIAL_ALUMNO": PERM_HISTORIAL_ALUMNO,
+        "PERM_HISTORIAL_PROFESOR": PERM_HISTORIAL_PROFESOR,
+        "PERM_RANKING_ALUMNOS": PERM_RANKING_ALUMNOS,
+        "PERM_RANKING_GRUPOS": PERM_RANKING_GRUPOS,
+        "PERM_RANKING_PROFESORES": PERM_RANKING_PROFESORES,
+        "PERM_EXCURSION": PERM_EXCURSION,
+        "PERM_GESTION_ALUMNOS": PERM_GESTION_ALUMNOS,
+        "PERM_GESTION_USUARIOS": PERM_GESTION_USUARIOS,
+        "PERM_BACKUP": PERM_BACKUP,
+
+        # ✅ Función de comprobación de permisos
         "has_permission": has_permission,
     }
 
