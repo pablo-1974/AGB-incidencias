@@ -15,6 +15,9 @@ from db.incidents import get_incidents
 from db.students import get_all_groups, get_students_by_group
 from db.users import get_all_teachers
 
+from utils.permissions import has_permission
+from utils.enums import PERM_LISTAR_INCIDENCIAS
+
 router = APIRouter()
 
 INICIO_CURSO = "2025-09-01"
@@ -25,6 +28,10 @@ def incidents_list(
     request: Request,
     user: dict = Depends(load_user_dep),
 ):
+    
+    if not has_permission(user, PERM_LISTAR_INCIDENCIAS):
+        raise HTTPException(status_code=403)
+    
     role = user["role"]
     qp = request.query_params
 
