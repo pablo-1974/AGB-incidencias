@@ -13,7 +13,10 @@ from fastapi.responses import HTMLResponse
 
 from auth import load_user_dep
 from context import ctx
-from db.incidents import count_open_incidents
+from db.incidents import (
+    count_open_incidents,
+    count_total_incidents,
+)
 
 router = APIRouter()
 
@@ -43,6 +46,8 @@ def admin_dashboard(
 
     # KPI PRINCIPAL
     open_incidences = count_open_incidents()
+    total_incidences = count_total_incidents()
+
 
     return request.app.state.templates.TemplateResponse(
         "admin/dashboard.html",
@@ -52,6 +57,7 @@ def admin_dashboard(
             title="Dashboard de administración",
             kpis={
                 "open_incidences": open_incidences,
+                "total_incidences": total_incidences,
             },
         ),
     )
