@@ -2,7 +2,7 @@
 
 from collections import Counter
 from datetime import date
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 
 from db.incidents import get_incidents
@@ -10,10 +10,16 @@ from context import ctx
 from auth import load_user_dep
 from db.students import get_all_groups
 
+from utils.permissions import has_permission
+from utils.enums import (
+    PERM_RANKING_ALUMNOS,
+    PERM_RANKING_GRUPOS,
+    PERM_RANKING_PROFESORES,
+)
+
 router = APIRouter()
 
 INICIO_CURSO = "2025-09-01"
-
 
 @router.get("/rankings", response_class=HTMLResponse)
 def rankings(
@@ -25,6 +31,18 @@ def rankings(
     to: str | None = None,
     user=Depends(load_user_dep),
 ):
+    
+    # ✅ CONTROL DE PERMISOS
+    if mode == "alumnos":
+        if not has_permission(user, PERM_RANKING_ALUMNOS):
+            raise HTTPException(status_code=403)
+    elif mode == "grupos":
+        if not has_permission(user, PERM_RANKING_GRUPOS):
+            raise HTTPException(status_code=403)
+    else:  # profesores
+        if not has_permission(user, PERM_RANKING_PROFESORES):
+            raise HTTPException(status_code=403)
+
     """
     Rankings de incidencias.
     """
