@@ -99,18 +99,25 @@
       <div class="font-semibold">🏆 Ranking profesores</div>
     </a>
 
-    {# === FILA 4 === #}
-    <a href="#" class="card pointer-events-none opacity-50">
-      <div class="font-semibold">🎓 Gestión alumnos</div>
-    </a>
-
-    <a href="/admin/users" class="card hover:bg-gray-50">
-      <div class="font-semibold">👥 Gestión usuarios</div>
-    </a>
-
-    <a href="#" class="card pointer-events-none opacity-50">
-      <div class="font-semibold">💾 Backup</div>
-    </a>
+    {% if has_permission(user, PERM_GESTION_ALUMNOS)
+       or has_permission(user, PERM_GESTION_USUARIOS)
+       or has_permission(user, PERM_BACKUP) %}
+   
+      {# === FILA 4 · ADMINISTRADOR === #}
+   
+      <a href="#" class="card pointer-events-none opacity-50">
+        <div class="font-semibold">🎓 Gestión alumnos</div>
+      </a>
+   
+      <a href="/admin/users" class="card hover:bg-gray-50">
+        <div class="font-semibold">👥 Gestión usuarios</div>
+      </a>
+   
+      <a href="#" class="card pointer-events-none opacity-50">
+        <div class="font-semibold">💾 Backup</div>
+      </a>
+   
+    {% endif %}
 
   </div>
 </div>
