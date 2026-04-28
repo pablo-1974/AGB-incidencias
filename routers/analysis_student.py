@@ -1,6 +1,6 @@
 # routers/analysis_student.py
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from datetime import date
 
@@ -10,6 +10,9 @@ from context import ctx
 from db.incidents import get_incidents
 from db.students import get_all_groups, get_students_by_group
 from utils.enums import GRAVEDAD_MUY_GRAVE
+
+from utils.permissions import has_permission
+from utils.enums import PERM_HISTORIAL_ALUMNO
 
 router = APIRouter()
 
@@ -25,6 +28,11 @@ def analysis_student(
     to: str | None = None,
     user=Depends(load_user_dep),
 ):
+    
+    # ✅ CONTROL DE PERMISOS (PASO 5)
+    if not has_permission(user, PERM_HISTORIAL_ALUMNO):
+        raise HTTPException(status_code=403)
+
     """
     Historial de incidencias por alumno / grupo / global.
     """
