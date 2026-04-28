@@ -13,23 +13,34 @@ Acceso exclusivo para el rol admin.
 Incluye salvaguardas para evitar dejar el sistema sin administradores.
 """
 
-from fastapi import APIRouter, Request, Form, HTTPException, UploadFile, File
+from fastapi import (
+    APIRouter,
+    Request,
+    Form,
+    HTTPException,
+    UploadFile,
+    File,
+    Depends,
+)
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from context import ctx
+import io
+import openpyxl
+
 from auth import load_user_dep
-from utils.enums import ROLES_TODOS
+from context import ctx
+from utils.permissions import has_permission
+from utils.enums import PERM_GESTION_USUARIOS, ROLES_TODOS
+
 from db.users import (
     get_all_users,
     get_user_by_id,
+    get_user_by_email,
     create_user_admin,
     update_user_admin,
     set_user_active,
     reset_user_password,
 )
-
-import io
-import openpyxl
 
 router = APIRouter()
 
@@ -57,8 +68,8 @@ def _count_active_admins() -> int:
             return cur.fetchone()[0]
 
 
-def _require_admin(user: dict):
-    if user["role"] != "admin":
+def _require_perm(user: dict):
+    if not has_permission(user, PERM_GESTION_USUARIOS):
         raise HTTPException(status_code=403)
 
 
@@ -69,12 +80,9 @@ def _require_admin(user: dict):
 @router.get("/admin/users", response_class=HTMLResponse)
 def admin_users(
     request: Request,
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
 ):
-    """
-    Pantalla principal de gestión de usuarios.
-    """
-    _require_admin(user)
+    _require_perm(user)
 
     users = get_all_users()
 
@@ -96,16 +104,12 @@ def admin_users(
 @router.post("/admin/users/create")
 def admin_users_create(
     request: Request,
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
     name: str = Form(...),
     email: str = Form(...),
     role: str = Form(...),
 ):
-    """
-    Crea un usuario nuevo sin contraseña.
-    El usuario deberá definirla en su primer acceso.
-    """
-    _require_admin(user)
+    _require_perm(user)
 
     if role not in ROLES_TODOS:
         return RedirectResponse("/admin/users?status=error", status_code=303)
@@ -121,22 +125,19 @@ def admin_users_create(
 
 
 # ----------------------------------------------------------------------
-# EDITAR USUARIO (NOMBRE / EMAIL / ROL)
+# EDITAR USUARIO
 # ----------------------------------------------------------------------
 
 @router.post("/admin/users/update/{user_id}")
 def admin_users_update(
     request: Request,
     user_id: int,
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
     name: str = Form(...),
     email: str = Form(...),
     role: str = Form(...),
 ):
-    """
-    Actualiza nombre, email y rol de un usuario.
-    """
-    _require_admin(user)
+    _require_perm(user)
 
     if role not in ROLES_TODOS:
         return RedirectResponse("/admin/users?status=error", status_code=303)
@@ -168,12 +169,9 @@ def admin_users_update(
 def admin_users_toggle(
     request: Request,
     user_id: int,
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
 ):
-    """
-    Activa o desactiva un usuario.
-    """
-    _require_admin(user)
+    _require_perm(user)
 
     target = get_user_by_id(user_id)
     if not target:
@@ -200,13 +198,9 @@ def admin_users_toggle(
 def admin_users_reset_password(
     request: Request,
     user_id: int,
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
 ):
-    """
-    Resetea la contraseña de un usuario.
-    Fuerza el flujo de primer login.
-    """
-    _require_admin(user)
+    _require_perm(user)
 
     target = get_user_by_id(user_id)
     if not target:
@@ -223,23 +217,10 @@ def admin_users_reset_password(
 
 @router.post("/admin/users/import")
 def admin_users_import(
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
     file: UploadFile = File(...),
 ):
-    """
-    Importa usuarios desde un archivo Excel (.xlsx).
-
-    Columnas requeridas:
-    - Nombre
-    - Email
-    - Rol
-
-    Comportamiento:
-    - Email nuevo → crear usuario (sin contraseña)
-    - Email existente → actualizar nombre y rol
-    - NO se eliminan usuarios
-    """
-    _require_admin(user)
+    _require_perm(user)
 
     if not file.filename.lower().endswith(".xlsx"):
         return RedirectResponse("/admin/users?status=error", status_code=303)
@@ -250,14 +231,11 @@ def admin_users_import(
     except Exception:
         return RedirectResponse("/admin/users?status=error", status_code=303)
 
-    # Validar cabecera
     headers = [cell.value for cell in ws[1]]
     expected = ["Nombre", "Email", "Rol"]
 
     if headers[:3] != expected:
         return RedirectResponse("/admin/users?status=error", status_code=303)
-
-    from db.users import get_user_by_email, create_user_admin, update_user_admin
 
     created = 0
     updated = 0
@@ -302,12 +280,9 @@ def admin_users_import(
 
 @router.get("/admin/users/export")
 def export_users(
-    user=load_user_dep,
+    user: dict = Depends(load_user_dep),
 ):
-    """
-    Exporta los usuarios a un archivo Excel (.xlsx).
-    """
-    _require_admin(user)
+    _require_perm(user)
 
     users = get_all_users()
 
@@ -339,12 +314,10 @@ def export_users(
     wb.save(stream)
     stream.seek(0)
 
-    headers = {
-        "Content-Disposition": "attachment; filename=usuarios.xlsx"
-    }
-
     return Response(
         stream.read(),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers=headers,
+        headers={
+            "Content-Disposition": "attachment; filename=usuarios.xlsx"
+        },
     )
