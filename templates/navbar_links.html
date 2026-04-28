@@ -1,26 +1,119 @@
 <!-- templates/navbar_links.html -->
 
+{# =========================================================
+   ENLACES DEL NAVBAR · COMPARTIDOS (desktop y móvil)
+   ========================================================= #}
+
 <!-- Incidencias -->
-{% if has_permission(user, PERM_LISTAR_INCIDENCIAS) %}
-<a href="/incidents/list" class="block app-link">📋 Incidencias</a>
-{% endif %}
+<div class="relative group">
+  <span class="app-link cursor-pointer select-none">Incidencias</span>
+  <div
+    class="absolute left-0 top-full hidden group-hover:block
+           bg-white border rounded shadow-lg min-w-[220px] z-50"
+  >
+    {% if has_permission(user, PERM_ABRIR_INCIDENCIA) %}
+      <a href="/incidents/create" class="block px-4 py-2 hover:bg-gray-100">
+        📝 Abrir incidencia
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_LISTAR_INCIDENCIAS) %}
+      <a href="/incidents/list" class="block px-4 py-2 hover:bg-gray-100">
+        📋 Listar incidencias
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_CERRAR_INCIDENCIA) %}
+      <a href="/incidents/close" class="block px-4 py-2 hover:bg-gray-100">
+        ✅ Cerrar incidencia
+      </a>
+    {% endif %}
+  </div>
+</div>
 
 <!-- Análisis -->
-{% if has_permission(user, PERM_HISTORIAL_ALUMNO) %}
-<a href="/analysis/student" class="block app-link">👤 Análisis</a>
-{% endif %}
+<div class="relative group">
+  <span class="app-link cursor-pointer select-none">Análisis</span>
+  <div
+    class="absolute left-0 top-full hidden group-hover:block
+           bg-white border rounded shadow-lg min-w-[220px] z-50"
+  >
+    {% if has_permission(user, PERM_HISTORIAL_ALUMNO) %}
+      <a href="/analysis/student" class="block px-4 py-2 hover:bg-gray-100">
+        👤 Historial alumno
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_HISTORIAL_PROFESOR) %}
+      <a href="/analysis/teacher" class="block px-4 py-2 hover:bg-gray-100">
+        👨‍🏫 Historial profesor
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_EXCURSION) %}
+      <a href="/analysis/excursion" class="block px-4 py-2 hover:bg-gray-100">
+        🚌 Filtrar excursión
+      </a>
+    {% endif %}
+  </div>
+</div>
 
 <!-- Rankings -->
-{% if has_permission(user, PERM_RANKING_ALUMNOS) %}
-<a href="/rankings?mode=alumnos" class="block app-link">🏆 Rankings</a>
+<div class="relative group">
+  <span class="app-link cursor-pointer select-none">Rankings</span>
+  <div
+    class="absolute left-0 top-full hidden group-hover:block
+           bg-white border rounded shadow-lg min-w-[220px] z-50"
+  >
+    {% if has_permission(user, PERM_RANKING_ALUMNOS) %}
+      <a href="/rankings?mode=alumnos" class="block px-4 py-2 hover:bg-gray-100">
+        🏆 Alumnos
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_RANKING_GRUPOS) %}
+      <a href="/rankings?mode=grupos" class="block px-4 py-2 hover:bg-gray-100">
+        🏆 Grupos
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_RANKING_PROFESORES) %}
+      <a href="/rankings?mode=profesores" class="block px-4 py-2 hover:bg-gray-100">
+        🏆 Profesores
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Gestión alumnos -->
+{% if has_permission(user, PERM_GESTION_ALUMNOS) %}
+<div class="relative group">
+  <span class="app-link cursor-pointer select-none">Gestión alumnos</span>
+  <div
+    class="absolute left-0 top-full hidden group-hover:block
+           bg-white border rounded shadow-lg min-w-[220px] z-50"
+  >
+    <span class="block px-4 py-2 text-gray-400">📋 Listar alumnos</span>
+  </div>
+</div>
 {% endif %}
 
 <!-- Gestión usuarios -->
 {% if has_permission(user, PERM_GESTION_USUARIOS) %}
-<a href="/admin/users" class="block app-link font-semibold">👥 Usuarios</a>
+<div class="relative group">
+  <span class="app-link cursor-pointer select-none">Gestión usuarios</span>
+  <div
+    class="absolute left-0 top-full hidden group-hover:block
+           bg-white border rounded shadow-lg min-w-[220px] z-50"
+  >
+    <a href="/admin/users" class="block px-4 py-2 hover:bg-gray-100">
+      👥 Listar usuarios
+    </a>
+  </div>
+</div>
 {% endif %}
 
 <!-- Backup -->
 {% if has_permission(user, PERM_BACKUP) %}
-<span class="block text-gray-400">🗄 Backup</span>
+<span class="app-link opacity-50 cursor-not-allowed">🗄 Backup</span>
 {% endif %}
