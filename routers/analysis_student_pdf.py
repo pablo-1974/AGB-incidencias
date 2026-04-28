@@ -9,6 +9,9 @@ from auth import load_user_dep
 from db.incidents import get_incidents
 from utils.pdf_student_history import pdf_student_history
 
+from utils.permissions import has_permission
+from utils.enums import PERM_HISTORIAL_ALUMNO
+
 router = APIRouter()
 
 
@@ -28,6 +31,10 @@ def analysis_student_pdf(
     - Con grupo    → PDF del grupo (con grupo y alumno)
     - Con alumno   → PDF del alumno (sin grupo ni alumno en columnas)
     """
+    
+    # ✅ CONTROL DE PERMISOS (PASO 5)
+    if not has_permission(user, PERM_HISTORIAL_ALUMNO):
+        raise HTTPException(status_code=403)
 
     # --------------------------------------------------
     # 1. Fechas por defecto
