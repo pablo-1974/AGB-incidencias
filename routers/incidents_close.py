@@ -14,18 +14,10 @@ from db.incidents import (
     close_incident,
 )
 from utils.enums import GRAVEDADES
+from utils.permissions import has_permission
+from utils.enums import PERM_CERRAR_INCIDENCIA
 
 router = APIRouter()
-
-
-# ------------------------------------------------------
-# PERMISOS
-# ------------------------------------------------------
-
-def _can_close(user: dict):
-    if user["role"] not in ("admin", "jefe"):
-        raise HTTPException(status_code=403)
-
 
 # ------------------------------------------------------
 # VISTA · COLA DE INCIDENCIAS ABIERTAS
@@ -36,7 +28,8 @@ def incidents_close_view(
     request: Request,
     user: dict = Depends(load_user_dep),
 ):
-    _can_close(user)
+    if not has_permission(user, PERM_CERRAR_INCIDENCIA):
+        raise HTTPException(status_code=403)
 
     incidents = get_open_incidents_for_closing()
 
@@ -63,7 +56,8 @@ def incidents_close_submit(
     user: dict = Depends(load_user_dep),
     gravedad_final: str = Form(...),
 ):
-    _can_close(user)
+    if not has_permission(user, PERM_CERRAR_INCIDENCIA):
+        raise HTTPException(status_code=403)
 
     # Validación defensiva
     if gravedad_final not in GRAVEDADES:
