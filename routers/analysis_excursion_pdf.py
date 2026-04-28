@@ -10,6 +10,9 @@ from auth import load_user_dep
 from db.incidents import get_excursion_eligibility
 from utils.pdf_excursion import pdf_no_aptos_excursion
 
+from utils.permissions import has_permission
+from utils.enums import PERM_EXCURSION
+
 router = APIRouter()
 
 
@@ -27,6 +30,10 @@ def analysis_excursion_pdf(
     - Requiere actividad, fecha_excursion y al menos un grupo
     - Solo genera PDF si hay sancionados
     """
+
+    # ✅ CONTROL DE PERMISOS (PASO 5)
+    if not has_permission(user, PERM_EXCURSION):
+        raise HTTPException(status_code=403)
 
     # --------------------------------------------------
     # 1. Validación básica
@@ -61,7 +68,7 @@ def analysis_excursion_pdf(
             detail="No hay alumnos no aptos para la excursión",
         )
 
-    # Ordenación final (coherente con la vista HTML)
+    # Ordenación final
     sancionados.sort(key=lambda x: (x["grupo"], x["alumno"]))
 
     # --------------------------------------------------
@@ -76,7 +83,6 @@ def analysis_excursion_pdf(
         logo_path=Path("static/logo.png"),
     )
 
-    # Nombre de archivo limpio
     fname = f"no_aptos_{actividad.replace(' ', '_')}_{fecha_excursion}.pdf"
 
     # --------------------------------------------------
