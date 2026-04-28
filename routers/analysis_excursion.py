@@ -1,6 +1,6 @@
 # routers/analysis_excursion.py
 
-from fastapi import APIRouter, Request, Depends, Query
+from fastapi import APIRouter, Request, Depends, Query, HTTPException
 from fastapi.responses import HTMLResponse
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -9,6 +9,9 @@ from auth import load_user_dep
 from context import ctx
 from db.students import get_all_groups
 from db.incidents import get_excursion_eligibility
+
+from utils.permissions import has_permission
+from utils.enums import PERM_EXCURSION
 
 router = APIRouter()
 
@@ -21,6 +24,9 @@ def analysis_excursion(
     grupos: list[str] | None = Query(None),
     user=Depends(load_user_dep),
 ):
+    if not has_permission(user, PERM_EXCURSION):
+        raise HTTPException(status_code=403)
+        
     grupos_all = get_all_groups()
 
     sancionados = []
