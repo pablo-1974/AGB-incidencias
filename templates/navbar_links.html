@@ -1,0 +1,26 @@
+<!-- templates/navbar_links.html -->
+
+<!-- Incidencias -->
+{% if has_permission(user, PERM_LISTAR_INCIDENCIAS) %}
+<a href="/incidents/list" class="block app-link">📋 Incidencias</a>
+{% endif %}
+
+<!-- Análisis -->
+{% if has_permission(user, PERM_HISTORIAL_ALUMNO) %}
+<a href="/analysis/student" class="block app-link">👤 Análisis</a>
+{% endif %}
+
+<!-- Rankings -->
+{% if has_permission(user, PERM_RANKING_ALUMNOS) %}
+<a href="/rankings?mode=alumnos" class="block app-link">🏆 Rankings</a>
+{% endif %}
+
+<!-- Gestión usuarios -->
+{% if has_permission(user, PERM_GESTION_USUARIOS) %}
+<a href="/admin/users" class="block app-link font-semibold">👥 Usuarios</a>
+{% endif %}
+
+<!-- Backup -->
+{% if has_permission(user, PERM_BACKUP) %}
+<span class="block text-gray-400">🗄 Backup</span>
+{% endif %}
