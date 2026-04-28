@@ -1,6 +1,6 @@
 # routers/analysis_teacher.py
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from datetime import date
 
@@ -10,6 +10,9 @@ from context import ctx
 from db.incidents import get_incidents
 from db.users import get_all_teachers
 from db.students import get_all_groups, get_students_by_group
+
+from utils.permissions import has_permission
+from utils.enums import PERM_HISTORIAL_PROFESOR
 
 router = APIRouter()
 
@@ -29,6 +32,10 @@ def analysis_teacher(
     """
     Historial de incidencias por profesor / grupo / alumno.
     """
+    
+    # ✅ CONTROL DE PERMISOS (PASO 5)
+    if not has_permission(user, PERM_HISTORIAL_PROFESOR):
+        raise HTTPException(status_code=403)
 
     # --------------------------------------------------
     # 1. Fechas por defecto
