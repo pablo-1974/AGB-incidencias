@@ -5,29 +5,29 @@
 <nav class="bg-gray-100 border-b">
   <div class="max-w-7xl mx-auto px-4 py-2">
 
-    <!-- FILA SUPERIOR -->
-    <div class="flex items-center justify-between">
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="flex items-center">
 
-      <!-- IZQUIERDA: INICIO -->
-      <a href="/admin/dashboard" class="font-semibold app-link">
-        Inicio
-      </a>
+      <!-- BLOQUE IZQUIERDO: INICIO + MENÚ -->
+      <div class="flex items-center gap-6 flex-wrap">
 
-      <!-- BOTÓN MÓVIL -->
-      <button
-        class="md:hidden text-2xl"
-        onclick="document.getElementById('nav-mobile').classList.toggle('hidden')"
-      >
-        ☰
-      </button>
+        <!-- Inicio -->
+        <a href="/admin/dashboard" class="app-link font-semibold">
+          Inicio
+        </a>
 
-      <!-- MENÚ CENTRAL DESKTOP -->
-      <div class="hidden md:flex items-center gap-6 text-sm">
-        {% include "navbar_links.html" %}
+        <!-- MENÚ DESKTOP -->
+        <div class="hidden md:flex items-center gap-6 text-sm">
+          {% include "navbar_links.html" %}
+        </div>
+
       </div>
 
-      <!-- SESIÓN (DERECHA) DESKTOP -->
-      <div class="hidden md:flex gap-4 text-sm">
+      <!-- ESPACIADOR -->
+      <div class="flex-1"></div>
+
+      <!-- BLOQUE DERECHO: SESIÓN -->
+      <div class="hidden md:flex items-center gap-4 text-sm">
         <a href="/change-password" class="app-link">
           Cambiar contraseña
         </a>
@@ -35,17 +35,23 @@
           Salir
         </a>
       </div>
+
+      <!-- BOTÓN MÓVIL -->
+      <button
+        class="md:hidden ml-auto text-2xl"
+        onclick="document.getElementById('nav-mobile').classList.toggle('hidden')"
+      >
+        ☰
+      </button>
+
     </div>
 
     <!-- MENÚ MÓVIL -->
     <div id="nav-mobile" class="hidden md:hidden mt-4 space-y-3 text-sm">
-
-      <!-- enlaces principales -->
       {% include "navbar_links.html" %}
 
       <hr>
 
-      <!-- sesión en móvil -->
       <a href="/change-password" class="block app-link">
         Cambiar contraseña
       </a>
