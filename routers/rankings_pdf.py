@@ -10,6 +10,12 @@ from fastapi.responses import Response
 from auth import load_user_dep
 from db.incidents import get_incidents
 from utils.pdf_rankings import pdf_rankings
+from utils.permissions import has_permission
+from utils.enums import (
+    PERM_RANKING_ALUMNOS,
+    PERM_RANKING_GRUPOS,
+    PERM_RANKING_PROFESORES,
+)
 
 router = APIRouter()
 
@@ -26,6 +32,17 @@ def rankings_pdf(
     to: str | None = None,
     user=Depends(load_user_dep),
 ):
+    # ✅ CONTROL DE PERMISOS (IGUAL QUE EN rankings.py)
+    if mode == "alumnos":
+        if not has_permission(user, PERM_RANKING_ALUMNOS):
+            raise HTTPException(status_code=403)
+    elif mode == "grupos":
+        if not has_permission(user, PERM_RANKING_GRUPOS):
+            raise HTTPException(status_code=403)
+    else:  # profesores
+        if not has_permission(user, PERM_RANKING_PROFESORES):
+            raise HTTPException(status_code=403)
+            
     fecha_desde = from_ or INICIO_CURSO
     fecha_hasta = to or date.today().isoformat()
 
