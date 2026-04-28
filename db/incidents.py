@@ -579,3 +579,18 @@ def get_open_incidents_for_closing():
                 ),
             )
             return cur.fetchall()
+
+def count_total_incidents() -> int:
+    """
+    Número total de incidencias del sistema.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM incidents
+                """
+            )
+            row = cur.fetchone()
+            return next(iter(row.values()))
