@@ -85,35 +85,43 @@
   </div>
 </div>
 
-<!-- Gestión alumnos -->
-{% if has_permission(user, PERM_GESTION_ALUMNOS) %}
+{% if has_permission(user, PERM_GESTION_ALUMNOS)
+   or has_permission(user, PERM_GESTION_USUARIOS)
+   or has_permission(user, PERM_BACKUP) %}
+
 <div class="relative group">
-  <span class="app-link cursor-pointer select-none">Gestión alumnos</span>
+  <span class="app-link cursor-pointer select-none">
+    ⚙️ Administrador
+  </span>
+
   <div
     class="absolute left-0 top-full hidden group-hover:block
            bg-white border rounded shadow-lg min-w-[220px] z-50"
   >
-    <span class="block px-4 py-2 text-gray-400">📋 Listar alumnos</span>
+
+    {% if has_permission(user, PERM_GESTION_ALUMNOS) %}
+      <a href="#"
+         class="block px-4 py-2 hover:bg-gray-100">
+        🎓 Gestión alumnos
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_GESTION_USUARIOS) %}
+      <a href="/admin/users"
+         class="block px-4 py-2 hover:bg-gray-100">
+        👥 Gestión usuarios
+      </a>
+    {% endif %}
+
+    {% if has_permission(user, PERM_BACKUP) %}
+      <a href="#"
+         class="block px-4 py-2 hover:bg-gray-100">
+        💾 Backup
+      </a>
+    {% endif %}
+
   </div>
 </div>
+
 {% endif %}
 
-<!-- Gestión usuarios -->
-{% if has_permission(user, PERM_GESTION_USUARIOS) %}
-<div class="relative group">
-  <span class="app-link cursor-pointer select-none">Gestión usuarios</span>
-  <div
-    class="absolute left-0 top-full hidden group-hover:block
-           bg-white border rounded shadow-lg min-w-[220px] z-50"
-  >
-    <a href="/admin/users" class="block px-4 py-2 hover:bg-gray-100">
-      👥 Listar usuarios
-    </a>
-  </div>
-</div>
-{% endif %}
-
-<!-- Backup -->
-{% if has_permission(user, PERM_BACKUP) %}
-<span class="app-link opacity-50 cursor-not-allowed">🗄 Backup</span>
-{% endif %}
