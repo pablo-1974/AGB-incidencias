@@ -16,6 +16,8 @@ from datetime import date, datetime
 from db.students import get_all_groups, get_students_by_group
 from db.incidents import create_incident
 from utils.enums import GRAVEDADES, FRANJAS_HORARIAS, FRANJA_ORDEN
+from utils.permissions import has_permission
+from utils.enums import PERM_ABRIR_INCIDENCIA
 
 router = APIRouter()
 
@@ -29,6 +31,9 @@ def incident_create_form(
     request: Request,
     user: dict = Depends(load_user_dep),
 ):
+    if not has_permission(user, PERM_ABRIR_INCIDENCIA):
+        raise HTTPException(status_code=403)
+        
     grupos = get_all_groups()
 
     return request.app.state.templates.TemplateResponse(
@@ -60,6 +65,9 @@ def incident_create_submit(
     gravedad: str = Form(...),
     descripcion: str = Form(...),
 ):
+    if not has_permission(user, PERM_ABRIR_INCIDENCIA):
+        raise HTTPException(status_code=403)
+        
     # ---------------------------
     # Validación de grupo
     # ---------------------------
