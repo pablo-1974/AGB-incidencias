@@ -9,6 +9,9 @@ from auth import load_user_dep
 from db.incidents import get_incidents
 from utils.pdf_teacher_history import pdf_teacher_history
 
+from utils.permissions import has_permission
+from utils.enums import PERM_HISTORIAL_PROFESOR
+
 router = APIRouter()
 
 INICIO_CURSO = "2025-09-01"
@@ -29,6 +32,10 @@ def analysis_teacher_pdf(
     
     - Requiere profesor seleccionado
     """
+    
+    # ✅ CONTROL DE PERMISOS (PASO 5)
+    if not has_permission(user, PERM_HISTORIAL_PROFESOR):
+        raise HTTPException(status_code=403)
 
     # --------------------------------------------------
     # 1. Fechas por defecto
