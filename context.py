@@ -15,6 +15,7 @@ from utils.enums import (
     ROLE_ORIENTADOR,
     ROLE_PROFESOR,
 )
+from utils.permissions import has_permission
 
 def ctx(request, user=None, **extra):
     """
@@ -45,6 +46,9 @@ def ctx(request, user=None, **extra):
         "ROLE_CONVIVENCIA": ROLE_CONVIVENCIA,
         "ROLE_ORIENTADOR": ROLE_ORIENTADOR,
         "ROLE_PROFESOR": ROLE_PROFESOR,
+        
+        # ✅ Permisos funcionales
+        "has_permission": has_permission,
     }
 
     base.update(extra)
