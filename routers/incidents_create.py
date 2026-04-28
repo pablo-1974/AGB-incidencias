@@ -6,7 +6,7 @@ Formulario genérico para registrar una nueva incidencia.
 Reutiliza la lógica de la aplicación anterior (sin Streamlit).
 """
 
-from fastapi import APIRouter, Request, Form, Depends
+from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from auth import load_user_dep
@@ -124,7 +124,7 @@ def incident_create_submit(
         gravedad=gravedad,
     )
 
-    return RedirectResponse("/admin/dashboard", status_code=303)
+    return RedirectResponse("/", status_code=303)
 
 # ----------------------------------------------------------------------
 # GRUPO (GET)
