@@ -16,7 +16,7 @@ from db.students import get_all_groups, get_students_by_group
 from db.users import get_all_teachers
 
 from utils.permissions import has_permission
-from utils.enums import PERM_LISTAR_INCIDENCIAS
+from utils.enums import PERM_LISTAR_INCIDENCIAS, PERM_EDITAR_INCIDENCIA
 
 router = APIRouter()
 
