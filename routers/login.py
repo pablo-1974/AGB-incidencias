@@ -11,7 +11,7 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from context import ctx
-from db.users import get_user_by_email
+from db.users import get_user_by_email, update_last_login
 from security.passwords import verify_password
 
 router = APIRouter()
@@ -104,6 +104,8 @@ def login_submit(
     request.session.clear()
     request.session["user_id"] = user["id"]
 
+    update_last_login(user_id=user["id"])
+    
     # ✅ REDIRECCIÓN SEGÚN ROL
     if user["role"] == "admin":
         return RedirectResponse(url="/admin/dashboard", status_code=303)
