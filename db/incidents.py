@@ -594,3 +594,81 @@ def count_total_incidents() -> int:
             )
             row = cur.fetchone()
             return next(iter(row.values()))
+
+def get_incident_by_id(incident_id: int):
+    """
+    Devuelve una incidencia concreta por ID.
+    Usado para edición administrativa.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    id,
+                    fecha,
+                    hora,
+                    grupo,
+                    alumno,
+                    descripcion,
+                    gravedad_inicial,
+                    gravedad_final,
+                    estado,
+                    teacher_id,
+                    teacher_name
+                FROM incidents
+                WHERE id = %s
+                """,
+                (incident_id,),
+            )
+            return cur.fetchone()
+
+def update_incident(
+    *,
+    incident_id: int,
+    grupo: str,
+    alumno: str,
+    descripcion: str,
+    gravedad_inicial: str,
+    estado: str,
+):
+    """
+    Actualiza los campos principales de una incidencia.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE incidents
+                SET
+                    grupo = %s,
+                    alumno = %s,
+                    descripcion = %s,
+                    gravedad_inicial = %s,
+                    estado = %s
+                WHERE id = %s
+                """,
+                (
+                    grupo,
+                    alumno,
+                    descripcion,
+                    gravedad_inicial,
+                    estado,
+                    incident_id,
+                ),
+            )
+
+def delete_incident(incident_id: int):
+    """
+    Elimina definitivamente una incidencia.
+    Uso exclusivo administrativo.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM incidents
+                WHERE id = %s
+                """,
+                (incident_id,),
+            )
