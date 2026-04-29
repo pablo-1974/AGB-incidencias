@@ -31,6 +31,7 @@ from routers.admin_dashboard import router as admin_dashboard_router
 from routers.incidents_create import router as incidents_create_router
 from routers.incidents_list import router as incidents_list_router
 from routers.incidents_close import router as incidents_close_router
+from routers.incidents_edit import router as incidents_edit_router
 from routers.change_password import router as change_password_router
 
 # Auth / login
@@ -89,6 +90,7 @@ app.include_router(admin_dashboard_router)
 app.include_router(incidents_create_router)
 app.include_router(incidents_list_router)
 app.include_router(incidents_close_router)
+app.include_router(incidents_edit_router)
 app.include_router(change_password_router)
 
 # ------------------------------------------------------------
