@@ -108,14 +108,19 @@
           class="input"
         >
 
-        <button type="submit" class="btn-primary">
+        <button type="submit"
+                class="btn-primary"
+                onclick="return confirm('¿Seguro que quieres importar este archivo y modificar usuarios?')">
           Importar
         </button>
-
-        <p class="text-xs text-gray-500">
-          Columnas requeridas:
-          <strong>Nombre</strong>, <strong>Email</strong>, <strong>Rol</strong>.
-        </p>
+      
+       <p class="text-xs text-gray-500">
+         Columnas requeridas:
+         <strong>Nombre</strong>, <strong>Email</strong>, <strong>Rol</strong>.
+         <br>
+         Valores admitidos para <strong>Rol</strong>:
+         profesor, orientador, convivencia, secretario, director, jefe, admin.
+       </p>
       </form>
     </details>
 
