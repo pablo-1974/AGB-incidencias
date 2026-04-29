@@ -18,6 +18,9 @@ from db.incidents import (
     count_total_incidents,
 )
 
+from utils.permissions import has_permission
+from utils.enums import PERM_VER_DASHBOARD_ADMIN
+
 router = APIRouter()
 
 
@@ -25,8 +28,8 @@ router = APIRouter()
 # UTILIDADES
 # ----------------------------------------------------------------------
 
-def _require_admin(user: dict):
-    if user["role"] != "admin":
+def _require_admin_or_jefe(user: dict):
+    if user["role"] not in ("admin", "jefe"):
         raise HTTPException(status_code=403)
 
 
