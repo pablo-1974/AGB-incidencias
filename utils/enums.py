@@ -82,15 +82,15 @@ PERM_DASHBOARD_JEFATURA = "dashboard_jefatura"
 PERM_ABRIR_INCIDENCIA = "abrir_incidencia"
 PERM_LISTAR_INCIDENCIAS = "listar_incidencias"
 PERM_CERRAR_INCIDENCIA = "cerrar_incidencia"
+PERM_EDITAR_INCIDENCIA = "editar_incidencia"
 
 PERM_HISTORIAL_ALUMNO = "historial_alumno"
 PERM_HISTORIAL_PROFESOR = "historial_profesor"
+PERM_EXCURSION = "excursion"
 
 PERM_RANKING_ALUMNOS = "ranking_alumnos"
 PERM_RANKING_GRUPOS = "ranking_grupos"
 PERM_RANKING_PROFESORES = "ranking_profesores"
-
-PERM_EXCURSION = "excursion"
 
 PERM_GESTION_ALUMNOS = "gestion_alumnos"
 PERM_GESTION_USUARIOS = "gestion_usuarios"
@@ -113,6 +113,11 @@ PERMISSIONS_BY_ROLE = {
     PERM_LISTAR_INCIDENCIAS: ROLES_TODOS,
 
     PERM_CERRAR_INCIDENCIA: {
+        ROLE_ADMIN,
+        ROLE_JEFE,
+    },
+
+    PERM_EDITAR_INCIDENCIA: {
         ROLE_ADMIN,
         ROLE_JEFE,
     },
