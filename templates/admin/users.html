@@ -56,11 +56,11 @@
     <div>
       <label class="label">Rol</label>
       <select name="role" class="input">
-        <option value="profesor">Profesor</option>
-        <option value="convivencia">Convivencia</option>
-        <option value="director">Director</option>
-        <option value="jefe">Jefe</option>
-        <option value="admin">Admin</option>
+        {% for r in roles %}
+          <option value="{{ r }}">
+            {{ r | capitalize }}
+          </option>
+        {% endfor %}
       </select>
     </div>
 
@@ -177,9 +177,9 @@
                 <input type="text" name="name" value="{{ u.name }}" class="input" required>
                 <input type="email" name="email" value="{{ u.email }}" class="input" required>
                 <select name="role" class="input">
-                  {% for r in ['profesor','convivencia','director','jefe','admin'] %}
+                  {% for r in roles %}
                     <option value="{{ r }}" {% if r == u.role %}selected{% endif %}>
-                      {{ r }}
+                      {{ r | capitalize }}
                     </option>
                   {% endfor %}
                 </select>
