@@ -93,6 +93,7 @@ def admin_users(
             user=user,
             title="Gestión de usuarios",
             users=users,
+            roles=sorted(ROLES_TODOS),
         ),
     )
 
