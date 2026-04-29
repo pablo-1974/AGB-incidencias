@@ -170,9 +170,9 @@
         </td>
         <td class="nowrap space-x-1">
 
-          <details class="inline-block">
+          <details class="inline-block relative">
             <summary class="btn-muted cursor-pointer">✏️</summary>
-            <div class="absolute z-10 mt-2 p-4 card w-72">
+            <div class="absolute right-0 z-10 mt-2 p-4 card w-72">
               <form method="post" action="/admin/users/update/{{ u.id }}" class="space-y-2">
                 <input type="text" name="name" value="{{ u.name }}" class="input" required>
                 <input type="email" name="email" value="{{ u.email }}" class="input" required>
