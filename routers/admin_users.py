@@ -306,7 +306,7 @@ def export_users(
             u["email"],
             u["role"],
             "Sí" if u["active"] == 1 else "No",
-            "Sí" if u["must_change_password"] or not u["password_hash"] else "No",
+            "Sí" if u["must_change_password"] else "No",
             u["last_login_at"].strftime("%d/%m/%Y %H:%M")
                 if u["last_login_at"] else "",
         ])
