@@ -13,6 +13,7 @@ from utils.enums import PERM_GESTION_ALUMNOS
 
 from db.students import (
     get_all_students,
+    get_all_groups,
     create_student_if_not_exists,
 )
 
@@ -36,10 +37,19 @@ def _require_perm(user: dict):
 def admin_students(
     request: Request,
     user: dict = Depends(load_user_dep),
+    grupo: str | None = None,
 ):
     _require_perm(user)
 
-    students = get_all_students()
+    groups = get_all_groups()
+
+    if grupo:
+        students = [
+            s for s in get_all_students()
+            if s["grupo"] == grupo
+        ]
+    else:
+        students = get_all_students()
 
     return request.app.state.templates.TemplateResponse(
         "admin/students.html",
@@ -48,6 +58,8 @@ def admin_students(
             user=user,
             title="Gestión de alumnos",
             students=students,
+            groups=groups,
+            selected_group=grupo,
         ),
     )
 
