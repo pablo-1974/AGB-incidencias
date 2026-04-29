@@ -124,7 +124,7 @@ def incident_create_submit(
         gravedad=gravedad,
     )
 
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/dashboard", status_code=303)
 
 # ----------------------------------------------------------------------
 # GRUPO (GET)
