@@ -118,8 +118,10 @@
         <td>{{ i.gravedad_inicial }}</td>
         <td>{{ i.gravedad_final or "—" }}</td>
         <td>{{ i.teacher_name }}</td>
-        <td class="max-w-lg line-clamp-5 whitespace-normal">
-           {{ i.descripcion }}
+        <td class="w-[420px]">
+          <div class="max-h-28 overflow-y-auto whitespace-normal text-sm">
+            {{ i.descripcion }}
+          </div>
         </td>
         <td class="nowrap">
            {% if has_permission(user, PERM_EDITAR_INCIDENCIA) %}
