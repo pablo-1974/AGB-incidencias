@@ -8,7 +8,19 @@
 
 {% block dashboard_content %}
 
-<h1 class="text-xl font-semibold mb-6">🧑‍💼 Dashboard de administración</h1>
+{# =========================================================
+   MENSAJE BIENVENIDA
+   ========================================================= #}
+
+{% if has_permission(user, PERM_GESTION_USUARIOS) %}
+  <h1 class="text-xl font-semibold mb-6">
+    🧑‍💼 Dashboard de administración
+  </h1>
+{% else %}
+  <h1 class="text-xl font-semibold mb-6">
+    📋 Dashboard de jefatura
+  </h1>
+{% endif %}
 
 <p class="text-sm text-gray-600 mb-8">
   Bienvenido, <strong>{{ user.name }}</strong>.
