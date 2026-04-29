@@ -118,7 +118,9 @@
         <td>{{ i.gravedad_inicial }}</td>
         <td>{{ i.gravedad_final or "—" }}</td>
         <td>{{ i.teacher_name }}</td>
-        <td class="max-w-lg truncate">{{ i.descripcion }}</td>
+        <td class="max-w-lg line-clamp-5 whitespace-normal">
+           {{ i.descripcion }}
+        </td>
         <td class="nowrap">
            {% if has_permission(user, PERM_EDITAR_INCIDENCIA) %}
              <a href="/incidents/edit/{{ i.id }}"
