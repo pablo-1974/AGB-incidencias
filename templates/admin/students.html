@@ -73,7 +73,7 @@
 
     <div>
       <label class="label">Grupo</label>
-      <select name="grupo" class="input">
+      <select name="grupo" class="input auto-submit">
         <option value="">— Todos los grupos —</option>
         {% for g in groups %}
           <option value="{{ g }}"
@@ -84,10 +84,6 @@
       </select>
     </div>
 
-    <button type="submit" class="btn-muted">
-      Filtrar
-    </button>
-
   </form>
 </div>
 
@@ -97,6 +93,15 @@
 
 <div class="card">
   <h2 class="font-semibold mb-4">📋 Alumnos registrados</h2>
+
+  <p class="text-sm text-gray-500 mb-3">
+    Mostrando {{ students | length }}
+    {% if selected_group %}
+      alumnos del grupo <strong>{{ selected_group }}</strong>
+    {% else %}
+      alumnos
+    {% endif %}
+  </p>
 
   {% if students %}
   <table class="table">
@@ -121,5 +126,13 @@
     </p>
   {% endif %}
 </div>
+
+<script>
+  document.querySelectorAll(".auto-submit").forEach(el => {
+    el.addEventListener("change", () => {
+      el.form.submit();
+    });
+  });
+</script>
 
 {% endblock %}
