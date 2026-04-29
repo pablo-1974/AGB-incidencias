@@ -278,6 +278,22 @@ def reset_user_password(*, user_id: int):
         conn.commit()
 
 
+def update_last_login(*, user_id: int):
+    """
+    Actualiza la fecha del último login del usuario.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET last_login_at = now()
+                WHERE id = %s
+                """,
+                (user_id,),
+            )
+        conn.commit()
+        
 # ----------------------------------------------------------------------
 # LISTADOS
 # ----------------------------------------------------------------------
