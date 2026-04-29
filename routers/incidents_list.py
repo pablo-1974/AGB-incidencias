@@ -99,6 +99,7 @@ def incidents_list(
             user=user,
             title="Listado de incidencias",
             incidents=incidents,
+            PERM_EDITAR_INCIDENCIA=PERM_EDITAR_INCIDENCIA,
             filters={
                 "fecha_desde": fecha_desde,
                 "fecha_hasta": fecha_hasta,
