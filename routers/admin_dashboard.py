@@ -1,11 +1,8 @@
 # routers/admin_dashboard.py
 """
-Dashboard principal del administrador.
+Dashboard principal del sistema (Administración / Jefatura).
 
-Muestra:
-- Aviso principal del sistema: incidencias abiertas
-
-Acceso exclusivo para el rol admin.
+Acceso controlado por permiso PERM_DASHBOARD_JEFATURA.
 """
 
 from fastapi import APIRouter, Request, HTTPException, Depends
@@ -19,7 +16,7 @@ from db.incidents import (
 )
 
 from utils.permissions import has_permission
-from utils.enums import PERM_VER_DASHBOARD_ADMIN
+from utils.enums import PERM_DASHBOARD_JEFATURA
 
 router = APIRouter()
 
