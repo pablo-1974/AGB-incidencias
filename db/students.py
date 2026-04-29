@@ -1,7 +1,12 @@
 # db/students.py
+
 from db.connection import get_db
 from utils.text import normalize_for_sort
 
+
+# ======================================================
+# CONSULTAS (LECTURA)
+# ======================================================
 
 def get_all_groups() -> list[str]:
     """
@@ -23,24 +28,31 @@ def get_all_groups() -> list[str]:
     return grupos
 
 
-def get_all_students() -> list[str]:
+def get_all_students() -> list[dict]:
     """
-    Devuelve la lista completa de alumnos,
-    ordenada alfabéticamente según criterio español.
+    Devuelve la lista completa de alumnos con su grupo,
+    ordenada por grupo y alumno según criterio español.
     """
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT alumno
+                SELECT grupo, alumno
                 FROM students
-                WHERE alumno IS NOT NULL
                 """
             )
-            alumnos = [r["alumno"] for r in cur.fetchall()]
+            rows = cur.fetchall()
 
-    alumnos.sort(key=normalize_for_sort)
-    return alumnos
+    rows.sort(key=lambda r: (normalize_for_sort(r["grupo"]),
+                              normalize_for_sort(r["alumno"])))
+
+    return [
+        {
+            "grupo": r["grupo"],
+            "alumno": r["alumno"],
+        }
+        for r in rows
+    ]
 
 
 def get_students_by_group(grupo: str) -> list[str]:
@@ -55,7 +67,6 @@ def get_students_by_group(grupo: str) -> list[str]:
                 SELECT alumno
                 FROM students
                 WHERE grupo = %s
-                  AND alumno IS NOT NULL
                 """,
                 (grupo,),
             )
@@ -69,73 +80,78 @@ def get_students_by_group(grupo: str) -> list[str]:
 # GESTIÓN DE ALUMNOS (ADMIN)
 # ======================================================
 
-def upsert_student_by_name(
-    *,
-    alumno: str,
-    grupo: str,
-):
+def student_exists(*, grupo: str, alumno: str) -> bool:
     """
-    Inserta un alumno nuevo o actualiza su grupo si ya existe.
-    El alumno se identifica SOLO por su nombre.
+    Comprueba si existe un alumno con esa combinación (grupo, alumno).
     """
-    alumno = alumno.strip()
-    grupo = grupo.strip()
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT 1
+                FROM students
+                WHERE grupo = %s
+                  AND alumno = %s
+                """,
+                (grupo, alumno),
+            )
+            return cur.fetchone() is not None
 
-    if not alumno or not grupo:
-        raise ValueError("Alumno y grupo son obligatorios.")
+
+def create_student_if_not_exists(*, grupo: str, alumno: str) -> bool:
+    """
+    Crea un alumno si no existe la combinación (grupo, alumno).
+
+    Devuelve:
+    - True  → alumno creado
+    - False → ya existía (no se hace nada)
+    """
+    grupo = grupo.strip()
+    alumno = alumno.strip()
+
+    if not grupo or not alumno:
+        raise ValueError("Grupo y alumno son obligatorios")
 
     with get_db() as conn:
         with conn.cursor() as cur:
-            # ¿Existe el alumno?
             cur.execute(
                 """
-                SELECT grupo
+                SELECT 1
                 FROM students
-                WHERE alumno = %s
-                LIMIT 1
+                WHERE grupo = %s
+                  AND alumno = %s
                 """,
-                (alumno,),
+                (grupo, alumno),
             )
-            row = cur.fetchone()
 
-            if row is None:
-                # Nuevo alumno
-                cur.execute(
-                    """
-                    INSERT INTO students (grupo, alumno)
-                    VALUES (%s, %s)
-                    """,
-                    (grupo, alumno),
-                )
-                return "added"
+            if cur.fetchone():
+                return False
 
-            else:
-                current_group = row["grupo"]
-                if current_group != grupo:
-                    # Cambio de grupo
-                    cur.execute(
-                        """
-                        UPDATE students
-                        SET grupo = %s
-                        WHERE alumno = %s
-                        """,
-                        (grupo, alumno),
-                    )
-                    return "updated"
+            cur.execute(
+                """
+                INSERT INTO students (grupo, alumno)
+                VALUES (%s, %s)
+                """,
+                (grupo, alumno),
+            )
+        conn.commit()
 
-        return "unchanged"
+    return True
 
 
 def change_student_group(
     *,
+    grupo_actual: str,
     alumno: str,
-    new_grupo: str,
-):
+    nuevo_grupo: str,
+) -> bool:
     """
     Cambia manualmente el grupo de un alumno existente.
+    Acción explícita (NO usada en importaciones).
     """
     alumno = alumno.strip()
-    new_grupo = new_grupo.strip()
+    grupo_actual = grupo_actual.strip()
+    nuevo_grupo = nuevo_grupo.strip()
 
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -143,8 +159,12 @@ def change_student_group(
                 """
                 UPDATE students
                 SET grupo = %s
-                WHERE alumno = %s
+                WHERE grupo = %s
+                  AND alumno = %s
                 """,
-                (new_grupo, alumno),
+                (nuevo_grupo, grupo_actual, alumno),
             )
-            return cur.rowcount > 0
+            updated = cur.rowcount > 0
+        conn.commit()
+
+    return updated
