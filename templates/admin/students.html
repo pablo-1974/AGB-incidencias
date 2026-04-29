@@ -63,6 +63,38 @@
   </div>
 </div>
 
+
+{# ======================================
+   FILTRO POR GRUPO
+   ====================================== #}
+
+<div class="card mb-6">
+  <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
+
+    <div>
+      <label class="label">Grupo</label>
+      <select name="grupo" class="input">
+        <option value="">— Todos los grupos —</option>
+        {% for g in groups %}
+          <option value="{{ g }}"
+                  {% if g == selected_group %}selected{% endif %}>
+            {{ g }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn-muted">
+      Filtrar
+    </button>
+
+  </form>
+</div>
+
+{# ======================================
+   LISTADO DE ALUMNOS
+   ====================================== #}
+
 <div class="card">
   <h2 class="font-semibold mb-4">📋 Alumnos registrados</h2>
 
