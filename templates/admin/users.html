@@ -55,11 +55,10 @@
 
     <div>
       <label class="label">Rol</label>
-      <select name="role" class="input">
+      <select name="role" class="input" required>
+        <option value="" disabled selected>— Selecciona un rol —</option>
         {% for r in roles %}
-          <option value="{{ r }}">
-            {{ r | capitalize }}
-          </option>
+          <option value="{{ r }}">{{ r | capitalize }}</option>
         {% endfor %}
       </select>
     </div>
