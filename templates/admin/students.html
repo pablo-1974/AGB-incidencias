@@ -1,0 +1,93 @@
+{# templates/admin/students.html #}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-xl font-semibold mb-6">🎓 Gestión de alumnos</h1>
+
+{% if request.query_params.get("status") == "imported" %}
+  <div class="alert ok mb-4">
+    ✅ Importación completada — creados {{ request.query_params.get("created") }} alumnos nuevos.
+  </div>
+{% elif request.query_params.get("status") == "error" %}
+  <div class="alert err mb-4">
+    ❌ Error al importar el archivo.
+  </div>
+{% endif %}
+
+<div class="card mb-8">
+  <h2 class="font-semibold mb-4">📦 Importar / Exportar alumnos</h2>
+
+  <div class="flex flex-col sm:flex-row gap-4 items-start">
+
+    <a href="/admin/students/export">
+      <button class="btn-muted">
+        📤 Exportar a Excel
+      </button>
+    </a>
+
+    <details>
+      <summary class="btn-muted cursor-pointer">
+        📥 Importar desde Excel
+      </summary>
+
+      <form method="post"
+            action="/admin/students/import"
+            enctype="multipart/form-data"
+            class="mt-3 space-y-3">
+
+        <input
+          type="file"
+          name="file"
+          accept=".xlsx"
+          required
+          class="input"
+        >
+
+        <button type="submit"
+                class="btn-primary"
+                onclick="return confirm('¿Importar alumnos desde este archivo?')">
+          Importar
+        </button>
+
+        <p class="text-xs text-gray-500">
+          Columnas requeridas:
+          <strong>Grupo</strong>, <strong>Alumno</strong>.<br>
+          Si el alumno ya existe en ese grupo, no se crea de nuevo.
+        </p>
+
+      </form>
+    </details>
+
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="font-semibold mb-4">📋 Alumnos registrados</h2>
+
+  {% if students %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Grupo</th>
+        <th>Alumno</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.grupo }}</td>
+        <td>{{ s.alumno }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="text-sm text-gray-500">
+      No hay alumnos registrados.
+    </p>
+  {% endif %}
+</div>
+
+{% endblock %}
