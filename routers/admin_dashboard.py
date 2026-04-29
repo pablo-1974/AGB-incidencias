@@ -28,8 +28,8 @@ router = APIRouter()
 # UTILIDADES
 # ----------------------------------------------------------------------
 
-def _require_admin_or_jefe(user: dict):
-    if user["role"] not in ("admin", "jefe"):
+def _require_dashboard_access(user):
+    if not has_permission(user, PERM_DASHBOARD_JEFATURA):
         raise HTTPException(status_code=403)
 
 
@@ -45,7 +45,8 @@ def admin_dashboard(
     """
     Dashboard principal del administrador.
     """
-    _require_admin(user)
+    _require_dashboard_access(user)
+
 
     # KPI PRINCIPAL
     open_incidences = count_open_incidents()
