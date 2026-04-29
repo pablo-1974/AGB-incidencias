@@ -12,14 +12,14 @@ router = APIRouter()
 def dashboard_entry(user: dict = Depends(load_user_dep)):
     """
     Punto de entrada general al dashboard.
-    Redirige según rol/permisos.
+    Redirige según rol.
     """
 
-    # Administrador y Jefe → dashboard común
-    if user["role"] in ("admin", "jefe"):
+    # Dashboard informativo / operativo común
+    if user["role"] in ("admin", "jefe", "director", "secretario"):
         return RedirectResponse("/admin/dashboard", status_code=303)
 
-    # Profesor / orientador (ejemplo)
+    # Profesor / orientador
     if user["role"] in ("profesor", "orientador"):
         return RedirectResponse("/incidents/list", status_code=303)
 
