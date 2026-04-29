@@ -77,6 +77,8 @@ FRANJA_ORDEN = {
 # PERMISOS FUNCIONALES
 # ==============================
 
+PERM_DASHBOARD_JEFATURA = "dashboard_jefatura"
+
 PERM_ABRIR_INCIDENCIA = "abrir_incidencia"
 PERM_LISTAR_INCIDENCIAS = "listar_incidencias"
 PERM_CERRAR_INCIDENCIA = "cerrar_incidencia"
@@ -99,6 +101,12 @@ PERM_BACKUP = "backup"
 # ==============================
 
 PERMISSIONS_BY_ROLE = {
+    
+    PERM_DASHBOARD_JEFATURA: {
+        ROLE_ADMIN,
+        ROLE_JEFE,
+    }
+    
     PERM_ABRIR_INCIDENCIA: ROLES_TODOS,
     PERM_LISTAR_INCIDENCIAS: ROLES_TODOS,
 
