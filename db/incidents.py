@@ -301,6 +301,24 @@ def count_incidents_closed_this_week() -> int:
             row = cur.fetchone()
             return next(iter(row.values()))
 
+def count_own_incidents(user_id: int) -> int:
+    """
+    Número total de incidencias creadas por un usuario.
+    KPI para Profesor / Orientador.
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM incidents
+                WHERE teacher_id = %s
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+            return next(iter(row.values()))
+
 # ======================================================
 # RANKINGS
 # ======================================================
