@@ -15,11 +15,15 @@ def dashboard_entry(user: dict = Depends(load_user_dep)):
     Redirige según rol.
     """
 
-    # Dashboard informativo / operativo común
+    # Admin / Jefatura / Dirección
     if user["role"] in ("admin", "jefe", "director", "secretario"):
         return RedirectResponse("/admin/dashboard", status_code=303)
 
-    # Profesor / orientador
+    # Convivencia
+    if user["role"] == "convivencia":
+        return RedirectResponse("/convivencia/dashboard", status_code=303)
+
+    # Profesor / Orientador (temporalmente)
     if user["role"] in ("profesor", "orientador"):
         return RedirectResponse("/incidents/list", status_code=303)
 
