@@ -595,6 +595,43 @@ def count_total_incidents() -> int:
             row = cur.fetchone()
             return next(iter(row.values()))
 
+def count_students_with_incidents() -> int:
+    """
+    Número de alumnos distintos con al menos una incidencia.
+    KPI informativo (Convivencia).
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(DISTINCT alumno)
+                FROM incidents
+                WHERE alumno IS NOT NULL
+                  AND alumno != ''
+                """
+            )
+            row = cur.fetchone()
+            return next(iter(row.values()))
+
+def count_groups_with_incidents() -> int:
+    """
+    Número de grupos distintos con al menos una incidencia.
+    KPI informativo (Convivencia).
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(DISTINCT grupo)
+                FROM incidents
+                WHERE grupo IS NOT NULL
+                  AND grupo != ''
+                """
+            )
+            row = cur.fetchone()
+            return next(iter(row.values()))
+
+
 def get_incident_by_id(incident_id: int):
     """
     Devuelve una incidencia concreta por ID.
