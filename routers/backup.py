@@ -1,7 +1,7 @@
 # routers/backup.py
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import Response, HTMLResponse
 from datetime import datetime
 import io
 import openpyxl
@@ -10,32 +10,54 @@ from auth import load_user_dep
 from utils.permissions import has_permission
 from utils.enums import PERM_BACKUP
 from db.connection import get_db
+from context import ctx
 
 router = APIRouter()
 
 
-@router.get("/admin/backup")
-def download_backup(user: dict = Depends(load_user_dep)):
+# --------------------------------------------------
+# PÁGINA DE BACKUP (UI)
+# --------------------------------------------------
+@router.get("/admin/backup", response_class=HTMLResponse)
+def backup_page(
+    request: Request,
+    user: dict = Depends(load_user_dep),
+):
+    if not has_permission(user, PERM_BACKUP):
+        raise HTTPException(status_code=403)
+
+    return request.app.state.templates.TemplateResponse(
+        "admin/backup.html",
+        ctx(
+            request,
+            user=user,
+            title="Copia de seguridad",
+        ),
+    )
+
+
+# --------------------------------------------------
+# DESCARGA DEL BACKUP (EXCEL)
+# --------------------------------------------------
+@router.get("/admin/backup/download")
+def backup_download(
+    user: dict = Depends(load_user_dep),
+):
     if not has_permission(user, PERM_BACKUP):
         raise HTTPException(status_code=403)
 
     wb = openpyxl.Workbook()
 
-    # --------------------------------------------------
     # Hoja INFO
-    # --------------------------------------------------
     ws_info = wb.active
     ws_info.title = "INFO"
-
     ws_info.append(["Aplicación", "Incidencias"])
     ws_info.append(["Fecha backup", datetime.now().strftime("%Y-%m-%d %H:%M")])
     ws_info.append(["Generado por", user["email"]])
     ws_info.append([])
     ws_info.append(["Contenido", "Copia completa de la base de datos"])
 
-    # --------------------------------------------------
-    # Exportar tablas reales
-    # --------------------------------------------------
+    # Exportar tablas
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -52,26 +74,3 @@ def download_backup(user: dict = Depends(load_user_dep)):
                 ws = wb.create_sheet(title=table)
 
                 cur.execute(f'SELECT * FROM "{table}" LIMIT 1')
-                columns = [desc[0] for desc in cur.description]
-                ws.append(columns)
-
-                cur.execute(f'SELECT * FROM "{table}"')
-                for row in cur.fetchall():
-                    ws.append(list(row.values()))
-
-    # --------------------------------------------------
-    # Descargar Excel
-    # --------------------------------------------------
-    stream = io.BytesIO()
-    wb.save(stream)
-    stream.seek(0)
-
-    filename = f"incidencias_backup_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
-
-    return Response(
-        stream.read(),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={
-            "Content-Disposition": f"attachment; filename={filename}"
-        },
-    )
