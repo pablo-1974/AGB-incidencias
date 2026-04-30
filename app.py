@@ -35,6 +35,7 @@ from routers.incidents_list import router as incidents_list_router
 from routers.incidents_close import router as incidents_close_router
 from routers.incidents_edit import router as incidents_edit_router
 from routers.change_password import router as change_password_router
+from routers.backup import router as backup_router
 
 # Auth / login
 from routers.login import router as login_router
@@ -96,6 +97,7 @@ app.include_router(incidents_list_router)
 app.include_router(incidents_close_router)
 app.include_router(incidents_edit_router)
 app.include_router(change_password_router)
+app.include_router(backup_router)
 
 # ------------------------------------------------------------
 # Ruta raíz: redirige al dashboard
