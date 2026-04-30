@@ -1,0 +1,28 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_content %}
+
+<h1 class="text-xl font-semibold mb-6">
+  💾 Copia de seguridad
+</h1>
+
+<div class="card max-w-3xl">
+
+  <h2 class="font-semibold mb-2">
+    Descargar copia completa
+  </h2>
+
+  <p class="text-sm text-gray-600 mb-6">
+    Genera un archivo Excel con toda la información del sistema.
+    Cada tabla se exporta en una hoja independiente.
+  </p>
+
+  <a href="/admin/backup"
+     class="btn-primary block text-center text-lg">
+    ⬇️ Descargar copia completa (Excel)
+  </a>
+
+</div>
+
+{% endblock %}
+``
