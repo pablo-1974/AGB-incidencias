@@ -115,15 +115,8 @@ def root(request: Request):
     if not request.session.get("user_id"):
         return RedirectResponse("/login", status_code=303)
 
-    # Usuario autenticado → decidir dashboard por rol
-    user_id = request.session.get("user_id")
-    user = get_user_by_id(user_id)
-    
-    if user["role"] == "admin":
-        return RedirectResponse("/admin/dashboard", status_code=303)
-    
-    # Otros roles (todavía no implementados)
-    return RedirectResponse("/login", status_code=303)
+    # Usuario autenticado → dashboard general
+    return RedirectResponse("/dashboard", status_code=303)
 
 
 # ------------------------------------------------------------
