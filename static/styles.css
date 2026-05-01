@@ -128,6 +128,7 @@ input[type="date"] {
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center; 
   gap: 0.5rem;
   background: var(--brand-600);
   color: var(--white);
