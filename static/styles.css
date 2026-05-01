@@ -129,6 +129,7 @@ input[type="date"] {
   display: inline-flex;
   align-items: center;
   justify-content: center; 
+  text-align: center; 
   gap: 0.5rem;
   background: var(--brand-600);
   color: var(--white);
