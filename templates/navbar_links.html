@@ -32,6 +32,7 @@
 </div>
 
 <!-- Análisis -->
+{% if user.role not in ("profesor", "orientador") %}
 <div class="relative group">
   <span class="app-link cursor-pointer select-none">Análisis</span>
   <div
@@ -57,8 +58,10 @@
     {% endif %}
   </div>
 </div>
+{% endif %}
 
 <!-- Rankings -->
+{% if user.role not in ("profesor", "orientador") %}
 <div class="relative group">
   <span class="app-link cursor-pointer select-none">Rankings</span>
   <div
@@ -84,6 +87,7 @@
     {% endif %}
   </div>
 </div>
+{% endif %}
 
 {% if has_permission(user, PERM_GESTION_ALUMNOS)
    or has_permission(user, PERM_GESTION_USUARIOS)
