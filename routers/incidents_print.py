@@ -8,7 +8,7 @@ from auth import load_user_dep
 from utils.permissions import has_permission
 from utils.enums import PERM_EDITAR_INCIDENCIA
 from db.incidents import get_incident_by_id
-from utils.pdf import incident_ticket_pdf  # donde tengas la función
+from utils.pdf_incident_ticket import incident_ticket_pdf
 
 router = APIRouter()
 
