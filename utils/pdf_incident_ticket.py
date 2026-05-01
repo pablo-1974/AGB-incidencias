@@ -89,8 +89,20 @@ def incident_ticket_pdf(
             st_body,
         )
     )
-    elems.append(Spacer(1, 18))
+    elems.append(Spacer(1, 6))
+    
+    if gravedad_final:
+        elems.append(
+            Paragraph(
+                f"<b>Gravedad (final):</b> {gravedad_final}",
+                st_body,
+            )
+        )
+        elems.append(Spacer(1, 10))
+    else:
+        elems.append(Spacer(1, 10))
 
+    
     elems.append(
         Paragraph(
             f"<i>*** Enviado a Jefatura el "
