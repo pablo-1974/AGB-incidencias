@@ -99,18 +99,30 @@ def backup_upload(
     file: UploadFile = File(...),
     user: dict = Depends(load_user_dep),
 ):
+    # ---------------------------------
+    # Seguridad
+    # ---------------------------------
     if not has_permission(user, PERM_BACKUP):
         raise HTTPException(status_code=403)
 
-    if not file.filename.endswith(".xlsx"):
+    if not file.filename.lower().endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Formato no válido")
 
+    # ---------------------------------
+    # Cargar Excel
+    # ---------------------------------
     wb = openpyxl.load_workbook(file.file)
 
+    # ---------------------------------
+    # Importación incremental
+    # ---------------------------------
     with get_db() as conn:
         with conn.cursor() as cur:
 
-            # -------- USERS --------
+            # =================================
+            # USERS
+            # Duplicado: email
+            # =================================
             if "users" in wb.sheetnames:
                 ws = wb["users"]
                 headers = [c.value for c in ws[1]]
@@ -118,6 +130,7 @@ def backup_upload(
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     data = dict(zip(headers, row))
 
+                    # Ignorar usuarios ya existentes
                     cur.execute(
                         "SELECT 1 FROM users WHERE email = %s",
                         (data["email"],),
@@ -125,15 +138,24 @@ def backup_upload(
                     if cur.fetchone():
                         continue
 
+                    # Insertar nuevo usuario
                     cur.execute(
                         """
                         INSERT INTO users (name, email, role)
                         VALUES (%s, %s, %s)
                         """,
-                        (data["name"], data["email"], data["role"]),
+                        (
+                            data["name"],
+                            data["email"],
+                            data["role"],
+                        ),
                     )
 
-            # -------- INCIDENTS --------
+            # =================================
+            # INCIDENTS
+            # Duplicado lógico:
+            # teacher_id + fecha + hora + grupo + alumno + descripcion
+            # =================================
             if "incidents" in wb.sheetnames:
                 ws = wb["incidents"]
                 headers = [c.value for c in ws[1]]
@@ -141,9 +163,11 @@ def backup_upload(
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     data = dict(zip(headers, row))
 
+                    # Comprobar si la incidencia ya existe
                     cur.execute(
                         """
-                        SELECT 1 FROM incidents
+                        SELECT 1
+                        FROM incidents
                         WHERE teacher_id = %s
                           AND fecha = %s
                           AND hora = %s
@@ -163,14 +187,23 @@ def backup_upload(
                     if cur.fetchone():
                         continue
 
+                    # Insertar nueva incidencia
+                    # created_at NO se importa (lo genera la BD)
                     cur.execute(
                         """
                         INSERT INTO incidents (
-                            teacher_id, teacher_name, grupo, alumno,
-                            fecha, hora, hora_orden, descripcion,
-                            gravedad_inicial, estado, created_at
+                            teacher_id,
+                            teacher_name,
+                            grupo,
+                            alumno,
+                            fecha,
+                            hora,
+                            hora_orden,
+                            descripcion,
+                            gravedad_inicial,
+                            estado
                         )
-                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """,
                         (
                             data["teacher_id"],
@@ -183,8 +216,13 @@ def backup_upload(
                             data["descripcion"],
                             data["gravedad_inicial"],
                             data["estado"],
-                            data["created_at"],
                         ),
                     )
 
-    return {"status": "ok", "message": "Importación completada correctamente"}
+        # ✅ CONFIRMAR CAMBIOS
+        conn.commit()
+
+    return {
+        "status": "ok",
+        "message": "Importación completada correctamente"
+    }
