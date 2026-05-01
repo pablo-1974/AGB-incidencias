@@ -1,6 +1,9 @@
 # routers/backup.py
 
-from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File
+from fastapi import (
+    APIRouter, Request, Depends, HTTPException,
+    UploadFile, File
+)
 from fastapi.responses import Response, HTMLResponse
 from datetime import datetime
 import io
@@ -14,10 +17,9 @@ from context import ctx
 
 router = APIRouter()
 
-
-# --------------------------------------------------
-# PÁGINA DE BACKUP (UI)
-# --------------------------------------------------
+# ======================================================
+# PÁGINA BACKUP (UI)
+# ======================================================
 @router.get("/admin/backup", response_class=HTMLResponse)
 def backup_page(
     request: Request,
@@ -28,17 +30,12 @@ def backup_page(
 
     return request.app.state.templates.TemplateResponse(
         "admin/backup.html",
-        ctx(
-            request,
-            user=user,
-            title="Copia de seguridad",
-        ),
+        ctx(request, user=user, title="Copia de seguridad"),
     )
 
-
-# --------------------------------------------------
-# DESCARGA DEL BACKUP (EXCEL)
-# --------------------------------------------------
+# ======================================================
+# DESCARGA BACKUP
+# ======================================================
 @router.get("/admin/backup/download")
 def backup_download(
     user: dict = Depends(load_user_dep),
@@ -48,7 +45,7 @@ def backup_download(
 
     wb = openpyxl.Workbook()
 
-    # Hoja INFO
+    # INFO
     ws_info = wb.active
     ws_info.title = "INFO"
     ws_info.append(["Aplicación", "Incidencias"])
@@ -60,16 +57,43 @@ def backup_download(
     # Exportar tablas
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
                 ORDER BY table_name
+            """)
+            tables = [r["table_name"] for r in cur.fetchall()]
 
-# --------------------------------------------------
-# CARGA DEL BACKUP (EXCEL)
-# --------------------------------------------------
+            for table in tables:
+                ws = wb.create_sheet(title=table)
+
+                cur.execute(f'SELECT * FROM "{table}" LIMIT 1')
+                columns = [d[0] for d in cur.description]
+                ws.append(columns)
+
+                cur.execute(f'SELECT * FROM "{table}"')
+                for row in cur.fetchall():
+                    ws.append(list(row.values()))
+
+    stream = io.BytesIO()
+    wb.save(stream)
+    stream.seek(0)
+
+    filename = f"incidencias_backup_{datetime.now():%Y%m%d_%H%M}.xlsx"
+
+    return Response(
+        stream.read(),
+        media_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+# ======================================================
+# SUBIDA BACKUP (IMPORTACIÓN INCREMENTAL)
+# ======================================================
 @router.post("/admin/backup/upload")
 def backup_upload(
     file: UploadFile = File(...),
@@ -86,9 +110,7 @@ def backup_upload(
     with get_db() as conn:
         with conn.cursor() as cur:
 
-            # -----------------------------
-            # USERS
-            # -----------------------------
+            # -------- USERS --------
             if "users" in wb.sheetnames:
                 ws = wb["users"]
                 headers = [c.value for c in ws[1]]
@@ -101,7 +123,7 @@ def backup_upload(
                         (data["email"],),
                     )
                     if cur.fetchone():
-                        continue  # ✅ duplicado
+                        continue
 
                     cur.execute(
                         """
@@ -111,9 +133,7 @@ def backup_upload(
                         (data["name"], data["email"], data["role"]),
                     )
 
-            # -----------------------------
-            # INCIDENTS
-            # -----------------------------
+            # -------- INCIDENTS --------
             if "incidents" in wb.sheetnames:
                 ws = wb["incidents"]
                 headers = [c.value for c in ws[1]]
@@ -141,7 +161,7 @@ def backup_upload(
                         ),
                     )
                     if cur.fetchone():
-                        continue  # ✅ duplicado
+                        continue
 
                     cur.execute(
                         """
@@ -167,13 +187,4 @@ def backup_upload(
                         ),
                     )
 
-    return {"status": "ok", "message": "Copia importada correctamente"}
-
-                """
-            )
-            tables = [r["table_name"] for r in cur.fetchall()]
-
-            for table in tables:
-                ws = wb.create_sheet(title=table)
-
-                cur.execute(f'SELECT * FROM "{table}" LIMIT 1')
+    return {"status": "ok", "message": "Importación completada correctamente"}
