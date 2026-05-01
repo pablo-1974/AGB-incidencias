@@ -33,6 +33,7 @@ def print_incident_ticket(
         profesor=inc["teacher_name"],
         descripcion=inc["descripcion"],
         gravedad_inicial=inc["gravedad_inicial"],
+        gravedad_final=inc.get("gravedad_final"),
         enviado_por=user["name"],
         enviado_dt=datetime.now(),
     )
