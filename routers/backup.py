@@ -153,16 +153,27 @@ def backup_upload(
 
             # =================================
             # INCIDENTS
-            # Duplicado lógico:
-            # teacher_id + fecha + hora + grupo + alumno + descripcion
             # =================================
             if "incidents" in wb.sheetnames:
                 ws = wb["incidents"]
                 headers = [c.value for c in ws[1]]
-
+            
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     data = dict(zip(headers, row))
-
+            
+                    # ---------------------------------
+                    # Validación mínima (campos obligatorios)
+                    # ---------------------------------
+                    if not all([
+                        data.get("teacher_id"),
+                        data.get("fecha"),
+                        data.get("hora"),
+                        data.get("grupo"),
+                        data.get("alumno"),
+                        data.get("descripcion"),
+                    ]):
+                        continue  # ❌ fila incompleta → se ignora
+            
                     # Comprobar si la incidencia ya existe
                     cur.execute(
                         """
@@ -186,9 +197,8 @@ def backup_upload(
                     )
                     if cur.fetchone():
                         continue
-
+            
                     # Insertar nueva incidencia
-                    # created_at NO se importa (lo genera la BD)
                     cur.execute(
                         """
                         INSERT INTO incidents (
