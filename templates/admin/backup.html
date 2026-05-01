@@ -12,6 +12,9 @@
 
 <div class="card max-w-3xl">
 
+  <!-- ===================== -->
+  <!-- DESCARGA -->
+  <!-- ===================== -->
   <h2 class="font-semibold mb-2">
     Descargar copia completa
   </h2>
@@ -21,12 +24,46 @@
     Cada tabla se exporta en una hoja independiente.
   </p>
 
-  <a href="/admin/backup"
+  <a href="/admin/backup/download"
      class="btn-primary block text-center text-lg">
     ⬇️ Descargar copia completa (Excel)
   </a>
 
+  <hr class="my-8">
+
+  <!-- ===================== -->
+  <!-- SUBIDA -->
+  <!-- ===================== -->
+  <h2 class="font-semibold mb-2">
+    Subir copia de seguridad
+  </h2>
+
+  <p class="text-sm text-gray-600 mb-4">
+    Importa un archivo Excel generado por esta aplicación.
+    Los registros ya existentes se ignoran automáticamente y
+    solo se añaden los nuevos.
+  </p>
+
+  <form method="post"
+        action="/admin/backup/upload"
+        enctype="multipart/form-data"
+        class="space-y-4">
+
+    <input type="file"
+           name="file"
+           accept=".xlsx"
+           class="input"
+           required>
+
+    <button type="submit" class="btn-primary">
+      ⬆️ Subir copia de seguridad
+    </button>
+  </form>
+
+  <p class="text-xs text-gray-500 mt-3">
+    La importación es incremental: no se borran ni sobrescriben datos.
+  </p>
+
 </div>
 
 {% endblock %}
-``
