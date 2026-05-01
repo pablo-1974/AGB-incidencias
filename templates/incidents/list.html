@@ -123,14 +123,22 @@
             {{ i.descripcion }}
           </div>
         </td>
-        <td class="nowrap">
-           {% if has_permission(user, PERM_EDITAR_INCIDENCIA) %}
-             <a href="/incidents/edit/{{ i.id }}"
-                class="btn-muted text-xs">
-               ✏️ Editar
-             </a>
-           {% endif %}
-         </td> 
+        <td class="nowrap flex gap-2">
+          {% if has_permission(user, PERM_EDITAR_INCIDENCIA) %}
+      
+            <a href="/incidents/edit/{{ i.id }}"
+               class="btn-muted text-xs">
+              ✏️ Editar
+            </a>
+      
+            <a href="/incidents/print/{{ i.id }}"
+               target="_blank"
+               class="btn-muted text-xs">
+              🖨️ Parte
+            </a>
+      
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
