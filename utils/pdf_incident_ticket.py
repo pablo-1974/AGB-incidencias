@@ -15,12 +15,15 @@ def incident_ticket_pdf(
     profesor: str,
     descripcion: str,
     gravedad_inicial: str,
+    gravedad_final: str | None,
     enviado_por: str,
     enviado_dt: datetime | None = None,
 ) -> bytes:
     """
     Genera un PDF tipo 'parte' individual de incidencias.
+    Incluye gravedad inicial y final (si existe).
     """
+
     if enviado_dt is None:
         enviado_dt = datetime.now()
 
@@ -42,6 +45,7 @@ def incident_ticket_pdf(
 
     elems = []
 
+    # Título
     elems.append(
         Paragraph(
             "Parte de Incidencias. IES Antonio García Bellido.",
@@ -50,6 +54,7 @@ def incident_ticket_pdf(
     )
     elems.append(Spacer(1, 12))
 
+    # Línea alumno / fecha / hora
     f_str = (
         fecha.strftime("%d/%m/%Y")
         if isinstance(fecha, (date, datetime))
@@ -66,6 +71,7 @@ def incident_ticket_pdf(
     )
     elems.append(Spacer(1, 6))
 
+    # Profesor
     elems.append(
         Paragraph(
             f"<b>Profesor:</b> {profesor}",
@@ -74,6 +80,7 @@ def incident_ticket_pdf(
     )
     elems.append(Spacer(1, 10))
 
+    # Descripción
     desc_html = (descripcion or "").replace("\n", "<br/>")
     elems.append(
         Paragraph(
@@ -83,6 +90,7 @@ def incident_ticket_pdf(
     )
     elems.append(Spacer(1, 10))
 
+    # Gravedad inicial
     elems.append(
         Paragraph(
             f"<b>Gravedad (inicial):</b> {gravedad_inicial}",
@@ -90,7 +98,8 @@ def incident_ticket_pdf(
         )
     )
     elems.append(Spacer(1, 6))
-    
+
+    # Gravedad final (solo si existe)
     if gravedad_final:
         elems.append(
             Paragraph(
@@ -102,7 +111,7 @@ def incident_ticket_pdf(
     else:
         elems.append(Spacer(1, 10))
 
-    
+    # Pie
     elems.append(
         Paragraph(
             f"<i>*** Enviado a Jefatura el "
