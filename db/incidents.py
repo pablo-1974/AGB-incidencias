@@ -697,6 +697,7 @@ def update_incident(
                 """
                 UPDATE incidents
                 SET
+                    teacher_id = %s,
                     grupo = %s,
                     alumno = %s,
                     descripcion = %s,
@@ -705,6 +706,7 @@ def update_incident(
                 WHERE id = %s
                 """,
                 (
+                    teacher_id,
                     grupo,
                     alumno,
                     descripcion,
