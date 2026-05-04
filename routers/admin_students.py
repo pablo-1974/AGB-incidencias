@@ -68,23 +68,6 @@ def admin_students(
 # Añadir alumno (formulario)
 # ------------------------------------------------------
 
-@router.get("/admin/students/create", response_class=HTMLResponse)
-def create_student_form(
-    request: Request,
-    user: dict = Depends(load_user_dep),
-):
-    _require_perm(user)
-
-    return request.app.state.templates.TemplateResponse(
-        "admin/student_create.html",
-        ctx(
-            request,
-            user=user,
-            title="Añadir alumno",
-        ),
-    )
-
-
 @router.post("/admin/students/create")
 def create_student_post(
     request: Request,
