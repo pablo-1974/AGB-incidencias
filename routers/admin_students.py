@@ -83,16 +83,9 @@ def create_student_post(
     )
 
     if not created:
-        return request.app.state.templates.TemplateResponse(
-            "admin/student_create.html",
-            ctx(
-                request,
-                user=user,
-                title="Añadir alumno",
-                error="El alumno ya existe en ese grupo.",
-                grupo=grupo,
-                alumno=alumno,
-            ),
+        return RedirectResponse(
+            "/admin/students?status=exists",
+            status_code=303,
         )
 
     return RedirectResponse(
