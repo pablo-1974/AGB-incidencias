@@ -1,7 +1,9 @@
 # db/users.py
+
 from db.connection import get_db
 from security.passwords import hash_password, verify_password
 from utils.enums import ROLES_TODOS
+from utils.text import normalize_for_sort
 
 
 # ----------------------------------------------------------------------
@@ -300,7 +302,8 @@ def update_last_login(*, user_id: int):
 
 def get_all_users() -> list[dict]:
     """
-    Devuelve todos los usuarios (para gestión admin).
+    Devuelve todos los usuarios (para gestión admin),
+    ordenados por nombre según criterio español.
     """
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -316,10 +319,11 @@ def get_all_users() -> list[dict]:
                     created_at,
                     last_login_at
                 FROM users
-                ORDER BY name
                 """
             )
             rows = cur.fetchall()
+
+    rows.sort(key=lambda r: normalize_for_sort(r["name"]))
 
     return [
         {
@@ -336,9 +340,10 @@ def get_all_users() -> list[dict]:
     ]
 
 
+
 def get_all_teachers() -> list[dict]:
     """
-    Devuelve profesores activos (para análisis).
+    Devuelve profesores ordenados alfabéticamente.
     """
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -346,9 +351,12 @@ def get_all_teachers() -> list[dict]:
                 """
                 SELECT id, name
                 FROM users
-                ORDER BY name
+                WHERE active = 1
                 """
             )
             rows = cur.fetchall()
 
+    rows.sort(key=lambda r: normalize_for_sort(r["name"]))
+
     return [{"id": r["id"], "name": r["name"]} for r in rows]
+
