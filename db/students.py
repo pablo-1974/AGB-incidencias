@@ -1,6 +1,7 @@
 # db/students.py
 
 from db.connection import get_db
+from db.students import update_student
 from utils.text import normalize_for_sort
 
 
@@ -190,3 +191,33 @@ def update_student(
         conn.commit()
 
     return updated
+
+# ======================================================
+# EDITAR ALUMNO
+# ======================================================
+
+@router.post("/admin/students/update/{student_id}")
+def update_student_post(
+    student_id: int,
+    user: dict = Depends(load_user_dep),
+    grupo: str = Form(...),
+    alumno: str = Form(...),
+):
+    _require_perm(user)
+
+    updated = update_student(
+        student_id=student_id,
+        grupo=grupo,
+        alumno=alumno,
+    )
+
+    if not updated:
+        return RedirectResponse(
+            "/admin/students?status=exists",
+            status_code=303,
+        )
+
+    return RedirectResponse(
+        "/admin/students?status=updated",
+        status_code=303,
+    )
