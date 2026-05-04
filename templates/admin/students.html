@@ -6,91 +6,33 @@
 
 <h1 class="text-xl font-semibold mb-6">🎓 Gestión de alumnos</h1>
 
-{# ===============================
+{# =========================================================
    MENSAJES DE ESTADO
-   =============================== #}
-
+   ========================================================= #}
 {% if request.query_params.get("status") == "imported" %}
   <div class="alert ok mb-4">
     ✅ Importación completada — creados {{ request.query_params.get("created") }} alumnos nuevos.
   </div>
 {% elif request.query_params.get("status") == "created" %}
-  <div class="alert ok mb-4">
-    ✅ Alumno añadido correctamente.
-  </div>
+  <div class="alert ok mb-4">✅ Alumno añadido correctamente.</div>
 {% elif request.query_params.get("status") == "updated" %}
-  <div class="alert ok mb-4">
-    ✅ Alumno actualizado correctamente.
-  </div>
+  <div class="alert ok mb-4">✅ Alumno actualizado correctamente.</div>
 {% elif request.query_params.get("status") == "exists" %}
-  <div class="alert warn mb-4">
-    ⚠️ El alumno ya existe en ese grupo.
-  </div>
+  <div class="alert warn mb-4">⚠️ El alumno ya existe en ese grupo.</div>
 {% elif request.query_params.get("status") == "error" %}
-  <div class="alert err mb-4">
-    ❌ No se pudo realizar la acción.
-  </div>
+  <div class="alert err mb-4">❌ No se pudo realizar la acción.</div>
 {% endif %}
 
-{# ===============================
-   IMPORTAR / EXPORTAR
-   =============================== #}
-
+{# =========================================================
+   AÑADIR ALUMNO
+   ========================================================= #}
 <div class="card mb-8">
-  <h2 class="font-semibold mb-4">📦 Importar / Exportar alumnos</h2>
 
-  <div class="flex flex-col sm:flex-row gap-4 items-start">
+  <h2 class="font-semibold mb-4">➕ Añadir alumno</h2>
 
-    <a href="/admin/students/export">
-      <button class="btn-muted">📤 Exportar a Excel</button>
-    </a>
-
-    <details>
-      <summary class="btn-muted cursor-pointer">
-        📥 Importar desde Excel
-      </summary>
-
-      <form
-        method="post"
-        action="/admin/students/import"
-        enctype="multipart/form-data"
-        class="mt-3 space-y-3"
-      >
-        <input
-          type="file"
-          name="file"
-          accept=".xlsx"
-          required
-          class="input"
-        >
-
-        <button
-          type="submit"
-          class="btn-primary"
-          onclick="return confirm('¿Importar alumnos desde este archivo?')"
-        >
-          Importar
-        </button>
-
-        <p class="text-xs text-gray-500">
-          Columnas requeridas:
-          <strong>Grupo</strong>, <strong>Alumno</strong>.<br>
-          Si el alumno ya existe en ese grupo, no se crea de nuevo.
-        </p>
-      </form>
-    </details>
-
-  </div>
-</div>
-
-{# ===============================
-   AÑADIR ALUMNO MANUALMENTE
-   =============================== #}
-
-<div class="card mb-8 max-w-xl">
-  <h2 class="font-semibold mb-4">➕ Añadir alumno manualmente</h2>
-
-  <form method="post" action="/admin/students/create" class="space-y-4">
+  <form method="post"
+        action="/admin/students/create"
+        class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
 
     <div>
       <label class="label">Grupo</label>
@@ -107,27 +49,79 @@
       <input
         type="text"
         name="alumno"
+        class="input"
         required
-        class="input w-full"
         placeholder="Nombre y apellidos"
       >
     </div>
 
-    <button type="submit" class="btn-primary">
-      Guardar alumno
-    </button>
-
-    <p class="text-xs text-gray-500">
-      Si el alumno ya existe en ese grupo, no se creará de nuevo.
-    </p>
+    <div class="flex items-end">
+      <button type="submit" class="btn-primary w-full">
+        Guardar alumno
+      </button>
+    </div>
 
   </form>
+
+  <p class="text-xs text-gray-500 mt-3">
+    Si el alumno ya existe en ese grupo, no se creará de nuevo.
+  </p>
+
 </div>
 
-{# ===============================
-   FILTRO POR GRUPO
-   =============================== #}
+{# =========================================================
+   IMPORTAR / EXPORTAR
+   ========================================================= #}
+<div class="card mb-8">
 
+  <h2 class="font-semibold mb-4">📦 Importar / Exportar alumnos</h2>
+
+  <div class="flex flex-col sm:flex-row gap-4 items-start">
+
+    <a href="/admin/students/export">
+      <button class="btn-muted">
+        📤 Exportar a Excel
+      </button>
+    </a>
+
+    <details>
+      <summary class="btn-muted cursor-pointer">
+        📥 Importar desde Excel
+      </summary>
+
+      <form method="post"
+            action="/admin/students/import"
+            enctype="multipart/form-data"
+            class="mt-3 space-y-3">
+
+        <input
+          type="file"
+          name="file"
+          accept=".xlsx"
+          required
+          class="input"
+        >
+
+        <button type="submit"
+                class="btn-primary"
+                onclick="return confirm('¿Importar alumnos desde este archivo?')">
+          Importar
+        </button>
+
+        <p class="text-xs text-gray-500">
+          Columnas requeridas:
+          <strong>Grupo</strong>, <strong>Alumno</strong>.<br>
+          Si el alumno ya existe en ese grupo, no se creará de nuevo.
+        </p>
+      </form>
+    </details>
+
+  </div>
+</div>
+
+{# =========================================================
+   FILTRO
+   ========================================================= #}
 <div class="card mb-6">
   <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
 
@@ -147,12 +141,12 @@
   </form>
 </div>
 
-{# ===============================
+{# =========================================================
    LISTADO DE ALUMNOS
-   =============================== #}
-
+   ========================================================= #}
 <div class="card">
-  <h2 class="font-semibold mb-4">📋 Alumnos registrados</h2>
+
+  <h2 class="font-semibold mb-4">👥 Alumnos registrados</h2>
 
   <p class="text-sm text-gray-500 mb-3">
     Mostrando {{ students | length }}
@@ -178,17 +172,15 @@
       <tr>
         <td>{{ s.grupo }}</td>
         <td>{{ s.alumno }}</td>
-        <td class="nowrap">
+        <td class="nowrap space-x-1">
 
           <details class="inline-block relative">
             <summary class="btn-muted cursor-pointer">✏️</summary>
 
-            <div class="absolute z-10 mt-2 p-4 card w-64">
-              <form
-                method="post"
-                action="/admin/students/update/{{ s.id }}"
-                class="space-y-2"
-              >
+            <div class="absolute left-0 sm:right-0 sm:left-auto z-10 mt-2 p-4 card w-72 max-w-[90vw]">
+              <form method="post"
+                    action="/admin/students/update/{{ s.id }}"
+                    class="space-y-2">
 
                 <select name="grupo" class="input" required>
                   {% for g in groups %}
@@ -210,6 +202,7 @@
                 <button class="btn-primary w-full">
                   Guardar
                 </button>
+
               </form>
             </div>
           </details>
@@ -225,6 +218,7 @@
       No hay alumnos registrados.
     </p>
   {% endif %}
+
 </div>
 
 <script>
@@ -236,4 +230,5 @@
 </script>
 
 {% endblock %}
+
 
