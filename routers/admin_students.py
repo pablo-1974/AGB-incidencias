@@ -1,6 +1,6 @@
 # routers/admin_students.py
 
-from fastapi import APIRouter, Request, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Request, Depends, UploadFile, File, HTTPException, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 import io
@@ -61,6 +61,60 @@ def admin_students(
             groups=groups,
             selected_group=grupo,
         ),
+    )
+
+
+# ------------------------------------------------------
+# Añadir alumno (formulario)
+# ------------------------------------------------------
+
+@router.get("/admin/students/create", response_class=HTMLResponse)
+def create_student_form(
+    request: Request,
+    user: dict = Depends(load_user_dep),
+):
+    _require_perm(user)
+
+    return request.app.state.templates.TemplateResponse(
+        "admin/student_create.html",
+        ctx(
+            request,
+            user=user,
+            title="Añadir alumno",
+        ),
+    )
+
+
+@router.post("/admin/students/create")
+def create_student_post(
+    request: Request,
+    user: dict = Depends(load_user_dep),
+    grupo: str = Form(...),
+    alumno: str = Form(...),
+):
+    _require_perm(user)
+
+    created = create_student_if_not_exists(
+        grupo=grupo,
+        alumno=alumno,
+    )
+
+    if not created:
+        return request.app.state.templates.TemplateResponse(
+            "admin/student_create.html",
+            ctx(
+                request,
+                user=user,
+                title="Añadir alumno",
+                error="El alumno ya existe en ese grupo.",
+                grupo=grupo,
+                alumno=alumno,
+            ),
+        )
+
+    return RedirectResponse(
+        "/admin/students?status=created",
+        status_code=303,
     )
 
 
