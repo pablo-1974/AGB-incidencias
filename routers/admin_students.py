@@ -15,6 +15,7 @@ from db.students import (
     get_all_students,
     get_all_groups,
     create_student_if_not_exists,
+    update_student,
 )
 
 router = APIRouter()
@@ -43,13 +44,9 @@ def admin_students(
 
     groups = get_all_groups()
 
+    students = get_all_students()
     if grupo:
-        students = [
-            s for s in get_all_students()
-            if s["grupo"] == grupo
-        ]
-    else:
-        students = get_all_students()
+        students = [s for s in students if s["grupo"] == grupo]
 
     return request.app.state.templates.TemplateResponse(
         "admin/students.html",
@@ -65,22 +62,18 @@ def admin_students(
 
 
 # ------------------------------------------------------
-# Añadir alumno (formulario)
+# Crear alumno
 # ------------------------------------------------------
 
 @router.post("/admin/students/create")
 def create_student_post(
-    request: Request,
     user: dict = Depends(load_user_dep),
     grupo: str = Form(...),
     alumno: str = Form(...),
 ):
     _require_perm(user)
 
-    created = create_student_if_not_exists(
-        grupo=grupo,
-        alumno=alumno,
-    )
+    created = create_student_if_not_exists(grupo=grupo, alumno=alumno)
 
     if not created:
         return RedirectResponse(
@@ -90,6 +83,37 @@ def create_student_post(
 
     return RedirectResponse(
         "/admin/students?status=created",
+        status_code=303,
+    )
+
+
+# ------------------------------------------------------
+# Editar alumno ✅ (LO QUE FALTABA)
+# ------------------------------------------------------
+
+@router.post("/admin/students/update/{student_id}")
+def update_student_post(
+    student_id: int,
+    user: dict = Depends(load_user_dep),
+    grupo: str = Form(...),
+    alumno: str = Form(...),
+):
+    _require_perm(user)
+
+    updated = update_student(
+        student_id=student_id,
+        grupo=grupo,
+        alumno=alumno,
+    )
+
+    if not updated:
+        return RedirectResponse(
+            "/admin/students?status=exists",
+            status_code=303,
+        )
+
+    return RedirectResponse(
+        "/admin/students?status=updated",
         status_code=303,
     )
 
@@ -111,7 +135,6 @@ def export_students(
     ws.title = "Alumnos"
 
     ws.append(["Grupo", "Alumno"])
-
     for s in students:
         ws.append([s["grupo"], s["alumno"]])
 
@@ -149,19 +172,14 @@ def import_students(
         return RedirectResponse("/admin/students?status=error", status_code=303)
 
     headers = [cell.value for cell in ws[1]]
-    expected = ["Grupo", "Alumno"]
-
-    if headers[:2] != expected:
+    if headers[:2] != ["Grupo", "Alumno"]:
         return RedirectResponse("/admin/students?status=error", status_code=303)
 
     created = 0
 
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        grupo, alumno = row[:2]
-
+    for grupo, alumno, *_ in ws.iter_rows(min_row=2, values_only=True):
         if not grupo or not alumno:
             continue
-
         if create_student_if_not_exists(grupo=grupo, alumno=alumno):
             created += 1
 
