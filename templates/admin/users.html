@@ -176,7 +176,7 @@
 
           <details class="inline-block relative">
             <summary class="btn-muted cursor-pointer">✏️</summary>
-            <div class="absolute right-0 z-10 mt-2 p-4 card w-72">
+            <div class="absolute left-0 sm:right-0 sm:left-auto z-10 mt-2 p-4 card w-72 max-w-[90vw]">
               <form method="post" action="/admin/users/update/{{ u.id }}" class="space-y-2">
                 <input type="text" name="name" value="{{ u.name }}" class="input" required>
                 <input type="email" name="email" value="{{ u.email }}" class="input" required>
