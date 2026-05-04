@@ -59,6 +59,9 @@ def analysis_student_pdf(
             detail="No hay incidencias para los filtros seleccionados",
         )
 
+    # ✅ Invertir orden para PDF (N → 1)
+    rows_raw = list(reversed(rows_raw))
+
     # --------------------------------------------------
     # 3. Preparar filas (SIEMPRE con grupo y alumno)
     #    El PDF decidirá qué columnas mostrar
