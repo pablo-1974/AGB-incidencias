@@ -681,6 +681,7 @@ def get_incident_by_id(incident_id: int):
 def update_incident(
     *,
     incident_id: int,
+    teacher_id: int,
     grupo: str,
     alumno: str,
     descripcion: str,
