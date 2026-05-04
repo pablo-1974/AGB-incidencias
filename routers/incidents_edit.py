@@ -63,7 +63,7 @@ def edit_incident_submit(
 
     update_incident(
         incident_id=incident_id,
-        profesor_id=profesor_id,
+        teacher_id=teacher_id,
         grupo=grupo,
         alumno=alumno,
         descripcion=descripcion,
