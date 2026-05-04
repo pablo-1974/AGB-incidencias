@@ -51,7 +51,7 @@ def edit_incident_submit(
     incident_id: int,
     request: Request,
     user: dict = Depends(load_user_dep),
-    profesor_id: int = Form(...),
+    teacher_id: int = Form(...),
     grupo: str = Form(...),
     alumno: str = Form(...),
     descripcion: str = Form(...),
