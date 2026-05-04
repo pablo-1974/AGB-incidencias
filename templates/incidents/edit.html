@@ -11,6 +11,16 @@
 
 <form method="post" class="card space-y-4">
 
+   <label>Profesor</label>
+   <select name="profesor_id" class="input">
+     {% for p in profesores %}
+       <option value="{{ p.id }}"
+         {% if p.id == incident.profesor_id %}selected{% endif %}>
+         {{ p.name }}
+       </option>
+     {% endfor %}
+   </select>
+   
   <label>Grupo</label>
   <input name="grupo" value="{{ incident.grupo }}" class="input">
 
