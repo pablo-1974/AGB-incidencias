@@ -7,6 +7,7 @@ from auth import load_user_dep
 from utils.permissions import has_permission
 from utils.enums import PERM_EDITAR_INCIDENCIA, GRAVEDADES, ESTADOS_INCIDENCIA
 from db.incidents import get_incident_by_id, update_incident, delete_incident
+from db.users import get_all_teachers
 from context import ctx
 
 router = APIRouter()
@@ -27,6 +28,8 @@ def edit_incident_view(
     if not incident:
         raise HTTPException(status_code=404)
 
+    profesores = get_all_teachers()
+
     return request.app.state.templates.TemplateResponse(
         "incidents/edit.html",
         ctx(
@@ -34,6 +37,7 @@ def edit_incident_view(
             user=user,
             title="Editar incidencia",
             incident=incident,
+            profesores=profesores,
             gravedades=GRAVEDADES,
             estados=ESTADOS_INCIDENCIA,
         ),
