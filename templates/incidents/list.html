@@ -98,7 +98,7 @@
     <thead>
       <tr>
         <th>Nº</th>
-        <th>Fecha</th>
+        <th class="w-28">Fecha</th>
         <th>Hora</th>
         <th>Alumno</th>
         <th>Gravedad inicial</th>
@@ -112,7 +112,7 @@
       {% for i in incidents %}
       <tr>
         <td>{{ i.id }}</td>
-        <td>{{ i.fecha }}</td>
+        <td class="w-28 whitespace-nowrap">{{ i.fecha }}</td>
         <td>{{ i.franja or "—" }}</td>
         <td>{{ i.alumno }}</td>
         <td>{{ i.gravedad_inicial }}</td>
