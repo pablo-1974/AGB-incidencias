@@ -54,6 +54,9 @@ def analysis_teacher_pdf(
         fecha_hasta=fecha_hasta,
     )
 
+    # ✅ Invertir orden para PDF (N → 1)
+    rows_raw = list(reversed(rows_raw))
+
     # --------------------------------------------------
     # 3. Preparar filas
     # --------------------------------------------------
