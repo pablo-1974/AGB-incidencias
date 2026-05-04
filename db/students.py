@@ -31,23 +31,28 @@ def get_all_groups() -> list[str]:
 def get_all_students() -> list[dict]:
     """
     Devuelve la lista completa de alumnos con su grupo,
-    ordenada por grupo y alumno según criterio español.
+    incluyendo ID, ordenada por grupo y alumno.
     """
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT grupo, alumno
+                SELECT id, grupo, alumno
                 FROM students
                 """
             )
             rows = cur.fetchall()
 
-    rows.sort(key=lambda r: (normalize_for_sort(r["grupo"]),
-                              normalize_for_sort(r["alumno"])))
+    rows.sort(
+        key=lambda r: (
+            normalize_for_sort(r["grupo"]),
+            normalize_for_sort(r["alumno"]),
+        )
+    )
 
     return [
         {
+            "id": r["id"],
             "grupo": r["grupo"],
             "alumno": r["alumno"],
         }
@@ -104,7 +109,7 @@ def create_student_if_not_exists(*, grupo: str, alumno: str) -> bool:
 
     Devuelve:
     - True  → alumno creado
-    - False → ya existía (no se hace nada)
+    - False → ya existía
     """
     grupo = grupo.strip()
     alumno = alumno.strip()
@@ -139,32 +144,49 @@ def create_student_if_not_exists(*, grupo: str, alumno: str) -> bool:
     return True
 
 
-def change_student_group(
+def update_student(
     *,
-    grupo_actual: str,
+    student_id: int,
+    grupo: str,
     alumno: str,
-    nuevo_grupo: str,
 ) -> bool:
     """
-    Cambia manualmente el grupo de un alumno existente.
-    Acción explícita (NO usada en importaciones).
+    Actualiza el grupo y/o nombre de un alumno por ID.
+    Evita duplicados (grupo, alumno).
     """
+    grupo = grupo.strip()
     alumno = alumno.strip()
-    grupo_actual = grupo_actual.strip()
-    nuevo_grupo = nuevo_grupo.strip()
+
+    if not grupo or not alumno:
+        raise ValueError("Grupo y alumno son obligatorios")
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            # Evitar duplicados con otro ID
+            cur.execute(
+                """
+                SELECT 1
+                FROM students
+                WHERE grupo = %s
+                  AND alumno = %s
+                  AND id <> %s
+                """,
+                (grupo, alumno, student_id),
+            )
+            if cur.fetchone():
+                return False
+
             cur.execute(
                 """
                 UPDATE students
-                SET grupo = %s
-                WHERE grupo = %s
-                  AND alumno = %s
+                SET grupo = %s,
+                    alumno = %s
+                WHERE id = %s
                 """,
-                (nuevo_grupo, grupo_actual, alumno),
+                (grupo, alumno, student_id),
             )
             updated = cur.rowcount > 0
+
         conn.commit()
 
     return updated
