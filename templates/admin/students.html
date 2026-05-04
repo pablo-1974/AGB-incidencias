@@ -6,6 +6,10 @@
 
 <h1 class="text-xl font-semibold mb-6">🎓 Gestión de alumnos</h1>
 
+{# ===============================
+   MENSAJES DE ESTADO
+   =============================== #}
+
 {% if request.query_params.get("status") == "imported" %}
   <div class="alert ok mb-4">
     ✅ Importación completada — creados {{ request.query_params.get("created") }} alumnos nuevos.
@@ -14,7 +18,19 @@
   <div class="alert err mb-4">
     ❌ Error al importar el archivo.
   </div>
+{% elif request.query_params.get("status") == "created" %}
+  <div class="alert ok mb-4">
+    ✅ Alumno añadido correctamente.
+  </div>
+{% elif request.query_params.get("status") == "exists" %}
+  <div class="alert warn mb-4">
+    ⚠️ El alumno ya existe en ese grupo.
+  </div>
 {% endif %}
+
+{# ===============================
+   IMPORTAR / EXPORTAR
+   =============================== #}
 
 <div class="card mb-8">
   <h2 class="font-semibold mb-4">📦 Importar / Exportar alumnos</h2>
@@ -63,10 +79,51 @@
   </div>
 </div>
 
+{# ===============================
+   AÑADIR ALUMNO MANUALMENTE
+   =============================== #}
 
-{# ======================================
+<div class="card mb-8 max-w-xl">
+  <h2 class="font-semibold mb-4">➕ Añadir alumno manualmente</h2>
+
+  <form method="post" action="/admin/students/create" class="space-y-4">
+
+    <div>
+      <label class="label">Grupo</label>
+      <input
+        type="text"
+        name="grupo"
+        required
+        class="input w-full"
+        placeholder="Ej. 1A"
+      >
+    </div>
+
+    <div>
+      <label class="label">Alumno</label>
+      <input
+        type="text"
+        name="alumno"
+        required
+        class="input w-full"
+        placeholder="Nombre y apellidos"
+      >
+    </div>
+
+    <button type="submit" class="btn-primary">
+      Guardar alumno
+    </button>
+
+    <p class="text-xs text-gray-500">
+      Si el alumno ya existe en ese grupo, no se creará de nuevo.
+    </p>
+
+  </form>
+</div>
+
+{# ===============================
    FILTRO POR GRUPO
-   ====================================== #}
+   =============================== #}
 
 <div class="card mb-6">
   <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
@@ -87,9 +144,9 @@
   </form>
 </div>
 
-{# ======================================
+{# ===============================
    LISTADO DE ALUMNOS
-   ====================================== #}
+   =============================== #}
 
 <div class="card">
   <h2 class="font-semibold mb-4">📋 Alumnos registrados</h2>
