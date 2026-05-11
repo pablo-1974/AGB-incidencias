@@ -35,7 +35,7 @@ def print_incident_ticket(
         gravedad_inicial=inc["gravedad_inicial"],
         gravedad_final=inc.get("gravedad_final"),
         enviado_por=inc["teacher_name"],
-        enviado_dt=datetime.fromisoformat(f"{inc['fecha']}T{inc['hora']}"),
+        enviado_dt=datetime.fromisoformat(inc["created_at"]),
     )
 
     return Response(
