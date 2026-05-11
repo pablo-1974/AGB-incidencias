@@ -670,7 +670,8 @@ def get_incident_by_id(incident_id: int):
                     gravedad_final,
                     estado,
                     teacher_id,
-                    teacher_name
+                    teacher_name,
+                    created_at
                 FROM incidents
                 WHERE id = %s
                 """,
