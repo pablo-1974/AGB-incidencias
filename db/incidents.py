@@ -688,7 +688,10 @@ def update_incident(
     descripcion: str,
     gravedad_inicial: str,
     estado: str,
+    fecha: str,
+    hora: str,
 ):
+
     """
     Actualiza los campos principales de una incidencia.
     """
@@ -703,7 +706,9 @@ def update_incident(
                     alumno = %s,
                     descripcion = %s,
                     gravedad_inicial = %s,
-                    estado = %s
+                    estado = %s,               
+                    fecha = %s,
+                    hora = %s
                 WHERE id = %s
                 """,
                 (
@@ -713,6 +718,8 @@ def update_incident(
                     descripcion,
                     gravedad_inicial,
                     estado,
+                    fecha,
+                    hora,
                     incident_id,
                 ),
             )
