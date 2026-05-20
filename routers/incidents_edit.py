@@ -72,6 +72,8 @@ def edit_incident_submit(
         descripcion=descripcion,
         gravedad_inicial=gravedad_inicial,
         estado=estado,
+        fecha=fecha,
+        hora=hora,
     )
 
     return RedirectResponse("/incidents/list?status=updated", status_code=303)
