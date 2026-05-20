@@ -57,7 +57,10 @@ def edit_incident_submit(
     descripcion: str = Form(...),
     gravedad_inicial: str = Form(...),
     estado: str = Form(...),
+    fecha: str = Form(...),
+    hora: str = Form(...),
 ):
+
     if not has_permission(user, PERM_EDITAR_INCIDENCIA):
         raise HTTPException(status_code=403)
 
