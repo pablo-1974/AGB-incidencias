@@ -26,6 +26,23 @@
       {% endfor %}
     </select>
 
+    <label>Fecha</label>
+    <input
+      type="date"
+      name="fecha"
+      value="{{ incident.fecha }}"
+      class="input"
+      required
+    >
+   
+    <label>Franja horaria</label>
+    <input
+      name="hora"
+      value="{{ incident.hora }}"
+      class="input"
+      required
+    >
+     
     <label>Grupo</label>
     <input
       name="grupo"
